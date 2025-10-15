@@ -1,0 +1,17 @@
+# Blender v2.79 (sub 0) OBJ File: 'PythonModels.blend'
+# www.blender.org
+mtllib MinorFactor.mtl
+o MinorVactor_Cube.023
+v 0.200000 0.000000 0.000000
+v -0.200000 0.000000 0.000000
+v 0.000000 -0.200000 0.000000
+v 0.000000 0.200000 0.000000
+v 0.000000 0.000000 0.000000
+l 2 5
+l 1 5
+l 3 5
+l 4 5
+l 1 4
+l 2 4
+l 2 3
+l 1 3

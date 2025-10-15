@@ -1,0 +1,227 @@
+
+name: gravity theorem
+desc: imagine cursor being planet
+image: Gravity
+speed + 1.41
+
+name: friction
+desc: with what!?
+image: Friction
+brk + 3
+
+name: air resistance
+desc: I have no words...
+image: AirResistance
+speed + -1
+brk + 1
+brk * 1.2
+vel + -1
+
+name: lightspeed
+desc: AaaaAAaaAAaaAA!!!!!...
+image: Lightspeed
+speed * 3
+brk * 0.4
+steer * 0.4
+recoil * 4
+vel * 2
+
+name: minor factor
+desc: not so minor
+image: MinorFactor
+hp * 1.1
+size * 1.1
+speed * 1.1
+brk * 1.1
+steer * 1.1
+acc * 1.1
+recoil * 1.1
+vel * 1.1
+bsize * 1.1
+dmg * 1.1
+range * 1.1
+delay * 1.1
+recharge * 1.1
+
+name: hardware
+desc: you feel like a tank
+image: Hardware
+hp * 1.2
+hp + 1
+steer * 0.6
+size * 1.2
+speed * 0.6
+dmg + 1
+dmg * 1.2
+bsize + 2
+
+name: SDF
+desc: better collision detection
+image: Item(1)
+size + -2
+bsize + 3
+
+name: mandelbrot set
+desc: magical image
+image: Mandelbrot
+size + -2
+mult + 1
+
+name: bubble sort
+desc: painfully slow....
+image: Item(1)
+speed + -0.2
+hp + 1
+vel + -2
+
+name: full angle
+desc: zero acc, better firerate
+image: FullAngle
+acc * 0.01
+delay * 3
+recharge * 4
+
+name: straight line
+desc: laser bullets
+image: Line
+hp + 1
+dmg + 3
+range * 0.01
+bsize + 10
+bsize * 3
+
+name: infinity
+desc: never ending rampage
+image: Infinity
+ammo * 5
+dmg * 0.2
+recoil * 0.4
+delay * 4
+recharge * 3
+bsize + -4
+
+name: monte carlo
+desc: shotgun vibe
+image: MonteCarlo
+mult + 3 6
+vel + -2 2
+delay * 0.35
+range * 0.6
+
+name: pointer
+desc: right into the variables
+image: Pointer
+ammo - 4
+recoil * 2.5
+range * 3
+acc * 2.7
+dmg * 3
+vel * 4
+delay * 0.2
+recharge * 0.6
+
+name: math series
+desc: burst shot
+image: MathSeries
+ammo - 3
+delay * 3
+recharge * 0.5
+
+name: vector 2
+desc: shoot in both dimensions!
+image: Vector2
+mult * 2
+dmg * 0.7
+recharge * 0.8
+
+name: vector 3
+desc: shoot in all dimensions!
+image: Vector3
+mult * 3
+delay * 0.4
+recharge * 0.5
+
+name: background processing
+desc: chance for bullets
+image: Item(1)
+mult + -1 1
+
+name: bruteforce
+desc: the best solution
+image: Bruteforce
+hp + 2
+dmg + 3
+recoil + 2
+
+name: desynch
+desc: random intervals
+image: Desynch
+delay + -0.2 1
+recharge + -0.1 0.5
+
+name: optimization
+desc: quicker execution
+image: Item(1)
+delay + 1.2
+recharge + 0.8
+
+name: zip file
+desc: loading package...
+image: Zip
+ammo + 3
+recharge + 1.5
+
+name: A*
+desc: reach thy destination
+image: Astar
+vel + 3
+range + 0.5
+
+name: sdrawkcab
+desc: wait, what?!
+image: Item(1)
+vel * -1
+
+name: freeze
+desc: program has stopped working
+image: Item(1)
+vel * 0
+
+name: append()
+desc: adding bullets
+image: Item(1)
+mult + 1
+
+name: stack
+desc: ammo up
+image: Stack
+ammo + 5
+
+name: wide screen
+desc: thick bullets
+image: WideScreen
+bsize + 2
+bsize * 1.2
+dmg + 0.5
+vel - 1
+
+name: sharp angle
+desc: acc up
+image: SharpAngle
+acc + 1.5
+
+name: sin(x)
+desc: acc up
+image: Sinx
+acc + 1.73
+
+name: number pi
+desc: the queen of angles
+image: PI
+acc + 3.14
+steer + 1.57
+
+name: pitagoras theorem
+desc: range up
+image: Pitagoras
+range + 1.41

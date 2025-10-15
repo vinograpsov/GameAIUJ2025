@@ -1,0 +1,7 @@
+# Blender v2.79 (sub 0) OBJ File: 'PythonModels.blend'
+# www.blender.org
+mtllib Line.mtl
+o Line_Cube.027
+v -0.500000 -0.500000 0.000000
+v 0.500000 0.500000 0.000000
+l 1 2
