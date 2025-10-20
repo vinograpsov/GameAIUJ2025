@@ -33,10 +33,16 @@ while running:
         if  event.type == pygame.QUIT:
             running = False
 
-
     player.update_angle()
     player.handle_input()
     
+
+
+    for o in obstacles:
+        player.resolve_collision(o)
+            
+
+
     screen.fill((50, 50, 50))
     pygame.draw.rect(screen, (0,0,0), (0,0, WIDTH, HEIGHT), 10)
 

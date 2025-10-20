@@ -1,5 +1,7 @@
 import pygame
 import math
+from collider import Collider
+
 
 class Player:
 
@@ -8,7 +10,9 @@ class Player:
         self.angle = 0
         self.speed = 5
         self.debug = debug
-        self. collider_radius = 20
+        self.collider_radius = 20
+
+        self.collider = Collider(x, y, self.collider_radius)   
 
     def handle_input(self):
 
@@ -26,6 +30,16 @@ class Player:
             perp_direction = pygame.Vector2(direction.y, -direction.x)
             self.pos += perp_direction * self.speed
 
+        if direction.length_squared() > 0:
+            direction = direction.normalize() * self.speed
+            self.pos += direction
+            self.collider.pos = self.pos
+
+    def resolve_collision(self, obstacle):
+        if self.collider.collides_with(obstacle.collider):
+            self.collider.resolve_collision(obstacle.collider)
+            self.pos = self.collider.pos
+
     def update_angle(self):
         mouse_pos = pygame.mouse.get_pos()
         dx = mouse_pos[0] - self.pos.x
@@ -40,4 +54,4 @@ class Player:
         pygame.draw.polygon(surface, (0, 0, 255), [front, left, right])
 
         if self.debug:
-            pygame.draw.circle(surface, (255,0,0), (int(self.pos.x), int(self.pos.y)), self.collider_radius, 1)
+            self.collider.draw_debug(surface)
