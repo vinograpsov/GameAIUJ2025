@@ -7,11 +7,11 @@ Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "GameAIUJ2025", "GameAIUJ202
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{205E1DBE-A130-4232-B42C-0865392F1F80}"
 	ProjectSection(SolutionItems) = preProject
-		collider.py = collider.py
-		enemy.py = enemy.py
+		enums.py = enums.py
+		game_object.py = game_object.py
 		main.py = main.py
-		obstacle.py = obstacle.py
-		player.py = player.py
+		rendering.py = rendering.py
+		transforms.py = transforms.py
 	EndProjectSection
 EndProject
 Global
