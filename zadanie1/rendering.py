@@ -61,10 +61,22 @@ class Model():
             end1[1] = windowSize[1] - end1[1]
             end2[1] = windowSize[1] - end2[1]
             pygame.draw.line(screen, self.col, end1, end2)
-
+    
+    '''
     def RenderVertices(self, screen, pos, rot, scale):
         for vertice in self.verts:
             pygame.draw.circle(screen, self.col, transforms.Reposition(vertice, transform), 2)
+    '''
+
+    def RenderVertices(self, screen, windowSize):
+        trans = self.gameObject.transform
+        trans.SynchGlobals()
+        for vertice in self.verts:
+            #correction for pygame rendering y in reverse
+            drawPos = trans.Reposition(transforms.Vector(vertice)).data
+            drawPos[1] = windowSize[1] - drawPos[1]
+            pygame.draw.circle(screen, self.col, drawPos, 2)
+
 
 #LATER ADD ENUMS
 class Primitive():
