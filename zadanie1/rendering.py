@@ -5,6 +5,56 @@ import transforms
 
 pygame.font.init()
 
+class Camera():
+    #Window Size is NOT a vector
+    def __init__(self, windowSize, clearColor, windowName):
+        self.gameObject = None
+        self.windowSize = windowSize
+        self.clearColor = clearColor
+        self.screen = pygame.display.set_mode(self.windowSize)
+        pygame.display.set_caption(windowName)
+
+    def Clear(self):
+        self.screen.fill(self.clearColor)
+
+    #for now unused, here in case we want game object scale to not be connected to screen resolution
+    def ToCameraSpace():
+        pass
+
+    def RenderVertices(self, model):
+        trans = model.gameObject.transform
+        trans.SynchGlobals()
+        for vertice in model.verts:
+            #correction for pygame rendering y in reverse
+            drawPos = trans.Reposition(transforms.Vector(vertice)).data
+            drawPos[1] = self.windowSize[1] - drawPos[1]
+            pygame.draw.circle(self.screen, model.col, drawPos, 2)
+
+    def RenderWireframe(self, model):
+        cameraTrans = self.gameObject.transform
+        trans = model.gameObject.transform
+        trans.SynchGlobals()
+        if abs(trans.pos.x()) + trans.scale.x() - abs(cameraTrans.pos.x()) > self.windowSize[0] or abs(trans.pos.y()) + trans.scale.y() - abs(cameraTrans.pos.y()) > self.windowSize[1]: 
+            return #for optimization do not render a model that is outside of window
+        #coordinate system correction
+        for connection in model.edges:
+            end1 = trans.Reposition(transforms.Vector(model.verts[connection[0] - 1])).data
+            end2 = trans.Reposition(transforms.Vector(model.verts[connection[1] - 1])).data
+            end1 = [end1[0] - cameraTrans.pos.x() + self.windowSize[0] / 2, end1[1] - cameraTrans.pos.y() + self.windowSize[1] / 2]
+            end2 = [end2[0] - cameraTrans.pos.x() + self.windowSize[0] / 2, end2[1] - cameraTrans.pos.y() + self.windowSize[1] / 2]
+            #correct y values to match pygame rendering
+            end1[1] = self.windowSize[1] - end1[1]
+            end2[1] = self.windowSize[1] - end2[1]
+            pygame.draw.line(self.screen, model.col, end1, end2)
+            #end1 = transforms.Reposition(self.verts[connection[0] - 1], trans)
+            #end2 = transforms.Reposition(self.verts[connection[1] - 1], trans)
+            #end1 = [end1[0] - cameraPivot[0] + windowSize[0] / 2, end1[1] - cameraPivot[1] + windowSize[1] / 2]
+            #end2 = [end2[0] - cameraPivot[0] + windowSize[0] / 2, end2[1] - cameraPivot[1] + windowSize[1] / 2]
+            #end1[1] = windowSize[1] - end1[1]
+            #end2[1] = windowSize[1] - end2[1]
+            #pygame.draw.line(screen, self.col, end1, end2)
+
+
 class Model():
 
     '''loads model from assets in game's memory'''

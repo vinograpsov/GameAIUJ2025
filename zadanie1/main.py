@@ -11,9 +11,10 @@ import physics
 
 pygame.init()
 
-WIDTH, HEIGHT = 800, 600
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Zombie Survival Killer Mega Bestseller 3000")
+#already at start create camera as global object
+CameraObject = game_object.GameObject(TransformV2(Vector([800 / 2, 600 / 2]), 0, Vector([1, 1])), [], None)
+CameraObject.AddComp(rendering.Camera([800, 600], (255, 255, 255), "Zombie Survival Killer Mega Bestseller 3000"))
+MainCamera = CameraObject.GetComp('Camera')
 
 def GetFixedMousePos(windowSize):
     pygamePos = pygame.mouse.get_pos()
@@ -21,7 +22,7 @@ def GetFixedMousePos(windowSize):
 
 def GetWorldMousePos(windowSize, cameraPivot):
     pygamePos = pygame.mouse.get_pos()
-    return Vector([pygamePos[0] + cameraPivot[0] - windowSize[0] / 2, windowSize[1] - pygamePos[1] + cameraPivot[1] - windowSize[1] / 2])
+    return Vector([pygamePos[0] + cameraPivot.x() - windowSize[0] / 2, windowSize[1] - pygamePos[1] + cameraPivot.y() - windowSize[1] / 2])
 
 def main():
     #------------------------------------------------------------------
@@ -44,7 +45,6 @@ def main():
     '''
 
     size = [pygame.display.Info().current_w, pygame.display.Info().current_h]
-    center = [size[0] / 2, size[1] / 2]
     background = (255, 255, 255)
 
     deltaTime = time.time()
@@ -59,14 +59,14 @@ def main():
     GlobalObjects = []
 
     #create player (now not moving) object
-    Player = game_object.GameObject(Transform([size[0] / 2, size[1] / 2], 0, [15, 15]), [], None)
+    Player = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, [15, 15]), [], None)
     Player.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255]));
     Player.AddComp(physics.PhysicObject([0, 0], [0, 0], 1))
 
     GlobalObjects.append(Player);
 
     #create cursor object
-    Cursor = game_object.GameObject(TransformV2(Vector([size[0] / 2, size[1] / 2]), 0, Vector([15, 15])), [], None)
+    Cursor = game_object.GameObject(TransformV2(Vector(MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
     #Cursor = game_object.GameObject(transforms.Transform([size[0] / 2, size[1] / 2], 0, [15, 15]), [], None)
     GlobalObjects.append(Cursor);
     Cursor.AddComp(rendering.Model('Assets\Cursor.obj', [255, 0, 0]))
@@ -136,7 +136,7 @@ def main():
                 MouseInputs[0] = [MouseInputs[0][0] + MouseInputs[1][0], MouseInputs[0][1] + MouseInputs[1][1], MouseInputs[0][2] + MouseInputs[1][2]]
 
 
-        Cursor.transform.lpos = GetWorldMousePos(size, Player.transform.lpos)
+        Cursor.transform.lpos = GetWorldMousePos(MainCamera.windowSize, MainCamera.gameObject.transform.lpos)
         print(Cursor.transform.lpos.data)
         Cursor.transform.Desynch()
 
@@ -145,19 +145,21 @@ def main():
 
 
         #Global rendering
-        screen.fill(background)
+        MainCamera.Clear()
         #afferting position for camera pourposes:
         CameraPivot = Player.transform.lpos
 
         #print(Cursor.transform.pos.data)
-        Cursor.GetComp('Model').RenderVertices(screen, size)
+        #MainCamera.RenderVertices(Cursor.GetComp('Model'))
+        MainCamera.RenderWireframe(Cursor.GetComp('Model'))
+        #Cursor.GetComp('Model').RenderVertices(MainCamera.screen, MainCamera.windowSize)
         
         '''
         for Object in GlobalObjects:
             for Model in Object.GetComps('Model'):
-                Model.Render(screen, size, CameraPivot)
+                Model.Render(MainCamera.screen, size, CameraPivot)
             for Primitive in Object.GetComps('Primitive'):
-                Primitive.Render(screen, size, CameraPivot)
+                Primitive.Render(MainCamera.screen, size, CameraPivot)
         '''
         pygame.display.flip();
 
