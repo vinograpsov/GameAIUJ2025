@@ -6,6 +6,8 @@ import random, math, sys
 import transforms
 import game_object
 import rendering
+import collisions
+import physics
 
 pygame.init()
 
@@ -25,6 +27,20 @@ def main():
     #------------------------------------------------------------------
     #START
     #------------------------------------------------------------------
+
+    #For now vector testing
+    vectTest = transforms.Vector([1, 0])
+    #vectTest += transforms.Vector([2, 2])
+    #vectTest /= 2
+    print(transforms.RadiansToDegrees(transforms.Vector([0, 1]).ToRotation()))
+    vectTest.Rotate(transforms.Vector([0, 1]).ToRotation());
+    #vectTest.x = 2
+    print(vectTest.data)
+    print(transforms.Vector.RotToVect(transforms.DegreesToRadians(90)).data)
+
+
+    return;
+
     size = [pygame.display.Info().current_w, pygame.display.Info().current_h]
     center = [size[0] / 2, size[1] / 2]
     background = (255, 255, 255)
@@ -43,6 +59,7 @@ def main():
     #create player (now not moving) object
     Player = game_object.GameObject(transforms.Transform([size[0] / 2, size[1] / 2], 0, [15, 15]), [], None)
     Player.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255]));
+    Player.AddComp(physics.PhysicObject([0, 0], [0, 0], 1))
 
     GlobalObjects.append(Player);
 

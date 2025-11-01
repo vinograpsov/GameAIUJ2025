@@ -7,6 +7,201 @@ usually takes vectors as arguments and outputs also vectors'''
 
 import math
 
+def RadiansToDegrees(radians):
+    return radians * 180 / math.pi
+
+def DegreesToRadians(degrees):
+    return degrees * math.pi / 180
+
+class Vector:
+
+    def __init__(self, data):
+        self.data = data
+    
+    
+    def x(self):
+        return self.data[0]
+
+    def y(self):
+        return self.data[1]
+
+    def z(self):
+        return self.data[2]
+
+    def w(self):
+        return self.data[3]
+    
+
+    #OPERATORS OVERLOADING
+    #------------------------------------------------------------------------
+
+    def __add__(self, other):
+        result = []
+        if type(other) != type(self): #if addition by a number
+            for i in range(0, len(self.data)):
+                result.append(self.data[i] + other)
+            return Vector(result)
+        for i in range(0, len(self.data)): #if addition by a vector
+            result.append(self.data[i] + other.data[i])
+        return Vector(result);
+
+    def __sub__(self, other):
+        result = []
+        if type(other) != type(self): #if subtraction by a number
+            for i in range(0, len(self.data)):
+                result.append(self.data[i] - other)
+            return Vector(result)
+        for i in range(0, len(self.data)): #if subtraction by a vector
+            result.append(self.data[i] - other.data[i])
+        return Vector(result);
+
+    def __mul__(self, other):
+        result = []
+        if type(other) != type(self): #if scaled by a number
+            for i in range(0, len(self.data)):
+                result.append(self.data[i] * other)
+            return Vector(result)
+        for i in range(0, len(self.data)): #if scaled by a vector
+            result.append(self.data[i] * other.data[i])
+        return Vector(result);
+
+    def __truediv__(self, other):
+        result = []
+        if type(other) != type(self): #if division by a number
+            for i in range(0, len(self.data)):
+                result.append(self.data[i] / other)
+            return Vector(result)
+        for i in range(0, len(self.data)): #if division by a vector
+            result.append(self.data[i] / other.data[i])
+        return Vector(result);
+
+    #Assignment operators
+
+    def __iadd__(self, other):
+        result = []
+        if type(other) != type(self): #if addition by a number
+            for i in range(0, len(self.data)):
+                result.append(self.data[i] + other)
+            self.data = result
+            return self
+        for i in range(0, len(self.data)): #if addition by a vector
+            result.append(self.data[i] + other.data[i])
+        self.data = result
+        return self
+
+    def __isub__(self, other):
+        result = []
+        if type(other)  != type(self): #if subtraction by a number
+            for i in range(0, len(self.data)):
+                result.append(self.data[i] - other)
+            self.data = result
+            return self
+        for i in range(0, len(self.data)): #if subtraction by a vector
+            result.append(self.data[i] - other.data[i])
+        self.data = result
+        return self
+
+    def __imul__(self, other):
+        result = []
+        if type(other) != type(self): #if scaled by a number
+            for i in range(0, len(self.data)):
+                result.append(self.data[i] * other)
+            self.data = result
+            return self
+        for i in range(0, len(self.data)): #if scaled by a vector
+            result.append(self.data[i] * other.data[i])
+        self.data = result
+        return self
+
+    def __itruediv__(self, other):
+        result = []
+        if type(other) != type(self): #if divided by a number
+            for i in range(0, len(self.data)):
+                result.append(self.data[i] / other)
+            self.data = result
+            return self
+        for i in range(0, len(self.data)): #if divided by a vector
+            result.append(self.data[i] / other.data[i])
+        self.data = result
+        return self
+
+    #comparison operators
+
+    def __eq__(self, other):
+        if len(self.data) != len(other.data):
+            return False
+        for i in range(0, len(self.data)):
+            if self.data[i] != other.data[i]:
+                return False
+        return True
+
+    #STATIC METHODS
+    @staticmethod
+    def Distance(vect1, vect2):
+        for i in range(0, len(self.data)): #if divided by a vector
+            result.append(self.data[i] / other.data[i])
+        return 
+
+    '''returns min ignoring - values and returns them without changing their original sign'''
+    @staticmethod
+    def AbsMin(v1, v2):
+        if abs(v1) < abs(v2):
+            return v1
+        return v2
+
+    '''constructs a normalized vector based on rotation in radians'''
+    @staticmethod
+    def RotToVect(rot):
+        result = Vector([1, 0])
+        return result.Rotate(rot)
+
+
+    #REGULAR METHODS
+
+    def Length(self):
+        result = 0;
+        for comp in self.data:
+            result += comp * comp
+        return math.sqrt(result);
+
+    '''normalizes vector'''
+    def Normalize(self):
+        self.data = self / Length(self)
+        return self
+
+    '''returns normalized vertion of the vector without changing original reference'''
+    def Normalized(self):
+        return self / Length(self)
+
+    #unused
+    '''despite name returns max axis value from one vector'''
+    def MaxComponent(self):
+        return max(self.data)
+
+    #works only in 2D!!!
+    def ToRotationDegrees(self):
+        specialDeg = math.atan2(self.y(), self.x()) * 180 / math.pi
+        return specialDeg + 180
+    
+    def ToRotation(self):
+        return math.atan2(self.y(), self.x())
+
+    #works only in 2D
+    '''rotates vector'''
+    def Rotate(self, rot):
+        result = [self.x(), self.y()]
+        result[0] = self.x() * math.cos(rot) - self.y() * math.sin(rot)
+        result[1] = self.x() * math.sin(rot) - self.y() * math.cos(rot)
+        self.data = result
+        return self
+
+    def RotateByVect(self, vect):
+        self.Rotate(vect.ToRotation())
+        return self
+
+
+#-------------------------------------------------------------------------------------------------
+
 '''returns min ignoring - values and returns them without changing their original sign'''
 def absMin(v1, v2):
     if abs(v1) < abs(v2):
