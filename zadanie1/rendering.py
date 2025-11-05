@@ -46,13 +46,6 @@ class Camera():
             end1[1] = self.windowSize[1] - end1[1]
             end2[1] = self.windowSize[1] - end2[1]
             pygame.draw.line(self.screen, model.col, end1, end2)
-            #end1 = transforms.Reposition(self.verts[connection[0] - 1], trans)
-            #end2 = transforms.Reposition(self.verts[connection[1] - 1], trans)
-            #end1 = [end1[0] - cameraPivot[0] + windowSize[0] / 2, end1[1] - cameraPivot[1] + windowSize[1] / 2]
-            #end2 = [end2[0] - cameraPivot[0] + windowSize[0] / 2, end2[1] - cameraPivot[1] + windowSize[1] / 2]
-            #end1[1] = windowSize[1] - end1[1]
-            #end2[1] = windowSize[1] - end2[1]
-            #pygame.draw.line(screen, self.col, end1, end2)
 
 
 class Model():

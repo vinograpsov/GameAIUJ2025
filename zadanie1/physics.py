@@ -33,27 +33,44 @@ def BoundBounce(Bounds, EndPos, EndVel):
 
 class PhysicObject():
 
-    def __init__(self, vel, acc, res):
+    def __init__(self, mass):
         self.gameObject = None
-        self.newPos = [0, 0]
-        self.vel = vel #velocity
-        self.acc = acc #acceleration
-        self.res = res #resistance
+        self.mass = mass
+        self.restitution = 0
+        self.newPos = Vector([0, 0])
+        self.vel = Vector([0, 0]) #velocity
+        self.res = Vector([0, 0]) #resistance
     
+    def ApplyForce(self, forceVect):
+        self.vel += forceVect / self.mass #* time^2
+
     def ApplyForce(self, rot, force):
-        self.vel = ApplyDirForce(self.vel, rot, force)
+        forceVect = Vector.RotToVect(rot) * force
+        self.vel += forceVect / self.mass #* time^2
 
-    def ReduceForce(self, force):
-        self.vel = ApplyDirForce(self.vel, VectToDeg(self.vel), -min(VectToDist(self.vel), force))
+    #def ReduceForce(self, force):
+        #self.vel = ApplyDirForce(self.vel, VectToDeg(self.vel), -min(VectToDist(self.vel), force))
 
-    def ApplyArcForce(self, piviot, force): #piviot is a transform
+    def ApplyArcForce(self, pivot, force): #pivot is a transform
         trans = self.gameObject.transform
         trans.SynchGlobals()
-        piviot.SynchGlobals()
+        pivot.SynchGlobals()
         
-        newPos = Reposition(SubVect(piviot.pos, trans.pos), Transform(piviot.pos, force * 3.14, [1, 1]))
-        self.vel = AddVect(self.vel, SubVect(newPos, trans.pos))
+        newPos = Transform(pivot.pos, force * 3.14, [1, 1]).Reposition(pivot.pos - trans.pos)
+        self.vel += newPos - trans.pos
+        #newPos = Reposition(SubVect(pivot.pos, trans.pos), Transform(pivot.pos, force * 3.14, [1, 1]))
+        #self.vel = AddVect(self.vel, SubVect(newPos, trans.pos))
 
+    def PreupdatePos(self):
+        self.newPos = self.gameObject.transform.lpos + self.vel
+        #self.newPos = AddVect(self.gameObject.transform.lpos, self.vel)
+
+    def ExecutePos(self):
+        self.gameObject.transform.lpos = self.newPos
+        self.gameObject.transform.Desynch()
+
+
+    '''
     def isClosing(self, target):
         trans = self.gameObject.transform
         trans.SynchGlobals()
@@ -83,56 +100,8 @@ class PhysicObject():
         #print(secondRot)
         #print abs(firstRot - secondRot)
         return min(abs(firstRot - secondRot), abs((180 + firstRot) % 360 - (180 + secondRot) % 360))
-
-    def UpdateVel(self):
-        self.vel = ScaleVect(AddVect(self.vel, self.acc), self.res)
-
-    def PreupdatePos(self):
-        #return transformations.AddVect(Transform.pos, self.vel)
-        #self.newPos = AddVect(ScaleVect(self.gameObject.transform.lpos, deltaTime * 10), self.vel)
-        self.newPos = AddVect(self.gameObject.transform.lpos, self.vel)
-
-    def ExecutePos(self):
-        self.gameObject.transform.lpos = self.newPos
-        self.gameObject.transform.Desynch()
-
-class Projectile():
-
-    def __init__(self, range, lifeTime):
-        self.gameObject = None
-        self.range = range
-        self.lifeTime = lifeTime
-        self.dist = 0
-        self.time = 0
-        self.toDest = False
-        self.physicObjTemplate = PhysicObject([0, 0], [0, 0], 0)
-
-    def UpdateProj(self, deltaTime):
-        if self.toDest == True:
-            self.gameObject.isRemoved = True
-            return
-
-        physicObj = self.gameObject.GetComp('PhysicObject')
-        #physicObj = self.gameObject.transform
-        #print(self.physicObjTemplate)
-        #print(physicObj)
-        #print(self.gameObject.GetComp(self.physicObjTemplate))
-        distChange = VectToDist(physicObj.vel)
-        self.dist += distChange
-        self.time += deltaTime
-
-        #return
-        if self.dist > self.range:
-            #extrapolating end of life point
-            lastDist = self.dist - self.range
-            physicObj.vel = SubVect(physicObj.vel, ScaleVect(physicObj.vel, lastDist / distChange))
-            self.toDest = True
-        if self.time > self.lifeTime:
-            #extrapolating end of life point
-            lastTime = self.time - self.lifeTime
-            physicObj.vel = SubVect(physicObj.vel, ScaleVect(physicObj.vel, lastTime / deltaTime))
-            self.toDest = True
-
+    '''
+'''
 class Collider():
 
     def __init__(self, type, size):
@@ -176,6 +145,7 @@ class Collider():
         #print(dist)
         return False
 
+'''
 #class Animation():
 
     #def DefineNextAnimState(self):

@@ -7,10 +7,10 @@ usually takes vectors as arguments and outputs also vectors'''
 
 import math
 
-def RadiansToDegrees(radians):
+def RadToDeg(radians):
     return radians * 180 / math.pi
 
-def DegreesToRadians(degrees):
+def DegToRad(degrees):
     return degrees * math.pi / 180
 
 '''returns min ignoring - values and returns them without changing their original sign'''
@@ -40,6 +40,12 @@ class Vector:
 
     #OPERATORS OVERLOADING
     #------------------------------------------------------------------------
+
+    def __neg__(self):
+        result = []
+        for i in range(0, len(self.data)):
+            result.append(-self.data[i])
+        return Vector(result);
 
     def __add__(self, other):
         result = []
@@ -146,7 +152,30 @@ class Vector:
     def Distance(vect1, vect2):
         for i in range(0, len(self.data)): #if divided by a vector
             result.append(self.data[i] / other.data[i])
-        return 
+        return
+
+    @staticmethod
+    def Dot(vect1, vect2):
+        result = 0
+        for i in range(0, len(vect1.data)):
+            result += vect1.data[i] * vect2.data[i]
+        return result
+
+    '''returns projected part of other vector relative to this vector'''
+    @staticmethod
+    def Proj(vect1, vect2):
+        return vect2 * Dot(vect1, vect2) / Dot(vect2, vect2)
+
+    '''returns perpendicular part of other vector relative this vector'''
+    @staticmethod
+    def Perp(vect1, vect2):
+        return vect2 - Proj(vect1, vect2)
+
+    def AreOpposite(vect1, vect2):
+        for i in range(0, len(self.data)):
+            if (self.data[i] > 0 and other.data[i] > 0) or (self.data[i] < 0 and other.data[i] < 0):
+                return False #all vector segment must be of different sign for them to be fully opposite
+        return True
 
     '''returns min ignoring - values and returns them without changing their original sign
     @staticmethod
@@ -179,7 +208,6 @@ class Vector:
     def Normalized(self):
         return self / Length(self)
 
-    #unused
     '''despite name returns max axis value from one vector'''
     def MaxComponent(self):
         return max(self.data)
@@ -197,7 +225,7 @@ class Vector:
     def Rotate(self, rot):
         result = [self.x(), self.y()]
         result[0] = self.x() * math.cos(rot) - self.y() * math.sin(rot)
-        result[1] = self.x() * math.sin(rot) - self.y() * math.cos(rot)
+        result[1] = self.x() * math.sin(rot) + self.y() * math.cos(rot)
         self.data = result
         return self
 
@@ -206,7 +234,102 @@ class Vector:
         return self
 
 
+class Transform:
+    def __init__(self, lpos, lrot, lscale):
+        self.gameObject = None
+        self.isSynch = False
+        self.pos = lpos
+        self.rot = lrot
+        self.scale = lscale
+        self.lpos = lpos
+        self.lrot = lrot
+        self.lscale = lscale
+
+    '''returns a forward vector representing this transform facing dir'''
+    def Forward(self):
+        self.SynchGlobals()
+        return Vector.RotToVect(self.rot)
+
+    def LocalToGlobal(self):
+        self.pos.data = self.lpos.data
+        self.lrot %= math.pi * 2
+        self.rot = self.lrot
+        self.scale.data = self.lscale.data
+
+    '''returns coordinates of a given point in transform local space'''
+    def GlobalToLocal(self, point, ignoreScale):
+        result = (point - self.pos).Rotate(-self.rot)
+        if ignoreScale is False:
+            result /= self.scale
+        return result
+
+    '''locally scales, rotates and positions given vector as a relative to transform'''
+    '''actually what it does is it calculates global position of a point as if it would be child of this transform'''
+    def Reposition(self, vect):
+        return (vect * self.scale).Rotate(self.rot) + self.pos
+        #return AddVect(RotateVect(ScaleVect(vect, transform.scale), transform.rot), transform.pos)
+
+    def Retransform(self, other):
+        #position
+        self.pos = other.Reposition(self.pos)
+        #self.pos.ToLocalSpace(other)
+        #rotation
+        self.rot = self.lrot + other.rot
+        self.rot %= math.pi * 2
+        #scale
+        self.scale *= other.scale
+
+    '''Synchronizes global values so that they become accurate while calculating'''
+    def SynchGlobals(self):
+        if self.isSynch == True: #this allows to only try to synchronize
+            return
+        if self.gameObject.parent == None:
+            self.LocalToGlobal()
+        else:
+            self.gameObject.parent.transform.SynchGlobals()
+            self.Retransform(self.gameObject.parent.transform) #using retransform foces program to wait
+        self.isSynch = True
+
+    '''marks transform and it's children as desynchronised'''
+    def Desynch(self):
+        self.isSynch = False
+        for child in self.gameObject.GetObjsInChilds(self.gameObject):
+            child.transform.isSynch = False
+
+    '''immediately faces one object to another tranform(position)'''
+    def FaceTowards(self, other):
+        #First update both object's globals
+        self.SynchGlobals()
+        other.SynchGlobals()
+
+        TargetRot = (other.pos - self.pos).ToRotation() #calculates direction and converts to rot
+        self.lrot = TargetRot
+
+        self.Desynch()
+
+    '''rotates one object so that it faces another tranform(position) with a certain speed'''
+    def RotateTowards(self, other, strength):
+        #First update both object's globals
+        self.SynchGlobals()
+        other.SynchGlobals()
+
+        TargetRot = (other.pos - self.pos).ToRotation() #calculates direction and converts to rot 
+        idealTarget = AbsMin(TargetRot - self.lrot, (math.pi + TargetRot) % (math.pi * 2) - (math.pi + self.lrot) % (math.pi * 2))
+        
+        self.lrot += min(abs(idealTarget), strength) * math.copysign(1, idealTarget)
+        self.lrot %= math.pi * 2
+        
+        #TargetRot = VectToDeg(SubVect(other.pos, self.pos)) #calculates direction and converts to rot
+        #idealTarget = absMin(TargetRot - self.lrot, (180 + TargetRot) % 360 - (180 + self.lrot) % 360)
+
+        #self.lrot += min(abs(idealTarget), strength) * math.copysign(1, idealTarget)
+        #self.lrot %= 360
+ 
+        self.Desynch()
+
 #-------------------------------------------------------------------------------------------------
+
+#DEPRICATED
 
 #unused
 '''despite name returns max axis value from one vector'''
@@ -337,88 +460,7 @@ def VectDist(vect1, vect2):
 def RotDiff(vect1, vect2):
     return (VectToDeg(vect1) - VectToDeg(vect2)) % 360
 
-
-class TransformV2:
-    def __init__(self, lpos, lrot, lscale):
-        self.gameObject = None
-        self.isSynch = False #unsure
-        self.pos = lpos
-        self.rot = lrot
-        self.scale = lscale
-        self.lpos = lpos
-        self.lrot = lrot
-        self.lscale = lscale
-
-    def LocalToGlobal(self):
-        self.pos.data = self.lpos.data
-        self.lrot %= math.pi * 2
-        self.rot = self.lrot
-        self.scale.data = self.lscale.data
-
-    '''locally scales, rotates and positions given vector as a relative to transform'''
-    def Reposition(self, vect):
-        return (vect * self.scale).Rotate(self.rot) + self.pos
-        #return AddVect(RotateVect(ScaleVect(vect, transform.scale), transform.rot), transform.pos)
-
-    def Retransform(self, other):
-        #position
-        self.pos = other.Reposition(self.pos)
-        #self.pos.ToLocalSpace(other)
-        #rotation
-        self.rot = self.lrot + other.rot
-        self.rot %= math.pi * 2
-        #scale
-        self.scale *= other.scale
-
-    '''Synchronizes global values so that they become accurate while calculating'''
-    def SynchGlobals(self):
-        if self.isSynch == True: #this allows to only try to synchronize
-            return
-        if self.gameObject.parent == None:
-            self.LocalToGlobal()
-        else:
-            self.gameObject.parent.transform.SynchGlobals()
-            self.Retransform(self.gameObject.parent.transform) #using retransform foces program to wait
-        self.isSynch = True
-
-    '''marks transform and it's children as desynchronised'''
-    def Desynch(self):
-        self.isSynch = False
-        for child in self.gameObject.GetObjsInChilds(self.gameObject):
-            child.transform.isSynch = False
-
-    '''immediately faces one object to another tranform(position)'''
-    def FaceTowards(self, other):
-        #First update both object's globals
-        self.SynchGlobals()
-        other.SynchGlobals()
-
-        TargetRot = (other.pos - self.pos).ToRotation() #calculates direction and converts to rot
-        self.lrot = TargetRot
-
-        self.Desynch()
-
-    '''rotates one object so that it faces another tranform(position) with a certain speed'''
-    def RotateTowards(self, other, strength):
-        #First update both object's globals
-        self.SynchGlobals()
-        other.SynchGlobals()
-
-        TargetRot = (other.pos - self.pos).ToRotation() #calculates direction and converts to rot 
-        idealTarget = AbsMin(TargetRot - self.lrot, (math.pi + TargetRot) % (math.pi * 2) - (math.pi + self.lrot) % (math.pi * 2))
-        
-        self.lrot += min(abs(idealTarget), strength) * math.copysign(1, idealTarget)
-        self.lrot %= math.pi * 2
-        
-        #TargetRot = VectToDeg(SubVect(other.pos, self.pos)) #calculates direction and converts to rot
-        #idealTarget = absMin(TargetRot - self.lrot, (180 + TargetRot) % 360 - (180 + self.lrot) % 360)
-
-        #self.lrot += min(abs(idealTarget), strength) * math.copysign(1, idealTarget)
-        #self.lrot %= 360
- 
-        self.Desynch()
-
-class Transform:
+class TransformOld:
 
     def __init__(self, lpos, lrot, lscale):
         self.gameObject = None

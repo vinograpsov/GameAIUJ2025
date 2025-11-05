@@ -6,5 +6,6 @@ class PrimitiveType(Enum):
 	SPHERE = 2
 
 class ColliderType(Enum):
-	SPHERE = 0
-	BORDER = 1 #border is inverse box, but requires special code
+	EMPTY = 0
+	SPHERE = 1
+	LINE = 2 #border is inverse box, but requires special code

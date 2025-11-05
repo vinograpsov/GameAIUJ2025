@@ -8,11 +8,12 @@ import game_object
 import rendering
 import collisions
 import physics
+import enums
 
 pygame.init()
 
 #already at start create camera as global object
-CameraObject = game_object.GameObject(TransformV2(Vector([800 / 2, 600 / 2]), 0, Vector([1, 1])), [], None)
+CameraObject = game_object.GameObject(Transform(Vector([800 / 2, 600 / 2]), 0, Vector([1, 1])), [], None)
 CameraObject.AddComp(rendering.Camera([800, 600], (255, 255, 255), "Zombie Survival Killer Mega Bestseller 3000"))
 MainCamera = CameraObject.GetComp('Camera')
 
@@ -31,14 +32,14 @@ def main():
 
     #For now vector testing
     '''
-    vectTest = transforms.Vector([1, 0])
-    #vectTest += transforms.Vector([2, 2])
+    vectTest = Vector([0, 1])
+    #vectTest += Vector([2, 2])
     #vectTest /= 2
-    print(transforms.RadiansToDegrees(transforms.Vector([0, 1]).ToRotation()))
-    vectTest.Rotate(transforms.Vector([0, 1]).ToRotation());
+    print(RadiansToDegrees(Vector([0, 1]).ToRotation()))
+    vectTest.Rotate(Vector([1, 1]).ToRotation());
     #vectTest.x = 2
     print(vectTest.data)
-    print(transforms.Vector.RotToVect(transforms.DegreesToRadians(90)).data)
+    print(Vector.RotToVect(DegToRad(90)).data)
 
 
     return;
@@ -59,14 +60,14 @@ def main():
     GlobalObjects = []
 
     #create player (now not moving) object
-    Player = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, [15, 15]), [], None)
+    Player = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
     Player.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255]));
-    Player.AddComp(physics.PhysicObject([0, 0], [0, 0], 1))
+    Player.AddComp(physics.PhysicObject(1))
 
     GlobalObjects.append(Player);
 
     #create cursor object
-    Cursor = game_object.GameObject(TransformV2(Vector(MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
+    Cursor = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
     #Cursor = game_object.GameObject(transforms.Transform([size[0] / 2, size[1] / 2], 0, [15, 15]), [], None)
     GlobalObjects.append(Cursor);
     Cursor.AddComp(rendering.Model('Assets\Cursor.obj', [255, 0, 0]))
@@ -74,6 +75,16 @@ def main():
     GlobalObjects.append(Cursor);
 
 
+    #WORLD BORDER
+    MainBorder = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([MainCamera.windowSize[0], MainCamera.windowSize[1]])), [], None)
+    Border1 = game_object.GameObject(Transform(Vector([1, 0]), DegToRad(180), Vector([1, 1])), [], MainBorder)
+    Border1.AddComp(collisions.Collider(enums.ColliderType.LINE))
+    Border2 = game_object.GameObject(Transform(Vector([0, 1]), DegToRad(270), Vector([1, 1])), [], MainBorder)
+    Border2.AddComp(collisions.Collider(enums.ColliderType.LINE))
+    Border3 = game_object.GameObject(Transform(Vector([-1, 0]), 0, Vector([1, 1])), [], MainBorder)
+    Border3.AddComp(collisions.Collider(enums.ColliderType.LINE))
+    Border4 = game_object.GameObject(Transform(Vector([0, -1]), DegToRad(90), Vector([1, 1])), [], MainBorder)
+    Border4.AddComp(collisions.Collider(enums.ColliderType.LINE))
 
     #------------------------------------------------------------------
     #UPDATE
@@ -137,11 +148,10 @@ def main():
 
 
         Cursor.transform.lpos = GetWorldMousePos(MainCamera.windowSize, MainCamera.gameObject.transform.lpos)
-        print(Cursor.transform.lpos.data)
         Cursor.transform.Desynch()
 
         #Player movement
-        #Player.transform.FaceTowards(Cursor.transform);
+        Player.transform.FaceTowards(Cursor.transform);
 
 
         #Global rendering
@@ -151,9 +161,13 @@ def main():
 
         #print(Cursor.transform.pos.data)
         #MainCamera.RenderVertices(Cursor.GetComp('Model'))
-        MainCamera.RenderWireframe(Cursor.GetComp('Model'))
+        #MainCamera.RenderWireframe(Cursor.GetComp('Model'))
         #Cursor.GetComp('Model').RenderVertices(MainCamera.screen, MainCamera.windowSize)
         
+        for Object in GlobalObjects:
+            for Model in Object.GetComps('Model'):
+                MainCamera.RenderWireframe(Model)
+
         '''
         for Object in GlobalObjects:
             for Model in Object.GetComps('Model'):
