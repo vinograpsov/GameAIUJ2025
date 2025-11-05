@@ -152,12 +152,34 @@ def main():
 
         #Player movement
         Player.transform.FaceTowards(Cursor.transform);
+        #LATER MOVE PLAYER SPEED TO SOME SPECIAL CLASS
+        moveVector = Vector([LeftRightInput[0], UpDownInput[0]])
+        playerSpeed = 0.2
+        Player.GetComp('PhysicObject').maxVelocity = 0.2
+        Player.GetComp('PhysicObject').vel += moveVector * playerSpeed
 
+        #-----------------------------------------------
+        #Physics update
+        #-----------------------------------------------
+        #print(Player.transform.lpos)
+        #print(Player.GetComp('PhysicObject').vel)
+        #Player.GetComp('PhysicObject').newPos = Player.transform.lpos + Player.GetComp('PhysicObject').vel
+        Player.GetComp('PhysicObject').PreupdatePos()
+        #print(Vector([8, 8]).Truncate(2).data)
 
+        #-----------------------------------------------
+        #Collision detection
+        #-----------------------------------------------
+
+        #-----------------------------------------------
+        #Physics execution
+        #-----------------------------------------------
+        Player.GetComp('PhysicObject').ExecutePos()
+
+        #-----------------------------------------------
         #Global rendering
+        #-----------------------------------------------
         MainCamera.Clear()
-        #afferting position for camera pourposes:
-        CameraPivot = Player.transform.lpos
 
         #print(Cursor.transform.pos.data)
         #MainCamera.RenderVertices(Cursor.GetComp('Model'))

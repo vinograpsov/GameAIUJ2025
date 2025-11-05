@@ -1,36 +1,6 @@
 import game_object
 from transforms import *
 
-#Made as for collision detection
-'''SDF comparing to [0, 0] point, original formula'''
-def CubeSDF(point, size):
-    outside = [abs(point[0]) - size[0], abs(point[1]) - size[1]]
-    #first part calculates the leftover distance from cube, other part gives the inside distance in the cube (if we are inside)
-    return VectToDist([max(outside[0], 0), max(outside[1], 0)]) + min(max(outside[0], outside[1]), 0)
-
-#unused, old code for colliding with boundaries
-def ReflectDeg(orgDeg, surfDim):
-    surfChange = 0
-    if surfDim >= 2:
-        surfChange = 180
-    return ((360 - orgDeg) + surfChange) % 360
-#unused, old code for colliding with boundaries
-def BoundBounce(Bounds, EndPos, EndVel):
-    BouncedPos = list(EndPos)
-    if EndPos[0] < Bounds[0][0]: #left
-        BouncedPos[0] = Bounds[0][0] + (Bounds[0][0] - EndPos[0])
-        EndVel[0] = -EndVel[0]
-    if EndPos[0] > Bounds[0][1]: #right
-        BouncedPos[0] = Bounds[0][1] - (EndPos[0] - Bounds[0][1])
-        EndVel[0] = -EndVel[0]
-    if EndPos[1] > Bounds[1][1]: #down
-        BouncedPos[1] = Bounds[1][1] - (EndPos[1] - Bounds[1][1])
-        EndVel[1] = -EndVel[1]
-    if EndPos[1] < Bounds[1][0]: #up
-        BouncedPos[1] = Bounds[1][0] + (Bounds[1][0] - EndPos[1])
-        EndVel[1] = -EndVel[1]
-    return BouncedPos, EndVel
-
 class PhysicObject():
 
     def __init__(self, mass):
@@ -40,6 +10,9 @@ class PhysicObject():
         self.newPos = Vector([0, 0])
         self.vel = Vector([0, 0]) #velocity
         self.res = Vector([0, 0]) #resistance
+
+        #requied by the book
+        self.maxVelocity = 2 #this number is a placeholder
     
     def ApplyForce(self, forceVect):
         self.vel += forceVect / self.mass #* time^2
@@ -62,6 +35,7 @@ class PhysicObject():
         #self.vel = AddVect(self.vel, SubVect(newPos, trans.pos))
 
     def PreupdatePos(self):
+        self.vel.Truncate(self.maxVelocity)
         self.newPos = self.gameObject.transform.lpos + self.vel
         #self.newPos = AddVect(self.gameObject.transform.lpos, self.vel)
 

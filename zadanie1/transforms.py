@@ -171,6 +171,7 @@ class Vector:
     def Perp(vect1, vect2):
         return vect2 - Proj(vect1, vect2)
 
+    @staticmethod
     def AreOpposite(vect1, vect2):
         for i in range(0, len(self.data)):
             if (self.data[i] > 0 and other.data[i] > 0) or (self.data[i] < 0 and other.data[i] < 0):
@@ -204,9 +205,24 @@ class Vector:
         self.data = self / Length(self)
         return self
 
-    '''returns normalized vertion of the vector without changing original reference'''
+    '''returns normalized version of the vector without changing original reference'''
     def Normalized(self):
         return self / Length(self)
+
+    '''capps vector so that it's magnitude is no bigger then threshold'''
+    def Truncate(self, threshold):
+        length = self.Length()
+        if length <= threshold:
+            return self #do nothing
+        self.data = ((self / length) * threshold).data
+        return self
+
+    '''return truncated version of vector without changing the original'''
+    def Truncated(self, threshold):
+        length = self.Length()
+        if length <= threshold:
+            return self #do nothing
+        return (self / length) * threshold
 
     '''despite name returns max axis value from one vector'''
     def MaxComponent(self):
