@@ -46,23 +46,40 @@ class Collider():
 
             #only possible collision shapes are sphere <-> sphere sphere <-> border
             if other.type == enums.ColliderType.SPHERE:
-                pass
+
+                separation = Vector.Dist(trans.pos, targetTrans.pos) - trans.scale.MaxComponent() - targetTrans.scale.MaxComponent()
+
+                #is collision happening
+                if separation < 0:
+                    collisionNormal = (trans.pos - targetTrans.pos).Normalized()
+                    #position correction
+                    trans.lpos += collisionNormal * -separation
+                    trans.Desynch()
+                    #velocity correction
+                    projVelocity = Vector.Proj(phys.vel, collisionNormal)
+                    if Vector.AreOpposite(projVelocity, collisionNormal):
+                        phys.vel += -projVelocity * (1 + phys.restitution)
 
             #sphere collision with world border
             if other.type == enums.ColliderType.LINE:
                 #technically by the book line collider needs to use normal vector
                 lineRelativePos = targetTrans.GlobalToLocal(trans.pos, True)
-                separation = max(0, -lineRelativePos.y() + trans.scale.MaxComponent()) #last is sphere radius
+                separation = lineRelativePos.y() - trans.scale.MaxComponent() #last is sphere radius
 
                 #is collision happening
-                if separation > 0:
-                    print(lineRelativePos.data)
+                if separation < 0:
+                    #print(lineRelativePos.data)
                     #print("collision happened")
                     collisionNormal = targetTrans.Forward()
                     #position correction
-                    #trans.lpos += collisionNormal * separation
-                    #trans.Desynch()
+                    trans.lpos += collisionNormal * -separation
+                    trans.Desynch()
                     #velocity correction
                     projVelocity = Vector.Proj(phys.vel, collisionNormal)
                     if Vector.AreOpposite(projVelocity, collisionNormal):
                         phys.vel += -projVelocity * (1 + phys.restitution)
+
+        else: #colision between 2 physic objects (both must be sphere)
+
+            if other.type == enums.ColliderType.SPHERE:
+                pass

@@ -77,7 +77,7 @@ def main():
     Player.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255]));
     Player.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
     Player.AddComp(physics.PhysicObject(1))
-    Player.GetComp('PhysicObject').restitution = 1
+    #Player.GetComp('PhysicObject').restitution = 1
 
     GlobalObjects.append(Player);
 
@@ -111,6 +111,16 @@ def main():
     Obstacles.append(Border2.GetComp('Collider'))
     Obstacles.append(Border3.GetComp('Collider'))
     Obstacles.append(Border4.GetComp('Collider'))
+
+    #enviromental obstacles creation
+    for _ in range(10):
+        borderDist = 50
+        obstacleSize = random.randint(10, 50)
+        CurObstacle = game_object.GameObject(Transform(Vector([random.randint(borderDist, MainCamera.windowSize[0] - borderDist), random.randint(borderDist, MainCamera.windowSize[1] - borderDist)]), 0, Vector([obstacleSize, obstacleSize])), [], None)
+        CurObstacle.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
+        CurObstacle.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (0, 255, 0)))
+        GlobalObjects.append(CurObstacle)
+        Obstacles.append(CurObstacle)
 
     #------------------------------------------------------------------
     #UPDATE
@@ -227,6 +237,8 @@ def main():
         for Object in GlobalObjects:
             for Model in Object.GetComps('Model'):
                 MainCamera.RenderWireframe(Model)
+            for Primitive in Object.GetComps('Primitive'):
+                MainCamera.RenderPrimitive(Primitive)
 
         '''
         for Object in GlobalObjects:

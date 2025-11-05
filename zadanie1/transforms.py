@@ -149,10 +149,8 @@ class Vector:
 
     #STATIC METHODS
     @staticmethod
-    def Distance(vect1, vect2):
-        for i in range(0, len(self.data)): #if divided by a vector
-            result.append(self.data[i] / other.data[i])
-        return
+    def Dist(vect1, vect2):
+        return (vect1 - vect2).Length()
 
     @staticmethod
     def Dot(vect1, vect2):
@@ -202,12 +200,12 @@ class Vector:
 
     '''normalizes vector'''
     def Normalize(self):
-        self.data = self / Length(self)
+        self.data = self / self.Length()
         return self
 
     '''returns normalized version of the vector without changing original reference'''
     def Normalized(self):
-        return self / Length(self)
+        return self / self.Length()
 
     '''capps vector so that it's magnitude is no bigger then threshold'''
     def Truncate(self, threshold):

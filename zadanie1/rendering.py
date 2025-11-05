@@ -1,6 +1,6 @@
 import pygame
 import transforms
-
+import enums
 #print
 
 pygame.font.init()
@@ -20,6 +20,25 @@ class Camera():
     #for now unused, here in case we want game object scale to not be connected to screen resolution
     def ToCameraSpace():
         pass
+
+    #general rendering function that combines all for ease of use, others can be used for debug purposes
+    def Render(self, renderingComp):
+        pass
+        #if 
+
+    def RenderPrimitive(self, primitive):
+        trans = primitive.gameObject.transform
+        trans.SynchGlobals()
+
+        if enums.PrimitiveType.CIRCLE:
+            #for some reason rendering here does not require to flip y position
+            drawPos = trans.Reposition(transforms.Vector([0, 0])).data
+            #drawPos = trans.pos.data
+            drawPos[1] = self.windowSize[1] - drawPos[1]
+            pygame.draw.circle(self.screen, primitive.col, drawPos, trans.scale.MaxComponent(), primitive.width)
+
+        if enums.PrimitiveType.LINE:
+            pass
 
     def RenderVertices(self, model):
         trans = model.gameObject.transform
@@ -90,72 +109,39 @@ class Model():
         #self.edges = modelData[1]
         self.col = col
 
-    def Render(self, screen, windowSize, cameraPivot):
-        trans = self.gameObject.transform
-        trans.SynchGlobals()
-        if abs(trans.pos[0]) + trans.scale[0] - abs(cameraPivot[0]) > windowSize[0] or abs(trans.pos[1]) + trans.scale[1] - abs(cameraPivot[1]) > windowSize[1]: 
-            return #for optimization do not render a model that is outside of window
-        #coordinate system correction
-        for connection in self.edges:
-            end1 = transforms.Reposition(self.verts[connection[0] - 1], trans)
-            end2 = transforms.Reposition(self.verts[connection[1] - 1], trans)
-            end1 = [end1[0] - cameraPivot[0] + windowSize[0] / 2, end1[1] - cameraPivot[1] + windowSize[1] / 2]
-            end2 = [end2[0] - cameraPivot[0] + windowSize[0] / 2, end2[1] - cameraPivot[1] + windowSize[1] / 2]
-            end1[1] = windowSize[1] - end1[1]
-            end2[1] = windowSize[1] - end2[1]
-            pygame.draw.line(screen, self.col, end1, end2)
-    
-    '''
-    def RenderVertices(self, screen, pos, rot, scale):
-        for vertice in self.verts:
-            pygame.draw.circle(screen, self.col, transforms.Reposition(vertice, transform), 2)
-    '''
-
-    def RenderVertices(self, screen, windowSize):
-        trans = self.gameObject.transform
-        trans.SynchGlobals()
-        for vertice in self.verts:
-            #correction for pygame rendering y in reverse
-            drawPos = trans.Reposition(transforms.Vector(vertice)).data
-            drawPos[1] = windowSize[1] - drawPos[1]
-            pygame.draw.circle(screen, self.col, drawPos, 2)
-
 
 #LATER ADD ENUMS
 class Primitive():
 
+    def __init__(self, type, col, width):
+        self.gameObject = None
+        self.type = type
+        self.width = width
+        self.col = col
+
     def __init__(self, type, col):
         self.gameObject = None
         self.type = type
+        self.width = 0 #0 width generates filled primitive
         self.col = col
 
-    def Render(self, screen, windowSize, cameraPivot):
-        trans = self.gameObject.transform
-        trans.SynchGlobals()
+class LinePrimitive(Primitive):
+       
+    def __init__(self, col, startTrans, endTrans):
+        self.gameObject = None
+        self.type = enums.PrimitiveType.LINE
+        self.width = 1 #0 width generates filled primitive
+        self.col = col
+        self.startTrans = startTrans
+        self.endTrans = endTrans
 
-        if abs(trans.pos[0]) + trans.scale[0] - abs(cameraPivot[0]) > windowSize[0] or abs(trans.pos[1]) + trans.scale[1] - abs(cameraPivot[1]) > windowSize[1]: 
-            return #for optimization do not render a model that is outside of window
-
-        if self.type == 0: #line
-            end1 = transforms.Reposition([1, 0], trans)
-            end2 = transforms.Reposition([-1, 0], trans)
-            end1 = [end1[0] - cameraPivot[0] + windowSize[0] / 2, end1[1] - cameraPivot[1] + windowSize[1] / 2]
-            end2 = [end2[0] - cameraPivot[0] + windowSize[0] / 2, end2[1] - cameraPivot[1] + windowSize[1] / 2]
-            end1[1] = windowSize[1] - end1[1]
-            end2[1] = windowSize[1] - end2[1]
-            pygame.draw.line(screen, self.col, end1, end2, trans.scale[1])
-        elif self.type == 1: #circle, hollow inside
-            center = transforms.Reposition([0, 0], trans)
-            center = [center[0] - cameraPivot[0] + windowSize[0] / 2, center[1] - cameraPivot[1] + windowSize[1] / 2]
-            center[1] = windowSize[1] - center[1]
-            pygame.draw.circle(screen, self.col, center, max(trans.scale), min(trans.scale))
-        elif self.type == 2: #sphere, full inside
-            center = transforms.Reposition([0, 0], trans)
-            center = [center[0] - cameraPivot[0] + windowSize[0] / 2, center[1] - cameraPivot[1] + windowSize[1] / 2]
-            center[1] = windowSize[1] - center[1]
-            pygame.draw.circle(screen, self.col, center, max(trans.scale))
-        else:
-            print('DebugWarning: primitive type ' + str(self.type) + ' is unsupported')
+    def __init__(self, col, width, startTrans, endTrans):
+        self.gameObject = None
+        self.type = enums.PrimitiveType.LINE
+        self.width = width
+        self.col = col
+        self.startTrans = startTrans
+        self.endTrans = endTrans
 
 class Text():
 
