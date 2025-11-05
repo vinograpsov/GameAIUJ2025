@@ -30,7 +30,7 @@ class Collider():
             if posFromCenter[1]+ scaledSize > target.scale[1] * other.size:
                 return True
 
-
+    #can properly handle only one collider per physic object
     def ResolveCollision(self, other):
         trans = self.gameObject.transform
         targetTrans = other.gameObject.transform
@@ -52,13 +52,17 @@ class Collider():
             if other.type == enums.ColliderType.LINE:
                 #technically by the book line collider needs to use normal vector
                 lineRelativePos = targetTrans.GlobalToLocal(trans.pos, True)
-                separation = math.max(0, -lineRelativePos.y() + trans.scale.MaxComponent()) #last is sphere radius
+                separation = max(0, -lineRelativePos.y() + trans.scale.MaxComponent()) #last is sphere radius
 
-                collisionNormal = targetTrans.Forward()
-                #position correction
-                trans.lpos += collisionNormal * separation
-                trans.Desynch()
-                #velocity correction
-                projVelocity = Vector.Proj(collisionNormal, phys.vel)
-                if AreOpposite(projVelocity, collisionNormal):
-                    phys.vel += -projVelocity * (1 + phys.restitution)
+                #is collision happening
+                if separation > 0:
+                    print(lineRelativePos.data)
+                    #print("collision happened")
+                    collisionNormal = targetTrans.Forward()
+                    #position correction
+                    #trans.lpos += collisionNormal * separation
+                    #trans.Desynch()
+                    #velocity correction
+                    projVelocity = Vector.Proj(phys.vel, collisionNormal)
+                    if Vector.AreOpposite(projVelocity, collisionNormal):
+                        phys.vel += -projVelocity * (1 + phys.restitution)

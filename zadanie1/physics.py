@@ -34,14 +34,16 @@ class PhysicObject():
         #newPos = Reposition(SubVect(pivot.pos, trans.pos), Transform(pivot.pos, force * 3.14, [1, 1]))
         #self.vel = AddVect(self.vel, SubVect(newPos, trans.pos))
 
+    #depricated
     def PreupdatePos(self):
         self.vel.Truncate(self.maxVelocity)
         self.newPos = self.gameObject.transform.lpos + self.vel
         #self.newPos = AddVect(self.gameObject.transform.lpos, self.vel)
 
     def ExecutePos(self):
-        self.gameObject.transform.lpos = self.newPos
-        self.gameObject.transform.Desynch()
+        trans = self.gameObject.transform
+        trans.lpos = trans.lpos + self.vel
+        trans.Desynch()
 
 
     '''

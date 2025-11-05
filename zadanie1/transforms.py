@@ -164,7 +164,7 @@ class Vector:
     '''returns projected part of other vector relative to this vector'''
     @staticmethod
     def Proj(vect1, vect2):
-        return vect2 * Dot(vect1, vect2) / Dot(vect2, vect2)
+        return vect2 * Vector.Dot(vect1, vect2) / Vector.Dot(vect2, vect2)
 
     '''returns perpendicular part of other vector relative this vector'''
     @staticmethod
@@ -173,8 +173,8 @@ class Vector:
 
     @staticmethod
     def AreOpposite(vect1, vect2):
-        for i in range(0, len(self.data)):
-            if (self.data[i] > 0 and other.data[i] > 0) or (self.data[i] < 0 and other.data[i] < 0):
+        for i in range(0, len(vect1.data)):
+            if (vect1.data[i] > 0 and vect2.data[i] > 0) or (vect1.data[i] < 0 and vect2.data[i] < 0):
                 return False #all vector segment must be of different sign for them to be fully opposite
         return True
 
@@ -274,7 +274,7 @@ class Transform:
 
     '''returns coordinates of a given point in transform local space'''
     def GlobalToLocal(self, point, ignoreScale):
-        result = (point - self.pos).Rotate(-self.rot)
+        result = (point - self.pos).Rotate(-self.rot + math.pi / 2)
         if ignoreScale is False:
             result /= self.scale
         return result

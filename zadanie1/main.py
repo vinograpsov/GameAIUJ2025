@@ -12,6 +12,9 @@ import enums
 
 pygame.init()
 
+clock = pygame.time.Clock()
+FPS = 60
+
 #already at start create camera as global object
 CameraObject = game_object.GameObject(Transform(Vector([800 / 2, 600 / 2]), 0, Vector([1, 1])), [], None)
 CameraObject.AddComp(rendering.Camera([800, 600], (255, 255, 255), "Zombie Survival Killer Mega Bestseller 3000"))
@@ -44,6 +47,11 @@ def main():
 
     return;
     '''
+    transTest = Transform(Vector([0, 0]), DegToRad(180), Vector([1, 1]))
+    print(transTest.GlobalToLocal(Vector([1, 0]), True).data)
+
+    #vectTest = Vector([1, 1])
+    #print(Vector.Proj(vectTest, Vector([0, 1])).data)
 
     size = [pygame.display.Info().current_w, pygame.display.Info().current_h]
     background = (255, 255, 255)
@@ -57,12 +65,19 @@ def main():
     RechargeInput = [0, 0] #determines if the player wants to recharge manually
     MouseInputs = [[0, 0, 0], [0, 0, 0]]
 
+    #----------------------------------------
+    #Game objects containers
+    #----------------------------------------
     GlobalObjects = []
+    Obstacles = [] #colliders
+    Enemies = [] #physic object
 
-    #create player (now not moving) object
+    #create player object
     Player = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
     Player.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255]));
+    Player.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
     Player.AddComp(physics.PhysicObject(1))
+    Player.GetComp('PhysicObject').restitution = 1
 
     GlobalObjects.append(Player);
 
@@ -77,20 +92,33 @@ def main():
 
     #WORLD BORDER
     MainBorder = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([MainCamera.windowSize[0], MainCamera.windowSize[1]])), [], None)
-    Border1 = game_object.GameObject(Transform(Vector([1, 0]), DegToRad(180), Vector([1, 1])), [], MainBorder)
+    Border1 = game_object.GameObject(Transform(Vector([0.5, 0]), DegToRad(180), Vector([1, 1])), [], MainBorder)
     Border1.AddComp(collisions.Collider(enums.ColliderType.LINE))
-    Border2 = game_object.GameObject(Transform(Vector([0, 1]), DegToRad(270), Vector([1, 1])), [], MainBorder)
+    Border2 = game_object.GameObject(Transform(Vector([0, 0.5]), DegToRad(270), Vector([1, 1])), [], MainBorder)
     Border2.AddComp(collisions.Collider(enums.ColliderType.LINE))
-    Border3 = game_object.GameObject(Transform(Vector([-1, 0]), 0, Vector([1, 1])), [], MainBorder)
+    Border3 = game_object.GameObject(Transform(Vector([-0.5, 0]), 0, Vector([1, 1])), [], MainBorder)
     Border3.AddComp(collisions.Collider(enums.ColliderType.LINE))
-    Border4 = game_object.GameObject(Transform(Vector([0, -1]), DegToRad(90), Vector([1, 1])), [], MainBorder)
+    Border4 = game_object.GameObject(Transform(Vector([0, -0.5]), DegToRad(90), Vector([1, 1])), [], MainBorder)
     Border4.AddComp(collisions.Collider(enums.ColliderType.LINE))
+
+    GlobalObjects.append(MainBorder)
+    GlobalObjects.append(Border1)
+    GlobalObjects.append(Border2)
+    GlobalObjects.append(Border3)
+    GlobalObjects.append(Border4)
+
+    Obstacles.append(Border1.GetComp('Collider'))
+    Obstacles.append(Border2.GetComp('Collider'))
+    Obstacles.append(Border3.GetComp('Collider'))
+    Obstacles.append(Border4.GetComp('Collider'))
 
     #------------------------------------------------------------------
     #UPDATE
     #------------------------------------------------------------------
 
     while 1:
+        clock.tick(FPS)
+
         deltaTime = time.time() - pastTime
         pastTime = time.time()
 
@@ -164,12 +192,22 @@ def main():
         #print(Player.transform.lpos)
         #print(Player.GetComp('PhysicObject').vel)
         #Player.GetComp('PhysicObject').newPos = Player.transform.lpos + Player.GetComp('PhysicObject').vel
-        Player.GetComp('PhysicObject').PreupdatePos()
+        #Player.GetComp('PhysicObject').PreupdatePos()
         #print(Vector([8, 8]).Truncate(2).data)
 
         #-----------------------------------------------
-        #Collision detection
+        #Collision handling
         #-----------------------------------------------
+
+        #print(Border1.transform.pos.data)
+        for i in range(0, len(GlobalObjects)):
+            for j in range(i, len(GlobalObjects)):
+                iPhys = GlobalObjects[i].GetComp('PhysicObject')
+                jCol = GlobalObjects[j].GetComp('Collider')
+                if iPhys and jCol:
+                    iPhys.gameObject.GetComp('Collider').ResolveCollision(jCol)
+                #elif i.gameObject.GetComp('Collider'):
+                    #i.gameObject.GetComp('Collider').CheckCollision()
 
         #-----------------------------------------------
         #Physics execution
