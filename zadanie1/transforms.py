@@ -264,15 +264,21 @@ class Transform:
         self.SynchGlobals()
         return Vector.RotToVect(self.rot)
 
-    def LocalToGlobal(self):
+    def ApplyLocals(self):
         self.pos.data = self.lpos.data
         self.lrot %= math.pi * 2
         self.rot = self.lrot
         self.scale.data = self.lscale.data
 
+    '''does the same thing as reposition, but ignores scale'''
+    def LocalToGlobal(self, point, ignoreScale):
+        if ignoreScale is False:
+            return (point * self.scale).Rotate(self.rot) + self.pos
+        return point.Rotate(self.rot) + self.pos
+
     '''returns coordinates of a given point in transform local space'''
     def GlobalToLocal(self, point, ignoreScale):
-        result = (point - self.pos).Rotate(-self.rot + math.pi / 2)
+        result = (point - self.pos).Rotate(-self.rot)
         if ignoreScale is False:
             result /= self.scale
         return result
@@ -285,20 +291,19 @@ class Transform:
 
     def Retransform(self, other):
         #position
-        self.pos = other.Reposition(self.pos)
-        #self.pos.ToLocalSpace(other)
+        self.pos = other.Reposition(self.lpos)
         #rotation
         self.rot = self.lrot + other.rot
         self.rot %= math.pi * 2
         #scale
-        self.scale *= other.scale
+        self.scale = self.lscale * other.scale
 
     '''Synchronizes global values so that they become accurate while calculating'''
     def SynchGlobals(self):
         if self.isSynch == True: #this allows to only try to synchronize
             return
         if self.gameObject.parent == None:
-            self.LocalToGlobal()
+            self.ApplyLocals()
         else:
             self.gameObject.parent.transform.SynchGlobals()
             self.Retransform(self.gameObject.parent.transform) #using retransform foces program to wait
@@ -307,8 +312,8 @@ class Transform:
     '''marks transform and it's children as desynchronised'''
     def Desynch(self):
         self.isSynch = False
-        for child in self.gameObject.GetObjsInChilds(self.gameObject):
-            child.transform.isSynch = False
+        for child in self.gameObject.childs:
+            child.transform.Desynch()
 
     '''immediately faces one object to another tranform(position)'''
     def FaceTowards(self, other):

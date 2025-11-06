@@ -9,17 +9,18 @@ class PhysicObject():
         self.restitution = 0
         self.newPos = Vector([0, 0])
         self.vel = Vector([0, 0]) #velocity
+        self.accForce = Vector([0, 0]) #accumulated velocity during a frame
         self.res = Vector([0, 0]) #resistance
 
         #requied by the book
-        self.maxVelocity = 2 #this number is a placeholder
+        self.maxVel = 2 #this number is a placeholder
     
     def ApplyForce(self, forceVect):
-        self.vel += forceVect / self.mass #* time^2
+        self.vel += forceVect / self.mass #* time
 
     def ApplyForce(self, rot, force):
         forceVect = Vector.RotToVect(rot) * force
-        self.vel += forceVect / self.mass #* time^2
+        self.vel += forceVect / self.mass #* time
 
     #def ReduceForce(self, force):
         #self.vel = ApplyDirForce(self.vel, VectToDeg(self.vel), -min(VectToDist(self.vel), force))
@@ -40,9 +41,15 @@ class PhysicObject():
         self.newPos = self.gameObject.transform.lpos + self.vel
         #self.newPos = AddVect(self.gameObject.transform.lpos, self.vel)
 
+    def UpdateVelocity(self):
+        self.ApplyForce(self.accForce)
+        #self.vel += self.accForce
+        self.accForce = Vector([0, 0])
+        self.vel.Truncate(self.maxVelocity)
+
     def ExecutePos(self):
         trans = self.gameObject.transform
-        trans.lpos = trans.lpos + self.vel
+        trans.lpos = trans.lpos + self.vel #* time
         trans.Desynch()
 
 

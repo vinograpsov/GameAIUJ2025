@@ -47,7 +47,7 @@ def main():
 
     return;
     '''
-    transTest = Transform(Vector([0, 0]), DegToRad(180), Vector([1, 1]))
+    transTest = Transform(Vector([0, 0]), DegToRad(0), Vector([1, 1]))
     print(transTest.GlobalToLocal(Vector([1, 0]), True).data)
 
     #vectTest = Vector([1, 1])
@@ -74,9 +74,11 @@ def main():
 
     #create player object
     Player = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
-    Player.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255]));
+    Player.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255], enums.RenderMode.POLYGON));
     Player.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
     Player.AddComp(physics.PhysicObject(1))
+    PlayerRaycast = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
+    PlayerRaycast.SetParent(Player)
     #Player.GetComp('PhysicObject').restitution = 1
 
     GlobalObjects.append(Player);
@@ -85,7 +87,7 @@ def main():
     Cursor = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
     #Cursor = game_object.GameObject(transforms.Transform([size[0] / 2, size[1] / 2], 0, [15, 15]), [], None)
     GlobalObjects.append(Cursor);
-    Cursor.AddComp(rendering.Model('Assets\Cursor.obj', [255, 0, 0]))
+    Cursor.AddComp(rendering.Model('Assets\Cursor.obj', [255, 0, 0], enums.RenderMode.WIREFRAME))
     #Cursor.AddComp(physics.Collider(0, [1, 1]))
     GlobalObjects.append(Cursor);
 
@@ -196,6 +198,11 @@ def main():
         Player.GetComp('PhysicObject').maxVelocity = 0.2
         Player.GetComp('PhysicObject').vel += moveVector * playerSpeed
 
+        #debug version of raycast
+        PlayerRaycast.transform.SynchGlobals()
+        #print(PlayerRaycast.transform.isSynch)
+        raycastObject, raycastPoint = collisions.Raycast.CastRay(PlayerRaycast.transform, GlobalObjects)
+
         #-----------------------------------------------
         #Physics update
         #-----------------------------------------------
@@ -234,6 +241,11 @@ def main():
         #MainCamera.RenderWireframe(Cursor.GetComp('Model'))
         #Cursor.GetComp('Model').RenderVertices(MainCamera.screen, MainCamera.windowSize)
         
+        PlayerRaycast.transform.SynchGlobals()
+        #Player.transform.SynchGlobals()
+        #print(PlayerRaycast.transform.pos.data)
+        MainCamera.RenderRawLine(PlayerRaycast.transform.pos, raycastPoint, (255, 0, 0), 1)
+
         for Object in GlobalObjects:
             for Model in Object.GetComps('Model'):
                 MainCamera.RenderWireframe(Model)

@@ -64,7 +64,7 @@ class Collider():
             if other.type == enums.ColliderType.LINE:
                 #technically by the book line collider needs to use normal vector
                 lineRelativePos = targetTrans.GlobalToLocal(trans.pos, True)
-                separation = lineRelativePos.y() - trans.scale.MaxComponent() #last is sphere radius
+                separation = lineRelativePos.x() - trans.scale.MaxComponent() #last is sphere radius
 
                 #is collision happening
                 if separation < 0:
@@ -83,3 +83,44 @@ class Collider():
 
             if other.type == enums.ColliderType.SPHERE:
                 pass
+
+
+
+#raycast is actually just a special case of obstacle avoidance algorithm
+#it works the same, but has inifinite range and 0 width
+class Raycast():
+
+    #ray is always casted in the forward direction of a transform
+    #by the book raycast will ignore collider when it starts inside it, that means that raycast by default will not trigger on the caster (player)
+    @staticmethod
+    def CastRay(transPivot, sceneObjects):
+        result = None
+        hit = 100000 #some arbitrary high number as ray highest range
+        transPivot.SynchGlobals()
+        for Object in sceneObjects:
+            for collider in Object.GetComps('Collider'):
+                if collider.type != enums.ColliderType.SPHERE:
+                    continue
+                colliderTrans = collider.gameObject.transform
+                colliderTrans.SynchGlobals()
+                #1. check if outside of range (skip)
+                #2. convert to local space
+                localColliderPos = transPivot.GlobalToLocal(colliderTrans.pos, True)
+                #3. discard objects behind ray (yes, also objects that eventually clip into ray)
+                if localColliderPos.x() < 0:
+                    continue
+                #4. check if collision occurs (broad collision case)
+                colliderRadius = colliderTrans.scale.MaxComponent()
+                if abs(localColliderPos.y()) - colliderRadius > 0:
+                    continue
+                #5. calculate contact point (narrow collision case)
+                sqrtPart = math.sqrt(colliderRadius * colliderRadius - localColliderPos.y() * localColliderPos.y())
+                contactPoint = localColliderPos.x() - sqrtPart
+                if contactPoint <= 0: #closer contact point behind ray, calculate further contact instead
+                    contactPoint = localColliderPos.x() + sqrtPart
+                #6. compare contact point to old contact point
+                #also update contact point to closest and returning object
+                if contactPoint < hit:
+                    hit = contactPoint
+                    result = collider.gameObject
+        return result, transPivot.LocalToGlobal(Vector([hit, 0]), True) #reposition also scales, possible bug

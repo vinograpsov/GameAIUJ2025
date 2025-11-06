@@ -23,7 +23,15 @@ class Camera():
 
     #general rendering function that combines all for ease of use, others can be used for debug purposes
     def Render(self, renderingComp):
-        pass
+        if type(renderingComp) is Model:
+            if renderingComp.renderMode is enums.RenderMode.VERTICES:
+                RenderVertices(renderingComp)
+            elif renderingComp.renderMode is enums.RenderMode.WIREFRAME:
+                RenderWireframe(renderingComp)
+            elif renderingComp.renderMode is enums.RenderMode.POLYGON:
+                RenderWireframe(renderingComp)
+        elif type(renderingComp) is Primitive:
+            RenderPrimitive(renderingComp)
         #if 
 
     def RenderPrimitive(self, primitive):
@@ -37,8 +45,25 @@ class Camera():
             drawPos[1] = self.windowSize[1] - drawPos[1]
             pygame.draw.circle(self.screen, primitive.col, drawPos, trans.scale.MaxComponent(), primitive.width)
 
-        if enums.PrimitiveType.LINE:
-            pass
+        if type(primitive) is LinePrimitive:
+            startTrans = primitive.startTrans
+            endTrans = primitive.endTrans
+            startTrans.SynchGlobals()
+            endTrans.SynchGlobals()
+            startDrawPos = startTrans.pos
+            endDrawPos = endTrans.pos
+            startDrawPos[1] = self.windowSize[1] - startDrawPos[1]
+            endDrawPos[1] = self.windowSize[1] - endDrawPos[1]
+
+            pygame.draw.line(self.screen, primitive.col, startDrawPos, endDrawPos, primitive.width)
+
+    def RenderRawLine(self, startPos, endPos, col, width):
+            startDrawPos = startPos.data
+            endDrawPos = endPos.data
+            startDrawPos[1] = self.windowSize[1] - startDrawPos[1]
+            endDrawPos[1] = self.windowSize[1] - endDrawPos[1]
+
+            pygame.draw.line(self.screen, col, startDrawPos, endDrawPos, width)
 
     def RenderVertices(self, model):
         trans = model.gameObject.transform
@@ -66,6 +91,20 @@ class Camera():
             end2[1] = self.windowSize[1] - end2[1]
             pygame.draw.line(self.screen, model.col, end1, end2)
 
+    def RenderPolygon(self, model):
+        cameraTrans = self.gameObject.transform
+        trans = model.gameObject.transform
+        trans.SynchGlobals()
+
+        points = []
+        #coordinate system correction
+        for vertice in model.verts:
+            #correction for pygame rendering y in reverse
+            drawPos = trans.Reposition(transforms.Vector(vertice)).data
+            drawPos[1] = self.windowSize[1] - drawPos[1]
+            points.append((drawPos[0], drawPos[1]))
+            #pygame.draw.circle(self.screen, model.col, drawPos, 2)
+        pygame.draw.polygon(self.screen, model.col, points, 0)
 
 class Model():
 
@@ -100,7 +139,16 @@ class Model():
         self.edges = Edges
         return bothResults
     
-    #still mess, repair later
+    def __init__(self, file, col, renderMode):
+        self.gameObject = None;
+        self.file = file
+        modelData = self.LoadModel()
+        #self.verts = modelData[0]
+        #self.edges = modelData[1]
+        self.col = col
+        self.renderMode = renderMode
+
+    '''
     def __init__(self, file, col):
         self.gameObject = None;
         self.file = file
@@ -108,6 +156,8 @@ class Model():
         #self.verts = modelData[0]
         #self.edges = modelData[1]
         self.col = col
+        self.renderMode = enums.RenderMode.WIREFRAME
+    '''
 
 
 #LATER ADD ENUMS
@@ -127,14 +177,6 @@ class Primitive():
 
 class LinePrimitive(Primitive):
        
-    def __init__(self, col, startTrans, endTrans):
-        self.gameObject = None
-        self.type = enums.PrimitiveType.LINE
-        self.width = 1 #0 width generates filled primitive
-        self.col = col
-        self.startTrans = startTrans
-        self.endTrans = endTrans
-
     def __init__(self, col, width, startTrans, endTrans):
         self.gameObject = None
         self.type = enums.PrimitiveType.LINE
@@ -142,6 +184,16 @@ class LinePrimitive(Primitive):
         self.col = col
         self.startTrans = startTrans
         self.endTrans = endTrans
+    
+    '''
+    def __init__(self, col, startTrans, endTrans):
+        self.gameObject = None
+        self.type = enums.PrimitiveType.LINE
+        self.width = 1
+        self.col = col
+        self.startTrans = startTrans
+        self.endTrans = endTrans
+    '''
 
 class Text():
 

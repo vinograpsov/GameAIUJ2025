@@ -1,5 +1,10 @@
 from enum import Enum
 
+class RenderMode(Enum):
+	VERTICES = 0
+	WIREFRAME = 1
+	POLYGON = 2
+
 class PrimitiveType(Enum):
 	LINE = 0
 	CIRCLE = 1

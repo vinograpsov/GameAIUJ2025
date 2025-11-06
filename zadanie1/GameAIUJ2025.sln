@@ -8,6 +8,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{205E1DBE-A130-4232-B42C-0865392F1F80}"
 	ProjectSection(SolutionItems) = preProject
 		collisions.py = collisions.py
+		enemies.py = enemies.py
 		enums.py = enums.py
 		game_object.py = game_object.py
 		main.py = main.py
