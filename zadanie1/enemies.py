@@ -11,6 +11,13 @@ class Enemy():
 		self.playerPhys = None
         self.minObstacleAvoidanceLength = 0
         self.breakMultiplier = 0.2
+        self.directionChangeThreshold = 0.001953125
+        self.wanderCircle = None #transform
+        self.wanderTarget = None #transform
+        self.wanderJitter = 0.1 * math.pi #placeholder value
+        self.wanderDistance = 1 #placeholder value
+        self.wanderRadius = 15 #placeholder value
+        self.wanderPoint = Vector([1, 0])
 
 	def Start(self, playerTransform, playerPhysic):
 		self.transform = self.gameObject.transform
@@ -22,11 +29,48 @@ class Enemy():
 
     #corrects object transform, so that it always faces the direction it is going (by velocity)
     def UpdateForwardDirection(self):
-        self.transform.lrot = self.phys.vel.ToRotation()
-        self.transform.Desynch()
+        if self.vel.Length() > directionChangeThreshold:
+            self.transform.lrot = self.phys.vel.ToRotation()
+            self.transform.Desynch()
+    
 
+    def Seek(self):
+        self.transform.SynchGlobals()
+        self.playerTransform.SynchGlobals()
+        desiredVelocity = (self.playerTransform.pos - self.transform.pos) * self.phys.maxVel
+        #applying force
+        self.phys.TryAccumulateForce(desiredVelocity - self.phys.vel)
+
+    #wander works mostly by using already existing game objects structure
 	def Wander(self):
+        self.transform.SynchGlobals()
+                #randomize target position in a stupid way
+        wanderPoint += Vector([random(-wanderJitter, wanderJitter), random(-wanderJitter, wanderJitter)])
+        #snap target point to land exacly at the border of a circle located at the player
+        wanderPoint = wanderTargetPoint.Normalize() * wanderRadius
+        #here we no longer use wander point to do not disrupt it's future behaviour
+        resultPoint = wanderPoint + Vector([wanderDistance, 0])
+        #calculate resulting force
+        resultForce = self.transform.LocalToGlobal(resultPoint, True) - self.transform.pos
+        self.phys.TryAccumulateForce(resultForce)
+    '''
+    def Wander(self):
+        #wander radius is circle scale
+        #wander distance is circle local x position
+        
+        #okay, the whole method is balantly stupid, instead of rotating point around perimeter, it moves it in global space and then "snaps" to circle boundary, like WTF
+        self.wanderCircle.SynchGlobals()
+        self.wanderTarget.SynchGlobals()
+        wanderRadius = self.wanderCircle.scale.MaxComponent()
+        wanderTargetPoint = self.wanderTarget.pos
+        #randomize target position in a stupid way
+        wanderTargetPoint += Vector([random(-wanderJitter, wanderJitter), random(-wanderJitter, wanderJitter)])
+        #snap target point to land exacly at the border of a circle
+        wanderTargetPoint = self.wanderCircle.pos + (wanderTargetPoint - self.wanderCircle.pos).Truncate(wanderRadius)
+        #self.wanderCircle.lrot += 
 		pass
+    '''
+
 
 	def ObstacleAvoidance(self, sceneObstacles): #checkout range is same as this object collision bounding box (which is it's scale)
 		result = None
@@ -81,9 +125,7 @@ class Enemy():
 
 
         #convert and aplly final result
-        self.phys.accForce += self.transform.LocalToGlobal(Vector(steeringForce), True)
-
-
+        self.phys.TryAccumulateForce(self.transform.LocalToGlobal(Vector(steeringForce), True))
 
 	def WallAvoidance(self, sceneBorder):
 		pass

@@ -27,9 +27,12 @@ class GameObject:
     '''destroys entire gameObject once with all it's components'''
     def __delete__(self):
         print('I am deleting')
+        for child in self.childs:
+            del child
         del self.transform
         for comp in self.components:
             del comp
+        del self
     
     def Destroy(self):
         print('I am trying')

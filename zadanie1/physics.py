@@ -13,7 +13,9 @@ class PhysicObject():
         self.res = Vector([0, 0]) #resistance
 
         #requied by the book
+        self.accForceTotalMagnitude = 0
         self.maxVel = 2 #this number is a placeholder
+        self.maxForce = 2 #this number is a placeholder
     
     def ApplyForce(self, forceVect):
         self.vel += forceVect / self.mass #* time
@@ -41,10 +43,29 @@ class PhysicObject():
         self.newPos = self.gameObject.transform.lpos + self.vel
         #self.newPos = AddVect(self.gameObject.transform.lpos, self.vel)
 
+    def AccumulateForce(self, force):
+        self.accForce += force
+
+    #accumulates force only when the TOTAL lenght of each force added before execution does not exeeds maxForce (also returns true false if succesfully added)
+    #required by book
+    def TryAccumulateForce(self, force):
+        addingMagnitude = force.Length()
+        remainedMagnitude = self.maxForce - self.accForceTotalMagnitude
+        if remainedMagnitude <= 0: #can no longer add forces
+            return False
+        if  addingMagnitude <= remainedMagnitude: #add normally
+            self.accForce += force
+            self.accForceTotalMagnitude += addingMagnitude
+        else: #there is still room for additional force, but only partiall
+            self.accForce += force.Truncate(remainedMagnitude)
+            self.accForceTotalMagnitude += remainedMagnitude
+        return True
+
     def UpdateVelocity(self):
-        self.ApplyForce(self.accForce)
+        self.ApplyForce(self.accForce.Truncate(self.maxForce))
         #self.vel += self.accForce
         self.accForce = Vector([0, 0])
+        self.accForceIterativeMagnitude = 0
         self.vel.Truncate(self.maxVelocity)
 
     def ExecutePos(self):

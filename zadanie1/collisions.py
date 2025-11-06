@@ -42,7 +42,8 @@ class Collider():
             print("LogWarning: " + "Cannot resolve collision for a static collider")
             return
         targetPhys = other.gameObject.GetComp('PhysicObject')
-        if targetPhys is None: #collision with static collider
+        if True: #THERE IS NO DIFFERENCE BETWEEN COLLIDING WITH STATIC AND DYNAMIC OBJECT (YES NOT DIFFERENCIATING THIS IS AN ACTUAL REQUIREMENT FROM THE BOOK)
+        #if targetPhys is None: #collision with static collider
 
             #only possible collision shapes are sphere <-> sphere sphere <-> border
             if other.type == enums.ColliderType.SPHERE:
@@ -55,10 +56,11 @@ class Collider():
                     #position correction
                     trans.lpos += collisionNormal * -separation
                     trans.Desynch()
+                    #THE BOOK FORBIDS AFFECTING VELOCITY DURING COLLISIONS IN ANY WAY!!!
                     #velocity correction
-                    projVelocity = Vector.Proj(phys.vel, collisionNormal)
-                    if Vector.AreOpposite(projVelocity, collisionNormal):
-                        phys.vel += -projVelocity * (1 + phys.restitution)
+                    #projVelocity = Vector.Proj(phys.vel, collisionNormal)
+                    #if Vector.AreOpposite(projVelocity, collisionNormal):
+                    #    phys.vel += -projVelocity * (1 + phys.restitution)
 
             #sphere collision with world border
             if other.type == enums.ColliderType.LINE:
@@ -74,10 +76,11 @@ class Collider():
                     #position correction
                     trans.lpos += collisionNormal * -separation
                     trans.Desynch()
+                    #THE BOOK FORBIDS AFFECTING VELOCITY DURING COLLISIONS IN ANY WAY!!!
                     #velocity correction
-                    projVelocity = Vector.Proj(phys.vel, collisionNormal)
-                    if Vector.AreOpposite(projVelocity, collisionNormal):
-                        phys.vel += -projVelocity * (1 + phys.restitution)
+                    #projVelocity = Vector.Proj(phys.vel, collisionNormal)
+                    #if Vector.AreOpposite(projVelocity, collisionNormal):
+                    #    phys.vel += -projVelocity * (1 + phys.restitution)
 
         else: #colision between 2 physic objects (both must be sphere)
 

@@ -203,6 +203,10 @@ def main():
         #print(PlayerRaycast.transform.isSynch)
         raycastObject, raycastPoint = collisions.Raycast.CastRay(PlayerRaycast.transform, GlobalObjects)
 
+        #killing enemies
+        if raycastObject and raycastObject.GetComp('Enemy'):
+            del raycastObject
+
         #-----------------------------------------------
         #Physics update
         #-----------------------------------------------
@@ -225,11 +229,6 @@ def main():
                     iPhys.gameObject.GetComp('Collider').ResolveCollision(jCol)
                 #elif i.gameObject.GetComp('Collider'):
                     #i.gameObject.GetComp('Collider').CheckCollision()
-
-        #-----------------------------------------------
-        #Physics execution
-        #-----------------------------------------------
-        Player.GetComp('PhysicObject').ExecutePos()
 
         #-----------------------------------------------
         #Global rendering
@@ -260,6 +259,11 @@ def main():
                 Primitive.Render(MainCamera.screen, size, CameraPivot)
         '''
         pygame.display.flip();
+
+        #-----------------------------------------------
+        #Physics execution
+        #-----------------------------------------------
+        Player.GetComp('PhysicObject').ExecutePos()
 
 if __name__ == '__main__':
     main()
