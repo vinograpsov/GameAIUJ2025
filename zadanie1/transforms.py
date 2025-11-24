@@ -45,7 +45,7 @@ class Vector:
         result = []
         for i in range(0, len(self.data)):
             result.append(-self.data[i])
-        return Vector(result);
+        return Vector(result.copy());
 
     def __add__(self, other):
         result = []
@@ -65,7 +65,7 @@ class Vector:
             return Vector(result)
         for i in range(0, len(self.data)): #if subtraction by a vector
             result.append(self.data[i] - other.data[i])
-        return Vector(result);
+        return Vector(result.copy());
 
     def __mul__(self, other):
         result = []
@@ -75,7 +75,7 @@ class Vector:
             return Vector(result)
         for i in range(0, len(self.data)): #if scaled by a vector
             result.append(self.data[i] * other.data[i])
-        return Vector(result);
+        return Vector(result.copy());
 
     def __truediv__(self, other):
         result = []
@@ -85,7 +85,7 @@ class Vector:
             return Vector(result)
         for i in range(0, len(self.data)): #if division by a vector
             result.append(self.data[i] / other.data[i])
-        return Vector(result);
+        return Vector(result.copy());
 
     #Assignment operators
 
