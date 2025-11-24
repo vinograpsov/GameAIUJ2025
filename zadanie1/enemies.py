@@ -1,35 +1,69 @@
 import game_object
+import random
+import enums
+import rendering
 from transforms import *
 
 class Enemy():
 
-	def __init__(self):
-		self.gameObject = None
-		self.transform = None
-		self.phys = None
-		self.playerTransform = None
-		self.playerPhys = None
+    def __init__(self):
+        self.gameObject = None
+        self.transform = None
+        self.phys = None
+        self.playerTransform = None
+        self.playerPhys = None
         self.minObstacleAvoidanceLength = 0
         self.breakMultiplier = 0.2
         self.directionChangeThreshold = 0.001953125
-        self.wanderCircle = None #transform
+        self.wanderCircleDebug = None #transform
         self.wanderTarget = None #transform
         self.wanderJitter = 0.1 * math.pi #placeholder value
         self.wanderDistance = 1 #placeholder value
         self.wanderRadius = 15 #placeholder value
         self.wanderPoint = Vector([1, 0])
+        self.debugFlag = enums.DebugFlag(0)
+        self.debugCol = (255, 0, 255)
 
-	def Start(self, playerTransform, playerPhysic):
-		self.transform = self.gameObject.transform
-		self.phys = self.gameObject.GetComp('PhysicObject')
-		self.playerTransform = playerTransform
-		self.playerPhys = playerPhysic
+    def Start(self, playerTransform, playerPhysic):
+        self.transform = self.gameObject.transform
+        self.phys = self.gameObject.GetComp('PhysicObject')
+        self.playerTransform = playerTransform
+        self.playerPhys = playerPhysic
 
         #debug objects:
+        self.wanderCircleDebug = game_object.GameObject(Transform(Vector([0, 0]), 0, Vector([1, 1])), [], self.gameObject)
+        self.wanderCircleDebug.transform.lpos = Vector([self.wanderDistance, 0])
+        self.wanderCircleDebug.transform.lscale = Vector([self.wanderRadius, self.wanderRadius])
+        self.wanderCircleDebug.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, self.debugCol, 1))
+        
+        #initialize local values:
+
+
+    def Debug(self, MainCamera):
+        self.transform.SynchGlobals()
+
+        if enums.DebugFlag.DIRECTION in self.debugFlag:
+            MainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(Vector([1, 0]), True), self.debugCol, 1)
+        if enums.DebugFlag.VELOCITY in self.debugFlag:
+            MainCamera.RenderRawLine(self.transform.pos, self.transform.pos + self.phys.vel, self.debugCol, 1)
+        if enums.DebugFlag.WANDER in self.debugFlag:
+            resultPoint = self.wanderPoint + Vector([self.wanderDistance, 0])
+
+            #position correctly and render debug cicrle
+            self.wanderCircleDebug.transform.lpos = Vector([self.wanderDistance, 0]) / self.transform.lscale.MaxComponent()
+            self.wanderCircleDebug.transform.lscale = Vector([self.wanderRadius, self.wanderRadius]) / self.transform.lscale
+            
+            self.wanderCircleDebug.transform.SynchGlobals()
+            MainCamera.RenderPrimitive(self.wanderCircleDebug.GetComp('Primitive'))
+
+            #render line towards end point
+            MainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(resultPoint, True), self.debugCol, 1)
+            #MainCamera.RenderRawLine(self.transform.pos, self.wanderCircleDebug.transform.LocalToGlobal(resultPoint, True), self.debugCol, 1)
+
 
     #corrects object transform, so that it always faces the direction it is going (by velocity)
     def UpdateForwardDirection(self):
-        if self.vel.Length() > directionChangeThreshold:
+        if self.phys.vel.Length() > self.directionChangeThreshold:
             self.transform.lrot = self.phys.vel.ToRotation()
             self.transform.Desynch()
     
@@ -42,17 +76,22 @@ class Enemy():
         self.phys.TryAccumulateForce(desiredVelocity - self.phys.vel)
 
     #wander works mostly by using already existing game objects structure
-	def Wander(self):
+    def Wander(self):
         self.transform.SynchGlobals()
-                #randomize target position in a stupid way
-        wanderPoint += Vector([random(-wanderJitter, wanderJitter), random(-wanderJitter, wanderJitter)])
+        print(self.wanderPoint.data)
+        self.wanderPoint += Vector([random.uniform(-self.wanderJitter, self.wanderJitter), random.uniform(-self.wanderJitter, self.wanderJitter)])
+        print(self.wanderPoint.data)
         #snap target point to land exacly at the border of a circle located at the player
-        wanderPoint = wanderTargetPoint.Normalize() * wanderRadius
+        self.wanderPoint = self.wanderPoint.Normalized() * self.wanderRadius
+        print(self.wanderPoint.data)
         #here we no longer use wander point to do not disrupt it's future behaviour
-        resultPoint = wanderPoint + Vector([wanderDistance, 0])
+        resultPoint = self.wanderPoint + Vector([self.wanderDistance, 0])
+        print(self.wanderPoint.data)
+
         #calculate resulting force
         resultForce = self.transform.LocalToGlobal(resultPoint, True) - self.transform.pos
         self.phys.TryAccumulateForce(resultForce)
+        print(self.wanderPoint.data)
     '''
     def Wander(self):
         #wander radius is circle scale
@@ -72,8 +111,8 @@ class Enemy():
     '''
 
 
-	def ObstacleAvoidance(self, sceneObstacles): #checkout range is same as this object collision bounding box (which is it's scale)
-		result = None
+    def ObstacleAvoidance(self, sceneObstacles): #checkout range is same as this object collision bounding box (which is it's scale)
+        result = None
         self.transform.SynchGlobals()
         castWidth = self.transform.scale.MaxComponent()
         self.minObstacleAvoidanceLength = castWidth
@@ -127,5 +166,5 @@ class Enemy():
         #convert and aplly final result
         self.phys.TryAccumulateForce(self.transform.LocalToGlobal(Vector(steeringForce), True))
 
-	def WallAvoidance(self, sceneBorder):
-		pass
+    def WallAvoidance(self, sceneBorder):
+        pass

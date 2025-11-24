@@ -58,12 +58,21 @@ class Camera():
             pygame.draw.line(self.screen, primitive.col, startDrawPos, endDrawPos, primitive.width)
 
     def RenderRawLine(self, startPos, endPos, col, width):
-            startDrawPos = startPos.data
-            endDrawPos = endPos.data
-            startDrawPos[1] = self.windowSize[1] - startDrawPos[1]
-            endDrawPos[1] = self.windowSize[1] - endDrawPos[1]
+        startDrawPos = startPos.data.copy()
+        endDrawPos = endPos.data.copy()
+        startDrawPos[1] = self.windowSize[1] - startDrawPos[1]
+        endDrawPos[1] = self.windowSize[1] - endDrawPos[1]
 
-            pygame.draw.line(self.screen, col, startDrawPos, endDrawPos, width)
+        pygame.draw.line(self.screen, col, startDrawPos, endDrawPos, width)
+
+    '''
+    def RenderRawCircle(self, pos, size, col, width):
+                    #for some reason rendering here does not require to flip y position
+            drawPos = pos.data
+            #drawPos = trans.pos.data
+            drawPos[1] = self.windowSize[1] - drawPos[1]
+            pygame.draw.circle(self.screen, col, drawPos, size, width)
+    '''
 
     def RenderVertices(self, model):
         trans = model.gameObject.transform
@@ -166,14 +175,16 @@ class Primitive():
     def __init__(self, type, col, width):
         self.gameObject = None
         self.type = type
-        self.width = width
         self.col = col
+        self.width = width
 
+    '''
     def __init__(self, type, col):
         self.gameObject = None
         self.type = type
         self.width = 0 #0 width generates filled primitive
         self.col = col
+    '''
 
 class LinePrimitive(Primitive):
        

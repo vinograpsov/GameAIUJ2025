@@ -1,4 +1,5 @@
 from enum import Enum
+from enum import Flag, auto
 
 class RenderMode(Enum):
 	VERTICES = 0
@@ -14,3 +15,9 @@ class ColliderType(Enum):
 	EMPTY = 0
 	SPHERE = 1
 	LINE = 2 #border is inverse box, but requires special code
+
+class DebugFlag(Flag):
+	DIRECTION = auto()
+	VELOCITY = auto()
+	WANDER = auto()
+	OBSTACLE = auto()

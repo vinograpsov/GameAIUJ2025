@@ -55,7 +55,7 @@ class Vector:
             return Vector(result)
         for i in range(0, len(self.data)): #if addition by a vector
             result.append(self.data[i] + other.data[i])
-        return Vector(result);
+        return Vector(result.copy());
 
     def __sub__(self, other):
         result = []
@@ -153,6 +153,13 @@ class Vector:
         return (vect1 - vect2).Length()
 
     @staticmethod
+    def Zero(vect1):
+        result = []
+        for i in range(0, len(vect1.data)): #if scaled by a vector
+            result.append(0)
+        return Vector(result);
+
+    @staticmethod
     def Dot(vect1, vect2):
         result = 0
         for i in range(0, len(vect1.data)):
@@ -162,7 +169,10 @@ class Vector:
     '''returns projected part of other vector relative to this vector'''
     @staticmethod
     def Proj(vect1, vect2):
-        return vect2 * Vector.Dot(vect1, vect2) / Vector.Dot(vect2, vect2)
+        dot2 = Vector.Dot(vect2, vect2)
+        if dot2 == 0:
+            return Vector.Zero(vect1)
+        return vect2 * Vector.Dot(vect1, vect2) / dot2
 
     '''returns perpendicular part of other vector relative this vector'''
     @staticmethod
@@ -198,14 +208,20 @@ class Vector:
             result += comp * comp
         return math.sqrt(result);
 
-    '''normalizes vector'''
+    '''normalizes vector''' #does not work for some reason (returns vector of vector idk)
     def Normalize(self):
-        self.data = self / self.Length()
+        length = self.Length()
+        if length == 0:
+            return self
+        self.data = self / length
         return self
 
     '''returns normalized version of the vector without changing original reference'''
     def Normalized(self):
-        return self / self.Length()
+        length = self.Length()
+        if length == 0:
+            return self
+        return self / length
 
     '''capps vector so that it's magnitude is no bigger then threshold'''
     def Truncate(self, threshold):

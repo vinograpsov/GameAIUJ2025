@@ -14,15 +14,17 @@ class PhysicObject():
 
         #requied by the book
         self.accForceTotalMagnitude = 0
-        self.maxVel = 2 #this number is a placeholder
+        self.maxVelocity = 2 #this number is a placeholder
         self.maxForce = 2 #this number is a placeholder
     
     def ApplyForce(self, forceVect):
         self.vel += forceVect / self.mass #* time
 
+    '''
     def ApplyForce(self, rot, force):
         forceVect = Vector.RotToVect(rot) * force
         self.vel += forceVect / self.mass #* time
+    '''
 
     #def ReduceForce(self, force):
         #self.vel = ApplyDirForce(self.vel, VectToDeg(self.vel), -min(VectToDist(self.vel), force))
@@ -65,7 +67,7 @@ class PhysicObject():
         self.ApplyForce(self.accForce.Truncate(self.maxForce))
         #self.vel += self.accForce
         self.accForce = Vector([0, 0])
-        self.accForceIterativeMagnitude = 0
+        self.accForceTotalMagnitude = 0
         self.vel.Truncate(self.maxVelocity)
 
     def ExecutePos(self):

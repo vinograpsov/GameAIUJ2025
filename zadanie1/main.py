@@ -10,6 +10,8 @@ import collisions
 import physics
 import enums
 
+import enemies
+
 pygame.init()
 
 clock = pygame.time.Clock()
@@ -120,9 +122,35 @@ def main():
         obstacleSize = random.randint(10, 50)
         CurObstacle = game_object.GameObject(Transform(Vector([random.randint(borderDist, MainCamera.windowSize[0] - borderDist), random.randint(borderDist, MainCamera.windowSize[1] - borderDist)]), 0, Vector([obstacleSize, obstacleSize])), [], None)
         CurObstacle.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
-        CurObstacle.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (0, 255, 0)))
+        CurObstacle.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (0, 255, 0), 0))
         GlobalObjects.append(CurObstacle)
         Obstacles.append(CurObstacle)
+
+    #enemies spawn
+    Enemies = []
+    for _ in range(1):
+        borderDist = 10
+        enemyPosition = Vector([random.randint(borderDist, MainCamera.windowSize[0] - borderDist), random.randint(borderDist, MainCamera.windowSize[0] - borderDist)])
+        CurEnemy = game_object.GameObject(Transform(enemyPosition, 0, Vector([15, 15])), [], None)
+        CurEnemy.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (255, 0, 0), 0))
+        #CurEnemy.AddComp(rendering.Model('Assets\Triangle.obj', [255, 0, 0], enums.RenderMode.POLYGON));
+        CurEnemy.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
+        CurEnemy.AddComp(physics.PhysicObject(1))
+        CurEnemy.AddComp(enemies.Enemy())
+
+        #ENEMY AI AND PHYSICS SETUP
+        CurEnemy.GetComp('PhysicObject').maxForce = 2;
+        CurEnemyAI = CurEnemy.GetComp('Enemy')
+        CurEnemyAI.wanderDistance = 48
+        CurEnemyAI.wanderRadius = 8
+        CurEnemyAI.wanderJitter = 0.3
+
+        #debug on / off
+        CurEnemyAI.debugFlag = enums.DebugFlag.WANDER #DebugFlag.WANDER | 
+        #values references setup
+        CurEnemyAI.Start(Player.transform, Player.GetComp('PhysicObject'))
+        Enemies.append(CurEnemy)
+        GlobalObjects.append(CurEnemy)
 
     #------------------------------------------------------------------
     #UPDATE
@@ -210,11 +238,7 @@ def main():
         #-----------------------------------------------
         #Physics update
         #-----------------------------------------------
-        #print(Player.transform.lpos)
-        #print(Player.GetComp('PhysicObject').vel)
-        #Player.GetComp('PhysicObject').newPos = Player.transform.lpos + Player.GetComp('PhysicObject').vel
-        #Player.GetComp('PhysicObject').PreupdatePos()
-        #print(Vector([8, 8]).Truncate(2).data)
+
 
         #-----------------------------------------------
         #Collision handling
@@ -234,16 +258,12 @@ def main():
         #Global rendering
         #-----------------------------------------------
         MainCamera.Clear()
-
-        #print(Cursor.transform.pos.data)
-        #MainCamera.RenderVertices(Cursor.GetComp('Model'))
-        #MainCamera.RenderWireframe(Cursor.GetComp('Model'))
-        #Cursor.GetComp('Model').RenderVertices(MainCamera.screen, MainCamera.windowSize)
         
         PlayerRaycast.transform.SynchGlobals()
         #Player.transform.SynchGlobals()
         #print(PlayerRaycast.transform.pos.data)
         MainCamera.RenderRawLine(PlayerRaycast.transform.pos, raycastPoint, (255, 0, 0), 1)
+
 
         for Object in GlobalObjects:
             for Model in Object.GetComps('Model'):
@@ -251,19 +271,32 @@ def main():
             for Primitive in Object.GetComps('Primitive'):
                 MainCamera.RenderPrimitive(Primitive)
 
-        '''
-        for Object in GlobalObjects:
-            for Model in Object.GetComps('Model'):
-                Model.Render(MainCamera.screen, size, CameraPivot)
-            for Primitive in Object.GetComps('Primitive'):
-                Primitive.Render(MainCamera.screen, size, CameraPivot)
-        '''
-        pygame.display.flip();
+        #ENEMIES DEBUG!!!
+        for Object in Enemies:
+            EnemyAI = Object.GetComp('Enemy')
+            EnemyAI.Debug(MainCamera)
+            #print(EnemyAI.phys.vel.data)
 
         #-----------------------------------------------
         #Physics execution
         #-----------------------------------------------
         Player.GetComp('PhysicObject').ExecutePos()
+
+        for Object in Enemies:
+            for Enemy in Object.GetComps('Enemy'):
+
+
+                #update enemy AI sequentially
+                Enemy.Wander() #just for now
+            for Phys in Object.GetComps('PhysicObject'):
+                Phys.UpdateVelocity()
+                #first rotate the enemy towards it's velocity
+                Enemy.UpdateForwardDirection()
+                Phys.ExecutePos()
+
+
+        pygame.display.flip();
+
 
 if __name__ == '__main__':
     main()
