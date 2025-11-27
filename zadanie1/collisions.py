@@ -7,6 +7,7 @@ class Collider():
         self.gameObject = None
         self.type = type
         self.size = 1 #size is unused (complicates too much)
+        self.isTrigger = False
 
     def CheckCollision(self, other):
         trans = self.gameObject.transform
@@ -36,6 +37,10 @@ class Collider():
         targetTrans = other.gameObject.transform
         trans.SynchGlobals()
         targetTrans.SynchGlobals()
+
+        #does nothing for trigger colliders
+        if self.isTrigger or other.isTrigger:
+            return
 
         phys = self.gameObject.GetComp('PhysicObject')
         if phys is None:

@@ -72,6 +72,7 @@ class PhysicObject():
 
     def ExecutePos(self):
         trans = self.gameObject.transform
+        trans.SynchGlobals()
         trans.lpos = trans.lpos + self.vel #* time
         trans.Desynch()
 

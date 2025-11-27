@@ -58,7 +58,6 @@ class Enemy():
 
             #render line towards end point
             MainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(resultPoint, True), self.debugCol, 1)
-            #MainCamera.RenderRawLine(self.transform.pos, self.wanderCircleDebug.transform.LocalToGlobal(resultPoint, True), self.debugCol, 1)
 
 
     #corrects object transform, so that it always faces the direction it is going (by velocity)

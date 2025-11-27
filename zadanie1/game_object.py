@@ -101,7 +101,7 @@ class GameObject:
 
     def GetObjsInParents(self, requiredComp):
         result = []
-        if self.parent != None:
+        if self.parent != None and self.parent != self: #programmer's stupidity check
             if type(requiredComp) == type(self):
                 result.append(parent)
             else:
@@ -109,7 +109,7 @@ class GameObject:
                     if type(parentComp) == type(requiredComp):
                         result.append(parent)
                         break;
-            result.extend(GetObjsInParents(parent, requiredComp))
+            result.extend(self.parent.GetObjsInParents(requiredComp))
         return result
 
     #made better in future

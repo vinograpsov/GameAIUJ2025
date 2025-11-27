@@ -88,7 +88,6 @@ def main():
     #create cursor object
     Cursor = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
     #Cursor = game_object.GameObject(transforms.Transform([size[0] / 2, size[1] / 2], 0, [15, 15]), [], None)
-    GlobalObjects.append(Cursor);
     Cursor.AddComp(rendering.Model('Assets\Cursor.obj', [255, 0, 0], enums.RenderMode.WIREFRAME))
     #Cursor.AddComp(physics.Collider(0, [1, 1]))
     GlobalObjects.append(Cursor);
@@ -147,6 +146,8 @@ def main():
 
         #debug on / off
         CurEnemyAI.debugFlag = enums.DebugFlag.WANDER #DebugFlag.WANDER | 
+        
+        #CurEnemy.GetComp('PhysicObject').vel = Vector([1, 0])
         #values references setup
         CurEnemyAI.Start(Player.transform, Player.GetComp('PhysicObject'))
         Enemies.append(CurEnemy)
@@ -218,7 +219,9 @@ def main():
         Cursor.transform.lpos = GetWorldMousePos(MainCamera.windowSize, MainCamera.gameObject.transform.lpos)
         Cursor.transform.Desynch()
 
-        #Player movement
+        #-----------------------------------------------
+        #Player handling
+        #-----------------------------------------------
         Player.transform.FaceTowards(Cursor.transform);
         #LATER MOVE PLAYER SPEED TO SOME SPECIAL CLASS
         moveVector = Vector([LeftRightInput[0], UpDownInput[0]])
@@ -244,15 +247,30 @@ def main():
         #Collision handling
         #-----------------------------------------------
 
-        #print(Border1.transform.pos.data)
+
+        #get all physic components in game: (as collision reaction happens only for them)
+        PhysicComponents = []
         for i in range(0, len(GlobalObjects)):
+            iPhys = GlobalObjects[i].GetComp('PhysicObject')
+            if iPhys:
+                PhysicComponents.append(iPhys)
+
+        #for every physic object, find colliders in all objects
+        for i in range(0, len(PhysicComponents)):
             for j in range(i, len(GlobalObjects)):
-                iPhys = GlobalObjects[i].GetComp('PhysicObject')
-                jCol = GlobalObjects[j].GetComp('Collider')
-                if iPhys and jCol:
-                    iPhys.gameObject.GetComp('Collider').ResolveCollision(jCol)
-                #elif i.gameObject.GetComp('Collider'):
-                    #i.gameObject.GetComp('Collider').CheckCollision()
+                #check for every collider in object
+                for OtherCollider in GlobalObjects[j].GetComps('Collider'):
+
+                    #for PhysCollider in PhysicComponents[i].GetCompsInChilds('Collider'):
+
+                    #check if not self colliding
+                    if OtherCollider.gameObject.GetObjsInParents('PhysicObject') == PhysicComponents[i].gameObject:
+                        continue
+
+                    PhysCollider = PhysicComponents[i].gameObject.GetComp('Collider')
+                    if PhysCollider:
+                        PhysCollider.ResolveCollision(OtherCollider)
+               
 
         #-----------------------------------------------
         #Global rendering
@@ -282,9 +300,10 @@ def main():
         #-----------------------------------------------
         Player.GetComp('PhysicObject').ExecutePos()
 
+        #enemy logic
         for Object in Enemies:
             for Enemy in Object.GetComps('Enemy'):
-
+                pass
 
                 #update enemy AI sequentially
                 Enemy.Wander() #just for now
