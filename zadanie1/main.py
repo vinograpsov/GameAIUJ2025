@@ -235,7 +235,10 @@ def main():
         raycastObject, raycastPoint = collisions.Raycast.CastRay(PlayerRaycast.transform, GlobalObjects)
 
         #killing enemies
+        #print(raycastObject.GetComp('Enemy'))
         if raycastObject and raycastObject.GetComp('Enemy'):
+            Enemies.remove(raycastObject)
+            GlobalObjects.remove(raycastObject)
             del raycastObject
 
         #-----------------------------------------------
