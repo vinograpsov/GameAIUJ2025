@@ -25,13 +25,13 @@ class Camera():
     def Render(self, renderingComp):
         if type(renderingComp) is Model:
             if renderingComp.renderMode is enums.RenderMode.VERTICES:
-                RenderVertices(renderingComp)
+                self.RenderVertices(renderingComp)
             elif renderingComp.renderMode is enums.RenderMode.WIREFRAME:
-                RenderWireframe(renderingComp)
+                self.RenderWireframe(renderingComp)
             elif renderingComp.renderMode is enums.RenderMode.POLYGON:
-                RenderWireframe(renderingComp)
+                self.RenderWireframe(renderingComp)
         elif type(renderingComp) is Primitive:
-            RenderPrimitive(renderingComp)
+            self.RenderPrimitive(renderingComp)
         #if 
 
     def RenderPrimitive(self, primitive):

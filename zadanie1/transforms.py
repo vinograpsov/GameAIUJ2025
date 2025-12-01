@@ -24,6 +24,8 @@ class Vector:
     def __init__(self, data):
         self.data = data
     
+    def copy(self):
+        return Vector(self.data.copy())
     
     def x(self):
         return self.data[0]
@@ -36,7 +38,7 @@ class Vector:
 
     def w(self):
         return self.data[3]
-    
+
 
     #OPERATORS OVERLOADING
     #------------------------------------------------------------------------
@@ -259,6 +261,12 @@ class Vector:
         self.data = result
         return self
 
+    def Rotated(self, rot):
+        result = [self.x(), self.y()]
+        result[0] = self.x() * math.cos(rot) - self.y() * math.sin(rot)
+        result[1] = self.x() * math.sin(rot) + self.y() * math.cos(rot)
+        return Vector(result)
+
     def RotateByVect(self, vect):
         self.Rotate(vect.ToRotation())
         return self
@@ -289,12 +297,12 @@ class Transform:
     '''does the same thing as reposition, but ignores scale'''
     def LocalToGlobal(self, point, ignoreScale):
         if ignoreScale is False:
-            return (point * self.scale).Rotate(self.rot) + self.pos
-        return point.Rotate(self.rot) + self.pos
+            return (point * self.scale).Rotated(self.rot) + self.pos
+        return point.Rotated(self.rot) + self.pos
 
     '''returns coordinates of a given point in transform local space'''
     def GlobalToLocal(self, point, ignoreScale):
-        result = (point - self.pos).Rotate(-self.rot)
+        result = (point - self.pos).Rotated(-self.rot)
         if ignoreScale is False:
             result /= self.scale
         return result
@@ -302,7 +310,7 @@ class Transform:
     '''locally scales, rotates and positions given vector as a relative to transform'''
     '''actually what it does is it calculates global position of a point as if it would be child of this transform'''
     def Reposition(self, vect):
-        return (vect * self.scale).Rotate(self.rot) + self.pos
+        return (vect * self.scale).Rotated(self.rot) + self.pos
         #return AddVect(RotateVect(ScaleVect(vect, transform.scale), transform.rot), transform.pos)
 
     def Retransform(self, other):

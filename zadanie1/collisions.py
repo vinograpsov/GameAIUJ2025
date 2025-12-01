@@ -132,3 +132,31 @@ class Raycast():
                     hit = contactPoint
                     result = collider.gameObject
         return result, transPivot.LocalToGlobal(Vector([hit, 0]), True) #reposition also scales, possible bug
+
+
+    #THIS IS A BOOK REQUIREMENT TO USE SUCH FUNCTION (SPECIFICALLY WALL AVOIDANCE)
+
+def LineIntersection2D(LineStart1, LineEnd1, LineStart2, LineEnd2, FirstLineIntersectionDist, IntersectionPoint):
+
+    rTop = (LineStart1.y()-LineStart2.y())*(LineEnd2.x()-LineStart2.x())-(LineStart1.x()-LineStart2.x())*(LineEnd2.y()-LineStart2.y());
+    sTop = (LineStart1.y()-LineStart2.y())*(LineEnd1.x()-LineStart1.x())-(LineStart1.x()-LineStart2.x())*(LineEnd1.y()-LineStart1.y());
+
+    Bot = (LineEnd1.x()-LineStart1.x())*(LineEnd2.y()-LineStart2.y())-(LineEnd1.y()-LineStart1.y())*(LineEnd2.x()-LineStart2.x());
+
+    if (Bot == 0): #parallel
+        return False, FirstLineIntersectionDist, IntersectionPoint
+
+    r = rTop / Bot;
+    s = sTop / Bot;
+
+    if (r > 0) and (r < 1) and (s > 0) and (s < 1):
+        #lines intersect
+        FirstLineIntersectionDist = Vector.Dist(LineStart1, LineEnd1) * r
+
+        IntersectionPoint = LineStart1 + (LineEnd1 - LineStart1) * r
+
+        return True, FirstLineIntersectionDist, IntersectionPoint
+
+    #lines do not intersect
+    FirstLineIntersectionDist = 0
+    return False, 0, IntersectionPoint

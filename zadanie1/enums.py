@@ -21,3 +21,4 @@ class DebugFlag(Flag):
 	VELOCITY = auto()
 	WANDER = auto()
 	OBSTACLE = auto()
+	WALL = auto()

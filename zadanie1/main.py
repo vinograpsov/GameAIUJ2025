@@ -71,7 +71,8 @@ def main():
     #Game objects containers
     #----------------------------------------
     GlobalObjects = []
-    Obstacles = [] #colliders
+    Obstacles = [] #game objects
+    Borders = [] #game objects
     Enemies = [] #physic object
 
     #create player object
@@ -95,8 +96,9 @@ def main():
 
     #WORLD BORDER
     MainBorder = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([MainCamera.windowSize[0], MainCamera.windowSize[1]])), [], None)
-    Border1 = game_object.GameObject(Transform(Vector([0.5, 0]), DegToRad(180), Vector([1, 1])), [], MainBorder)
+    Border1 = game_object.GameObject(Transform(Vector([0.5, 0]), DegToRad(180), Vector([0.1, 0.1])), [], MainBorder)
     Border1.AddComp(collisions.Collider(enums.ColliderType.LINE))
+    Border1.AddComp(rendering.Model('Assets\Triangle.obj', (255, 0, 255), enums.RenderMode.POLYGON))
     Border2 = game_object.GameObject(Transform(Vector([0, 0.5]), DegToRad(270), Vector([1, 1])), [], MainBorder)
     Border2.AddComp(collisions.Collider(enums.ColliderType.LINE))
     Border3 = game_object.GameObject(Transform(Vector([-0.5, 0]), 0, Vector([1, 1])), [], MainBorder)
@@ -110,10 +112,14 @@ def main():
     GlobalObjects.append(Border3)
     GlobalObjects.append(Border4)
 
-    Obstacles.append(Border1.GetComp('Collider'))
-    Obstacles.append(Border2.GetComp('Collider'))
-    Obstacles.append(Border3.GetComp('Collider'))
-    Obstacles.append(Border4.GetComp('Collider'))
+    Borders.append(Border1)
+    Borders.append(Border2)
+    Borders.append(Border3)
+    Borders.append(Border4)
+    #Obstacles.append(Border1)
+    #Obstacles.append(Border2)
+    #Obstacles.append(Border3)
+    #Obstacles.append(Border4)
 
     #enviromental obstacles creation
     for _ in range(10):
@@ -140,14 +146,19 @@ def main():
         #ENEMY AI AND PHYSICS SETUP
         CurEnemy.GetComp('PhysicObject').maxForce = 2;
         CurEnemyAI = CurEnemy.GetComp('Enemy')
+        #Wander
         CurEnemyAI.wanderDistance = 48
         CurEnemyAI.wanderRadius = 8
         CurEnemyAI.wanderJitter = 0.3
+        #ObstacleAvoidance
+        CurEnemyAI.breakMultiplier = 2
+        CurEnemyAI.wallDetectionRange = CurEnemy.transform.lscale.MaxComponent() * 3
 
         #debug on / off
-        CurEnemyAI.debugFlag = enums.DebugFlag.WANDER #DebugFlag.WANDER | 
-        
-        #CurEnemy.GetComp('PhysicObject').vel = Vector([1, 0])
+        #CurEnemyAI.debugFlag = enums.DebugFlag.WANDER | enums.DebugFlag.OBSTACLE | enums.DebugFlag.WALL
+        CurEnemyAI.debugFlag = enums.DebugFlag.WALL
+
+        CurEnemy.GetComp('PhysicObject').vel = Vector([1, 1])
         #values references setup
         CurEnemyAI.Start(Player.transform, Player.GetComp('PhysicObject'))
         Enemies.append(CurEnemy)
@@ -237,9 +248,10 @@ def main():
         #killing enemies
         #print(raycastObject.GetComp('Enemy'))
         if raycastObject and raycastObject.GetComp('Enemy'):
-            Enemies.remove(raycastObject)
-            GlobalObjects.remove(raycastObject)
-            del raycastObject
+            pass
+            #Enemies.remove(raycastObject)
+            #GlobalObjects.remove(raycastObject)
+            #del raycastObject
 
         #-----------------------------------------------
         #Physics update
@@ -267,8 +279,8 @@ def main():
                     #for PhysCollider in PhysicComponents[i].GetCompsInChilds('Collider'):
 
                     #check if not self colliding
-                    if OtherCollider.gameObject.GetObjsInParents('PhysicObject') == PhysicComponents[i].gameObject:
-                        continue
+                    #if OtherCollider.gameObject.GetObjsInParents('PhysicObject') == PhysicComponents[i].gameObject:
+                        #continue
 
                     PhysCollider = PhysicComponents[i].gameObject.GetComp('Collider')
                     if PhysCollider:
@@ -309,6 +321,8 @@ def main():
                 pass
 
                 #update enemy AI sequentially
+                Enemy.ObstacleAvoidance(Obstacles)
+                Enemy.WallAvoidance(Borders)
                 Enemy.Wander() #just for now
             for Phys in Object.GetComps('PhysicObject'):
                 Phys.UpdateVelocity()
