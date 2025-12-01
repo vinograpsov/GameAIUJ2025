@@ -98,7 +98,6 @@ def main():
     MainBorder = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([MainCamera.windowSize[0], MainCamera.windowSize[1]])), [], None)
     Border1 = game_object.GameObject(Transform(Vector([0.5, 0]), DegToRad(180), Vector([0.1, 0.1])), [], MainBorder)
     Border1.AddComp(collisions.Collider(enums.ColliderType.LINE))
-    Border1.AddComp(rendering.Model('Assets\Triangle.obj', (255, 0, 255), enums.RenderMode.POLYGON))
     Border2 = game_object.GameObject(Transform(Vector([0, 0.5]), DegToRad(270), Vector([1, 1])), [], MainBorder)
     Border2.AddComp(collisions.Collider(enums.ColliderType.LINE))
     Border3 = game_object.GameObject(Transform(Vector([-0.5, 0]), 0, Vector([1, 1])), [], MainBorder)
@@ -133,7 +132,7 @@ def main():
 
     #enemies spawn
     Enemies = []
-    for _ in range(1):
+    for _ in range(10):
         borderDist = 10
         enemyPosition = Vector([random.randint(borderDist, MainCamera.windowSize[0] - borderDist), random.randint(borderDist, MainCamera.windowSize[0] - borderDist)])
         CurEnemy = game_object.GameObject(Transform(enemyPosition, 0, Vector([15, 15])), [], None)
