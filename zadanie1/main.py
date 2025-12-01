@@ -132,7 +132,7 @@ def main():
 
     #enemies spawn
     Enemies = []
-    for _ in range(10):
+    for _ in range(1):
         borderDist = 10
         enemyPosition = Vector([random.randint(borderDist, MainCamera.windowSize[0] - borderDist), random.randint(borderDist, MainCamera.windowSize[0] - borderDist)])
         CurEnemy = game_object.GameObject(Transform(enemyPosition, 0, Vector([15, 15])), [], None)
@@ -154,8 +154,8 @@ def main():
         CurEnemyAI.wallDetectionRange = CurEnemy.transform.lscale.MaxComponent() * 3
 
         #debug on / off
-        CurEnemyAI.debugFlag = enums.DebugFlag.WANDER | enums.DebugFlag.OBSTACLE | enums.DebugFlag.WALL
-        #CurEnemyAI.debugFlag = enums.DebugFlag.WALL
+        #CurEnemyAI.debugFlag = enums.DebugFlag.WANDER | enums.DebugFlag.OBSTACLE | enums.DebugFlag.WALL
+        CurEnemyAI.debugFlag = enums.DebugFlag.HIDE | enums.DebugFlag.ARRIVE
 
         CurEnemy.GetComp('PhysicObject').vel = Vector([1, 1])
         #values references setup
@@ -320,9 +320,10 @@ def main():
                 pass
 
                 #update enemy AI sequentially
-                Enemy.ObstacleAvoidance(Obstacles)
-                Enemy.WallAvoidance(Borders)
-                Enemy.Wander() #just for now
+                #Enemy.ObstacleAvoidance(Obstacles)
+                #Enemy.WallAvoidance(Borders)
+                Enemy.Hide(Obstacles)
+                #Enemy.Wander()
             for Phys in Object.GetComps('PhysicObject'):
                 Phys.UpdateVelocity()
                 #first rotate the enemy towards it's velocity

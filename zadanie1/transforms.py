@@ -155,6 +155,10 @@ class Vector:
         return (vect1 - vect2).Length()
 
     @staticmethod
+    def DistSquared(vect1, vect2):
+        return (vect1 - vect2).LengthSquared()
+
+    @staticmethod
     def Zero(vect1):
         result = []
         for i in range(0, len(vect1.data)): #if scaled by a vector
@@ -209,6 +213,12 @@ class Vector:
         for comp in self.data:
             result += comp * comp
         return math.sqrt(result);
+
+    def LengthSquared(self):
+        result = 0;
+        for comp in self.data:
+            result += comp * comp
+        return result;
 
     '''normalizes vector''' #does not work for some reason (returns vector of vector idk)
     def Normalize(self):

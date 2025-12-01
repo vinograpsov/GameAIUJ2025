@@ -2,6 +2,7 @@ import game_object
 import random
 import enums
 import rendering
+import sys
 from collisions import LineIntersection2D
 from transforms import *
 
@@ -15,15 +16,19 @@ class Enemy():
         self.playerPhys = None
         #general
         self.directionChangeThreshold = 0.001953125
-        #obstacle avoidance
-        self.minObstacleAvoidanceLength = 0
-        self.breakMultiplier = 0.2
+        #arrive
+        self.arriveDecelerationMultiplier = 0.8 #placeholder value
         #wander
         self.wanderJitter = 0.1 * math.pi #placeholder value
         self.wanderDistance = 1 #placeholder value
         self.wanderRadius = 15 #placeholder value
         self.wanderTarget = None #transform
         self.wanderPoint = Vector([1, 0])
+        #hide
+        self.hidingSpotDist = 30 #placeholder value
+        #obstacle avoidance
+        self.minObstacleAvoidanceLength = 0
+        self.breakMultiplier = 0.2
         #wall avoidance
         self.wallDetectionRange = 1 # placeholder value
         #debug
@@ -31,6 +36,7 @@ class Enemy():
         self.debugCol = (255, 0, 255)
         self.wanderCircleDebug = None #transform
         self.obstacleAvoidanceDebug = None #transform
+        self.hideDebug = None #object
 
     def Start(self, playerTransform, playerPhysic, mainCamera):
         self.transform = self.gameObject.transform
@@ -47,6 +53,9 @@ class Enemy():
         
         self.obstacleAvoidanceDebug = game_object.GameObject(Transform(Vector([0, 0]), 0, Vector([1, 1])), [], self.gameObject)
         self.obstacleAvoidanceDebug.AddComp(rendering.Model('Assets\ObstacleAvoidanceDebug.obj', self.debugCol, enums.RenderMode.WIREFRAME))
+        
+        self.hideDebug = game_object.GameObject(Transform(Vector([0, 0]), 0, Vector([3, 3])), [], None)
+        self.hideDebug.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, self.debugCol, 0))
         #initialize local values:
 
 
@@ -90,7 +99,32 @@ class Enemy():
             self.transform.lrot = self.phys.vel.ToRotation()
             self.transform.Desynch()
     
+    #used in hide method
+    def Arrive(self, destination, arriveStyle):
+        self.transform.SynchGlobals()
+        self.playerTransform.SynchGlobals()
+        VectToTarget = destination - self.transform.pos
 
+        distToTarget = VectToTarget.Length()
+
+        if enums.DebugFlag.ARRIVE in self.debugFlag:
+            self.mainCamera.RenderRawLine(self.transform.pos, destination, self.debugCol, 1)
+
+        if distToTarget > 0:
+            speed = distToTarget / (float(arriveStyle.value) * self.arriveDecelerationMultiplier)
+
+            speed = min(speed, self.phys.maxVelocity)
+
+            SteeringForce = (VectToTarget * speed) / distToTarget
+
+            self.phys.TryAccumulateForce(SteeringForce - self.phys.vel)
+
+        #if dist <= 0 do nothing
+
+    #for now skip as in our project there is NEVER an option that obstacles are non existing
+    def Evade(self):
+        pass
+    #unused
     def Seek(self):
         self.transform.SynchGlobals()
         self.playerTransform.SynchGlobals()
@@ -111,6 +145,54 @@ class Enemy():
         resultForce = self.transform.LocalToGlobal(resultPoint, True) - self.transform.pos
         self.phys.TryAccumulateForce(resultForce)
 
+    
+    def Hide(self, sceneObstacles):
+
+        self.transform.SynchGlobals()
+        self.playerTransform.SynchGlobals()
+
+        ClosestHidingDist = sys.float_info.max #epsilon
+        ClosestHidingPoint = Vector([0, 0])
+
+        for Obstacle in sceneObstacles:
+            ObstacleTrans = Obstacle.transform
+            ObstacleTrans.SynchGlobals()
+            for collider in Obstacle.GetComps('Collider'):
+                if collider.type != enums.ColliderType.SPHERE:
+                    continue
+                colliderTrans = collider.gameObject.transform
+                #colliderTrans.SynchGlobals()
+
+                #calculate hiding spot behind obstacle
+                colliderRadius = colliderTrans.scale.MaxComponent()
+                curHidingDist = colliderRadius + self.hidingSpotDist
+
+                curHidingPoint = ObstacleTrans.pos + (Vector.Normalized(ObstacleTrans.pos - self.playerTransform.pos) * curHidingDist)
+
+                #DEBUGGING
+                if enums.DebugFlag.HIDE in self.debugFlag:
+                    self.hideDebug.transform.lpos = curHidingPoint
+                    self.hideDebug.transform.Desynch()
+                    self.mainCamera.RenderPrimitive(self.hideDebug.GetComp('Primitive'))
+                    
+
+                #calculate enemy dist to current hiding spot
+                #works in squared distance for optimization reasons
+                curHidingPointDist = Vector.DistSquared(self.transform.pos, curHidingPoint)
+
+                #get closest hiding spot
+                if curHidingPointDist < ClosestHidingDist:
+                    ClosestHidingDist = curHidingPointDist
+                    ClosestHidingPoint = curHidingPoint
+
+        if ClosestHidingDist >= sys.float_info.max:
+            print(ClosestHidingDist)
+            #must make evade algorithm
+            self.Evade() #evade does nothing for now
+            return
+
+        #print(ClosestHidingPoint.data)
+        self.Arrive(ClosestHidingPoint, enums.ArriveStyle.FAST)
 
     def ObstacleAvoidance(self, sceneObstacles): #checkout range is same as this object collision bounding box (which is it's scale)
         result = None
@@ -194,7 +276,7 @@ class Enemy():
             self.mainCamera.RenderRawLine(self.transform.pos, feelers[2], self.debugCol, 1)
 
         #defining variables
-        closestIntersectionDist = 8192
+        closestIntersectionDist = sys.float_info.max
         closestWallIndex = -1
         closestIntersectionPoint = Vector([0, 0])
         steeringForce = Vector([0, 0])
@@ -206,7 +288,7 @@ class Enemy():
                 curIntersectionDist = closestIntersectionDist
                 intersectionPoint = Vector([0, 0])
                 #define line left and right ends
-                lineEndEpsilon = 800 #8192
+                lineEndEpsilon = 800
                 lineLeftEnd = sceneBorders[i].transform.LocalToGlobal(Vector([0, -lineEndEpsilon]), True)
                 lineRightEnd = sceneBorders[i].transform.LocalToGlobal(Vector([0, lineEndEpsilon]), True)
                 #print(sceneBorders[i].transform.pos.data)

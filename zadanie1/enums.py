@@ -19,6 +19,14 @@ class ColliderType(Enum):
 class DebugFlag(Flag):
 	DIRECTION = auto()
 	VELOCITY = auto()
+	ARRIVE = auto()
 	WANDER = auto()
 	OBSTACLE = auto()
 	WALL = auto()
+	HIDE = auto()
+
+#used by AI
+class ArriveStyle(Enum):
+	FAST = 1
+	NORMAL = 2
+	SLOW = 3
