@@ -148,18 +148,18 @@ def main():
         #Wander
         CurEnemyAI.wanderDistance = 48
         CurEnemyAI.wanderRadius = 8
-        CurEnemyAI.wanderJitter = 0.3
+        CurEnemyAI.wanderJitter = 4
         #ObstacleAvoidance
         CurEnemyAI.breakMultiplier = 2
         CurEnemyAI.wallDetectionRange = CurEnemy.transform.lscale.MaxComponent() * 3
 
         #debug on / off
-        #CurEnemyAI.debugFlag = enums.DebugFlag.WANDER | enums.DebugFlag.OBSTACLE | enums.DebugFlag.WALL
-        CurEnemyAI.debugFlag = enums.DebugFlag.WALL
+        CurEnemyAI.debugFlag = enums.DebugFlag.WANDER | enums.DebugFlag.OBSTACLE | enums.DebugFlag.WALL
+        #CurEnemyAI.debugFlag = enums.DebugFlag.WALL
 
         CurEnemy.GetComp('PhysicObject').vel = Vector([1, 1])
         #values references setup
-        CurEnemyAI.Start(Player.transform, Player.GetComp('PhysicObject'))
+        CurEnemyAI.Start(Player.transform, Player.GetComp('PhysicObject'), MainCamera)
         Enemies.append(CurEnemy)
         GlobalObjects.append(CurEnemy)
 
@@ -306,7 +306,7 @@ def main():
         #ENEMIES DEBUG!!!
         for Object in Enemies:
             EnemyAI = Object.GetComp('Enemy')
-            EnemyAI.Debug(MainCamera)
+            EnemyAI.Debug()
             #print(EnemyAI.phys.vel.data)
 
         #-----------------------------------------------

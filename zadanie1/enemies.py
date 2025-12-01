@@ -32,13 +32,14 @@ class Enemy():
         self.wanderCircleDebug = None #transform
         self.obstacleAvoidanceDebug = None #transform
 
-    def Start(self, playerTransform, playerPhysic):
+    def Start(self, playerTransform, playerPhysic, mainCamera):
         self.transform = self.gameObject.transform
         self.phys = self.gameObject.GetComp('PhysicObject')
         self.playerTransform = playerTransform
         self.playerPhys = playerPhysic
 
         #debug objects:
+        self.mainCamera = mainCamera
         self.wanderCircleDebug = game_object.GameObject(Transform(Vector([0, 0]), 0, Vector([1, 1])), [], self.gameObject)
         self.wanderCircleDebug.transform.lpos = Vector([self.wanderDistance, 0])
         self.wanderCircleDebug.transform.lscale = Vector([self.wanderRadius, self.wanderRadius])
@@ -49,13 +50,13 @@ class Enemy():
         #initialize local values:
 
 
-    def Debug(self, MainCamera):
+    def Debug(self):
         self.transform.SynchGlobals()
 
         if enums.DebugFlag.DIRECTION in self.debugFlag:
-            MainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(Vector([1, 0]), True), self.debugCol, 1)
+            self.mainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(Vector([1, 0]), True), self.debugCol, 1)
         if enums.DebugFlag.VELOCITY in self.debugFlag:
-            MainCamera.RenderRawLine(self.transform.pos, self.transform.pos + self.phys.vel, self.debugCol, 1)
+            self.mainCamera.RenderRawLine(self.transform.pos, self.transform.pos + self.phys.vel, self.debugCol, 1)
         if enums.DebugFlag.WANDER in self.debugFlag:
             resultPoint = self.wanderPoint + Vector([self.wanderDistance, 0])
 
@@ -64,21 +65,24 @@ class Enemy():
             self.wanderCircleDebug.transform.lscale = Vector([self.wanderRadius, self.wanderRadius]) / self.transform.lscale
             
             self.wanderCircleDebug.transform.SynchGlobals()
-            MainCamera.RenderPrimitive(self.wanderCircleDebug.GetComp('Primitive'))
+            self.mainCamera.RenderPrimitive(self.wanderCircleDebug.GetComp('Primitive'))
 
             #render line towards end point
-            MainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(resultPoint, True), self.debugCol, 1)
+            self.mainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(resultPoint, True), self.debugCol, 1)
         if enums.DebugFlag.OBSTACLE in self.debugFlag:
-            MainCamera.RenderWireframe(self.obstacleAvoidanceDebug.GetComp('Model'))
+            self.mainCamera.RenderWireframe(self.obstacleAvoidanceDebug.GetComp('Model'))
+        
+        '''
         if enums.DebugFlag.WALL in self.debugFlag:
             mainFeeler = Vector([1, 0]) * self.wallDetectionRange
             #main feeler
-            MainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(mainFeeler, True), self.debugCol, 1)
+            self.mainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(mainFeeler, True), self.debugCol, 1)
             #side feelers
             mainFeeler = Vector([mainFeeler.x() / 2, mainFeeler.y()])
             #print(Vector([15, 0]).Rotate(DegToRad(45)).data)
-            MainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(mainFeeler.Rotated(DegToRad(45)), True), self.debugCol, 1)
-            MainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(mainFeeler.Rotated(DegToRad(-45)), True), self.debugCol, 1)
+            self.mainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(mainFeeler.Rotated(DegToRad(45)), True), self.debugCol, 1)
+            self.mainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(mainFeeler.Rotated(DegToRad(-45)), True), self.debugCol, 1)
+        '''
 
     #corrects object transform, so that it always faces the direction it is going (by velocity)
     def UpdateForwardDirection(self):
@@ -182,6 +186,12 @@ class Enemy():
         mainFeeler /= 2
         feelers.append(self.transform.LocalToGlobal(mainFeeler.Rotated(DegToRad(45)), True))
         feelers.append(self.transform.LocalToGlobal(mainFeeler.Rotated(DegToRad(-45)), True))
+
+        #DEBUGGING
+        if enums.DebugFlag.WALL in self.debugFlag:
+            self.mainCamera.RenderRawLine(self.transform.pos, feelers[0], self.debugCol, 1)
+            self.mainCamera.RenderRawLine(self.transform.pos, feelers[1], self.debugCol, 1)
+            self.mainCamera.RenderRawLine(self.transform.pos, feelers[2], self.debugCol, 1)
 
         #defining variables
         closestIntersectionDist = 8192
