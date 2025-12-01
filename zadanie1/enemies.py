@@ -100,7 +100,7 @@ class Enemy():
             self.transform.Desynch()
     
     #used in hide method
-    def Arrive(self, destination, arriveStyle):
+    def Arrive(self, weight, destination, arriveStyle):
         self.transform.SynchGlobals()
         self.playerTransform.SynchGlobals()
         VectToTarget = destination - self.transform.pos
@@ -117,23 +117,23 @@ class Enemy():
 
             SteeringForce = (VectToTarget * speed) / distToTarget
 
-            self.phys.TryAccumulateForce(SteeringForce - self.phys.vel)
+            self.phys.TryAccumulateForce((SteeringForce - self.phys.vel) * weight)
 
         #if dist <= 0 do nothing
 
     #for now skip as in our project there is NEVER an option that obstacles are non existing
-    def Evade(self):
+    def Evade(self, weight):
         pass
     #unused
-    def Seek(self):
+    def Seek(self, weight):
         self.transform.SynchGlobals()
         self.playerTransform.SynchGlobals()
         desiredVelocity = (self.playerTransform.pos - self.transform.pos) * self.phys.maxVel
         #applying force
-        self.phys.TryAccumulateForce(desiredVelocity - self.phys.vel)
+        self.phys.TryAccumulateForce((desiredVelocity - self.phys.vel) * weight)
 
     #wander works mostly by using already existing game objects structure
-    def Wander(self):
+    def Wander(self, weight):
         self.transform.SynchGlobals()
         self.wanderPoint += Vector([random.uniform(-self.wanderJitter, self.wanderJitter), random.uniform(-self.wanderJitter, self.wanderJitter)])
         #snap target point to land exacly at the border of a circle located at the player
@@ -143,10 +143,10 @@ class Enemy():
 
         #calculate resulting force
         resultForce = self.transform.LocalToGlobal(resultPoint, True) - self.transform.pos
-        self.phys.TryAccumulateForce(resultForce)
+        self.phys.TryAccumulateForce(resultForce * weight)
 
     
-    def Hide(self, sceneObstacles):
+    def Hide(self, weight, sceneObstacles):
 
         self.transform.SynchGlobals()
         self.playerTransform.SynchGlobals()
@@ -188,13 +188,13 @@ class Enemy():
         if ClosestHidingDist >= sys.float_info.max:
             print(ClosestHidingDist)
             #must make evade algorithm
-            self.Evade() #evade does nothing for now
+            self.Evade(weight) #evade does nothing for now
             return
 
         #print(ClosestHidingPoint.data)
-        self.Arrive(ClosestHidingPoint, enums.ArriveStyle.FAST)
+        self.Arrive(weight, ClosestHidingPoint, enums.ArriveStyle.FAST)
 
-    def ObstacleAvoidance(self, sceneObstacles): #checkout range is same as this object collision bounding box (which is it's scale)
+    def ObstacleAvoidance(self, weight, sceneObstacles): #checkout range is same as this object collision bounding box (which is it's scale)
         result = None
         self.transform.SynchGlobals()
         castWidth = self.transform.scale.MaxComponent()
@@ -250,10 +250,10 @@ class Enemy():
         #print(steeringForce)
         #print(self.phys.vel.data)
         #convert and aplly final result
-        self.phys.TryAccumulateForce(Vector(steeringForce).Rotate(self.transform.rot))
+        self.phys.TryAccumulateForce(Vector(steeringForce).Rotated(self.transform.rot) * weight)
         
         
-    def WallAvoidance(self, sceneBorders):
+    def WallAvoidance(self, weight, sceneBorders):
 
         self.transform.SynchGlobals()
         #create feelers
@@ -315,4 +315,4 @@ class Enemy():
                 steeringForce = sceneBorders[closestWallIndex].transform.Forward() * Overshoot.Length()
 
         #print(steeringForce.data)
-        self.phys.TryAccumulateForce(steeringForce)
+        self.phys.TryAccumulateForce(steeringForce * weight)

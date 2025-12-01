@@ -132,7 +132,7 @@ def main():
 
     #enemies spawn
     Enemies = []
-    for _ in range(1):
+    for _ in range(5):
         borderDist = 10
         enemyPosition = Vector([random.randint(borderDist, MainCamera.windowSize[0] - borderDist), random.randint(borderDist, MainCamera.windowSize[0] - borderDist)])
         CurEnemy = game_object.GameObject(Transform(enemyPosition, 0, Vector([15, 15])), [], None)
@@ -145,6 +145,10 @@ def main():
         #ENEMY AI AND PHYSICS SETUP
         CurEnemy.GetComp('PhysicObject').maxForce = 2;
         CurEnemyAI = CurEnemy.GetComp('Enemy')
+        #Arrive
+        CurEnemyAI.arriveDecelerationMultiplier = 0.8
+        #Hide
+        CurEnemyAI.hidingSpotDist = CurEnemy.transform.lscale.MaxComponent() * 2
         #Wander
         CurEnemyAI.wanderDistance = 48
         CurEnemyAI.wanderRadius = 8
@@ -154,8 +158,8 @@ def main():
         CurEnemyAI.wallDetectionRange = CurEnemy.transform.lscale.MaxComponent() * 3
 
         #debug on / off
-        #CurEnemyAI.debugFlag = enums.DebugFlag.WANDER | enums.DebugFlag.OBSTACLE | enums.DebugFlag.WALL
-        CurEnemyAI.debugFlag = enums.DebugFlag.HIDE | enums.DebugFlag.ARRIVE
+        CurEnemyAI.debugFlag = enums.DebugFlag.WANDER | enums.DebugFlag.OBSTACLE | enums.DebugFlag.WALL
+        #CurEnemyAI.debugFlag = enums.DebugFlag.HIDE | enums.DebugFlag.ARRIVE
 
         CurEnemy.GetComp('PhysicObject').vel = Vector([1, 1])
         #values references setup
@@ -320,10 +324,10 @@ def main():
                 pass
 
                 #update enemy AI sequentially
-                #Enemy.ObstacleAvoidance(Obstacles)
-                #Enemy.WallAvoidance(Borders)
-                Enemy.Hide(Obstacles)
-                #Enemy.Wander()
+                Enemy.ObstacleAvoidance(1, Obstacles)
+                Enemy.WallAvoidance(1, Borders)
+                Enemy.Hide(1, Obstacles)
+                Enemy.Wander(1)
             for Phys in Object.GetComps('PhysicObject'):
                 Phys.UpdateVelocity()
                 #first rotate the enemy towards it's velocity
