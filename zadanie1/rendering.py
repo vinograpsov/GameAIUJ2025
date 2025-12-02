@@ -65,6 +65,11 @@ class Camera():
 
         pygame.draw.line(self.screen, col, startDrawPos, endDrawPos, width)
 
+
+    def RenderRawPoint(self, pos, col, size):
+        pos.data[1] = self.windowSize[1] - pos.data[1]
+        pygame.draw.circle(self.screen, col, pos.data, size, 0)
+
     '''
     def RenderRawCircle(self, pos, size, col, width):
                     #for some reason rendering here does not require to flip y position

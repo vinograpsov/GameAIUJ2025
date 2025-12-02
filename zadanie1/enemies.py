@@ -6,6 +6,35 @@ import sys
 from collisions import LineIntersection2D
 from transforms import *
 
+class FlockingActivator():
+
+    def __init__(self, maxGroupingDist, minGroupSize):
+        self.maxGroupingDist = maxGroupingDist
+        self.minGroupSize = minGroupSize
+        self.flockingGroups = []
+
+    def TryGroupEnemies(self, Enemies):
+        for Enemy in Enemies:
+            Enemy.transform.SynchGlobals()
+
+        for LeadEnemy in Enemies:
+            LeadEnemyAI = LeadEnemy.GetComp('Enemy')
+            if LeadEnemyAI.isAttacking: #already grouped enemies cannot be grouped again
+                continue
+            curGroup = []
+            #second loop searching for neighbours
+            for Enemy in Enemies:
+                EnemyAI = Enemy.GetComp('Enemy')
+                if EnemyAI.isAttacking: #already grouped enemies cannot be grouped again
+                    continue
+                if Vector.Dist(LeadEnemy.transform.pos, Enemy.transform.pos) - Enemy.transform.scale.MaxComponent() < self.maxGroupingDist:
+                    curGroup.append(Enemy)
+            if len(curGroup) >= self.minGroupSize:
+                #here actually group enemies
+                for JoiningEnemy in curGroup:
+                    JoiningEnemy.GetComp('Enemy').isAttacking = True
+                self.flockingGroups.append(curGroup)
+
 class Enemy():
 
     def __init__(self):
@@ -16,6 +45,9 @@ class Enemy():
         self.playerPhys = None
         #general
         self.directionChangeThreshold = 0.001953125
+        #flocking
+        self.isAttacking = False
+        self.flockingGroup = []
         #arrive
         self.arriveDecelerationMultiplier = 0.8 #placeholder value
         #wander
@@ -31,6 +63,7 @@ class Enemy():
         self.breakMultiplier = 0.2
         #wall avoidance
         self.wallDetectionRange = 1 # placeholder value
+
         #debug
         self.debugFlag = enums.DebugFlag(0)
         self.debugCol = (255, 0, 255)
@@ -198,7 +231,6 @@ class Enemy():
         result = None
         self.transform.SynchGlobals()
         castWidth = self.transform.scale.MaxComponent()
-        self.minObstacleAvoidanceLength = castWidth
         castLength = self.minObstacleAvoidanceLength + (self.phys.vel.Length() / self.phys.maxVelocity) * self.minObstacleAvoidanceLength
         hit = self.minObstacleAvoidanceLength * 2 + 1 #max obstacle avoidance + epsilon to be out of range
         hitObjectLocalPos = Vector([0, 0])
@@ -247,6 +279,7 @@ class Enemy():
         steeringForce[1] = (hitColliderRadius - hitObjectLocalPos.y()) * forceMult
         steeringForce[0] = (hitColliderRadius - hitObjectLocalPos.x()) * self.breakMultiplier
         
+        #self.mainCamera.RenderRawPoint(self.transform.LocalToGlobal(hitObjectLocalPos, True), self.debugCol, 3)
         #print(steeringForce)
         #print(self.phys.vel.data)
         #convert and aplly final result

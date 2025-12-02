@@ -74,6 +74,7 @@ def main():
     Obstacles = [] #game objects
     Borders = [] #game objects
     Enemies = [] #physic object
+    FlockingGroups = [] #list of lists of game objects, so that it supports multiple flocks at the same time
 
     #create player object
     Player = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
@@ -132,7 +133,7 @@ def main():
 
     #enemies spawn
     Enemies = []
-    for _ in range(5):
+    for _ in range(30):
         borderDist = 10
         enemyPosition = Vector([random.randint(borderDist, MainCamera.windowSize[0] - borderDist), random.randint(borderDist, MainCamera.windowSize[0] - borderDist)])
         CurEnemy = game_object.GameObject(Transform(enemyPosition, 0, Vector([15, 15])), [], None)
@@ -154,7 +155,9 @@ def main():
         CurEnemyAI.wanderRadius = 8
         CurEnemyAI.wanderJitter = 4
         #ObstacleAvoidance
+        CurEnemyAI.minObstacleAvoidanceLength = CurEnemy.transform.lscale.MaxComponent()
         CurEnemyAI.breakMultiplier = 2
+        #WallAvoidance
         CurEnemyAI.wallDetectionRange = CurEnemy.transform.lscale.MaxComponent() * 3
 
         #debug on / off
@@ -167,6 +170,18 @@ def main():
         Enemies.append(CurEnemy)
         GlobalObjects.append(CurEnemy)
 
+
+
+    #create flocking activator object
+    #this object activates flocking behavior in enemies, it is separate manager since once activated, enemies become locked in created group
+    #FLOCKING ACTIVATOR IS NOT PART OF GLOBAL OBJECTS!!!!
+    FlockingActivator = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([15 * 4, 15 * 4])), [], None)
+
+    #only visible in debug mode
+    FlockingActivator.AddComp(enemies.FlockingActivator(60, 4))
+    FlockingActivator.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (255, 0, 0), 0))
+    
+    
     #------------------------------------------------------------------
     #UPDATE
     #------------------------------------------------------------------
@@ -248,6 +263,10 @@ def main():
         #print(PlayerRaycast.transform.isSynch)
         raycastObject, raycastPoint = collisions.Raycast.CastRay(PlayerRaycast.transform, GlobalObjects)
 
+        #-----------------------------------------------
+        #Special Events
+        #-----------------------------------------------
+
         #killing enemies
         #print(raycastObject.GetComp('Enemy'))
         if raycastObject and raycastObject.GetComp('Enemy'):
@@ -256,10 +275,8 @@ def main():
             #GlobalObjects.remove(raycastObject)
             #del raycastObject
 
-        #-----------------------------------------------
-        #Physics update
-        #-----------------------------------------------
-
+        #enemies grouping
+        FlockingActivator.GetComp('FlockingActivator').TryGroupEnemies(Enemies)
 
         #-----------------------------------------------
         #Collision handling
@@ -317,6 +334,7 @@ def main():
         #Physics execution
         #-----------------------------------------------
         Player.GetComp('PhysicObject').ExecutePos()
+        Player.transform.SynchGlobals()
 
         #enemy logic
         for Object in Enemies:
@@ -324,10 +342,19 @@ def main():
                 pass
 
                 #update enemy AI sequentially
-                Enemy.ObstacleAvoidance(1, Obstacles)
-                Enemy.WallAvoidance(1, Borders)
-                Enemy.Hide(1, Obstacles)
-                Enemy.Wander(1)
+                ExtendedObstacles = (Obstacles + Enemies)
+                ExtendedObstacles.remove(Object) #this may cause problems
+                
+                if not Enemy.isAttacking:
+                    Enemy.ObstacleAvoidance(0.4, ExtendedObstacles)
+                    Enemy.WallAvoidance(0.4, Borders)
+                    Enemy.Hide(0.2, Obstacles)
+                    Enemy.Wander(1)
+                else:
+                    Enemy.ObstacleAvoidance(0.4, ExtendedObstacles)
+                    Enemy.WallAvoidance(0.4, Borders)
+                    Enemy.Arrive(1, Player.transform.pos, enums.ArriveStyle.FAST)
+
             for Phys in Object.GetComps('PhysicObject'):
                 Phys.UpdateVelocity()
                 #first rotate the enemy towards it's velocity
