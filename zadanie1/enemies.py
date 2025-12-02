@@ -138,7 +138,7 @@ class Enemy():
         Result = Vector([0, 0])
 
         for Neighbour in flockingGroup:
-            if Neighbour == self:
+            if Neighbour == self.gameObject:
                 continue
             Neighbour.transform.SynchGlobals()
             VectToNeighbour = self.transform.pos - Neighbour.transform.pos
@@ -153,6 +153,8 @@ class Enemy():
         HeadingsSum = Vector([0, 0])
 
         for Neighbour in flockingGroup:
+            if Neighbour == self.gameObject:
+                continue
             Neighbour.transform.SynchGlobals()
             #calculate heading since object contains its rotation as a scalar and not vector
             HeadingsSum += Neighbour.transform.Forward()
@@ -173,21 +175,22 @@ class Enemy():
         PositionsSum = Vector([0, 0])
 
         for Neighbour in flockingGroup:
+            if Neighbour == self.gameObject:
+                continue
             Neighbour.transform.SynchGlobals()
             #calculate heading since object contains its rotation as a scalar and not vector
             PositionsSum += Neighbour.transform.pos
 
         CenterOfMass = PositionsSum / (len(flockingGroup) - 1)
-        Seek(CenterOfMass, weight)
+        self.Seek(weight, CenterOfMass)
 
 
     #NORMAL FUNCTIONS
 
     #unused
-    def Seek(self, weight):
+    def Seek(self, weight, destination):
         self.transform.SynchGlobals()
-        self.playerTransform.SynchGlobals()
-        desiredVelocity = (self.playerTransform.pos - self.transform.pos) * self.phys.maxVel
+        desiredVelocity = (destination - self.transform.pos) * self.phys.maxVelocity
         #applying force
         self.phys.TryAccumulateForce((desiredVelocity - self.phys.vel) * weight)
 

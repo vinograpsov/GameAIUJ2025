@@ -178,7 +178,7 @@ def main():
     FlockingActivator = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([15 * 4, 15 * 4])), [], None)
 
     #only visible in debug mode
-    FlockingActivator.AddComp(enemies.FlockingActivator(60, 4))
+    FlockingActivator.AddComp(enemies.FlockingActivator(90, 8))
     FlockingActivator.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (255, 0, 0), 0))
     
     
@@ -292,7 +292,7 @@ def main():
 
         #for every physic object, find colliders in all objects
         for i in range(0, len(PhysicComponents)):
-            for j in range(i, len(GlobalObjects)):
+            for j in range(0, len(GlobalObjects)):
                 #check for every collider in object
                 for OtherCollider in GlobalObjects[j].GetComps('Collider'):
 
@@ -337,6 +337,27 @@ def main():
         Player.transform.SynchGlobals()
 
         #enemy logic
+
+        #flocking behavior
+        for FlockingGroup in FlockingActivator.GetComp('FlockingActivator').flockingGroups:
+
+            for Enemy in FlockingGroup:
+                #print(len(FlockingGroup))
+                EnemyAI = Enemy.GetComp('Enemy')
+
+                ExtendedObstacles = (Obstacles + Enemies)
+                ExtendedObstacles.remove(Enemy) #this may cause problems
+                EnemyAI.ObstacleAvoidance(0.4, ExtendedObstacles)
+                EnemyAI.WallAvoidance(0.4, Borders)
+                EnemyAI.Seek(1, Player.transform.pos)
+                #EnemyAI.Separation(10, FlockingGroup)
+                #EnemyAI.Arrive(1, Player.transform.pos, enums.ArriveStyle.FAST)
+                #here goes special flocking behaviors
+
+                #EnemyAI.Cohesion(100, FlockingGroup)
+                #EnemyAI.Alignment(1, FlockingGroup)
+
+        #singular enemy
         for Object in Enemies:
             for Enemy in Object.GetComps('Enemy'):
                 pass
@@ -351,10 +372,11 @@ def main():
                     Enemy.Hide(0.2, Obstacles)
                     Enemy.Wander(1)
                 else:
-                    Enemy.ObstacleAvoidance(0.4, ExtendedObstacles)
-                    Enemy.WallAvoidance(0.4, Borders)
-                    Enemy.Arrive(1, Player.transform.pos, enums.ArriveStyle.FAST)
-
+                    pass
+                    #Enemy.ObstacleAvoidance(0.4, ExtendedObstacles)
+                    #Enemy.WallAvoidance(0.4, Borders)
+                    #Enemy.Arrive(1, Player.transform.pos, enums.ArriveStyle.FAST)
+            
             for Phys in Object.GetComps('PhysicObject'):
                 Phys.UpdateVelocity()
                 #first rotate the enemy towards it's velocity
