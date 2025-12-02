@@ -204,7 +204,7 @@ class Vector:
     @staticmethod
     def RotToVect(rot):
         result = Vector([1, 0])
-        return result.Rotate(rot)
+        return (result.Rotate(rot)).Normalized
 
     #REGULAR METHODS
 

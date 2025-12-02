@@ -131,7 +131,66 @@ class Enemy():
         if self.phys.vel.Length() > self.directionChangeThreshold:
             self.transform.lrot = self.phys.vel.ToRotation()
             self.transform.Desynch()
-    
+
+    #flocking functions
+    def Separation(self, weight, flockingGroup):
+        self.transform.SynchGlobals()
+        Result = Vector([0, 0])
+
+        for Neighbour in flockingGroup:
+            if Neighbour == self:
+                continue
+            Neighbour.transform.SynchGlobals()
+            VectToNeighbour = self.transform.pos - Neighbour.transform.pos
+            Result += VectToNeighbour.Normalized() / VectToNeighbour.Length()
+
+        self.phys.TryAccumulateForce(Result * weight)
+
+    def Alignment(self, weight, flockingGroup):
+        self.transform.SynchGlobals()
+        Result = Vector([0, 0])
+
+        HeadingsSum = Vector([0, 0])
+
+        for Neighbour in flockingGroup:
+            Neighbour.transform.SynchGlobals()
+            #calculate heading since object contains its rotation as a scalar and not vector
+            HeadingsSum += Neighbour.transform.Forward()
+
+        #there is no need to calculate neighbour count since it never changes (flocking group is forever locked)
+        #also no need for checking IF there are neighbours since we alredy know there is at least 1
+        AvarageHeading = HeadingsSum / (len(flockingGroup) - 1) #len - 1 because we exclude self
+
+        Result = AvarageHeading - self.transform.Forward()
+        self.phys.TryAccumulateForce(Result * weight)
+
+
+    def Cohesion(self, weight, flockingGroup):
+
+        self.transform.SynchGlobals()
+        Result = Vector([0, 0])
+
+        PositionsSum = Vector([0, 0])
+
+        for Neighbour in flockingGroup:
+            Neighbour.transform.SynchGlobals()
+            #calculate heading since object contains its rotation as a scalar and not vector
+            PositionsSum += Neighbour.transform.pos
+
+        CenterOfMass = PositionsSum / (len(flockingGroup) - 1)
+        Seek(CenterOfMass, weight)
+
+
+    #NORMAL FUNCTIONS
+
+    #unused
+    def Seek(self, weight):
+        self.transform.SynchGlobals()
+        self.playerTransform.SynchGlobals()
+        desiredVelocity = (self.playerTransform.pos - self.transform.pos) * self.phys.maxVel
+        #applying force
+        self.phys.TryAccumulateForce((desiredVelocity - self.phys.vel) * weight)
+
     #used in hide method
     def Arrive(self, weight, destination, arriveStyle):
         self.transform.SynchGlobals()
@@ -157,13 +216,6 @@ class Enemy():
     #for now skip as in our project there is NEVER an option that obstacles are non existing
     def Evade(self, weight):
         pass
-    #unused
-    def Seek(self, weight):
-        self.transform.SynchGlobals()
-        self.playerTransform.SynchGlobals()
-        desiredVelocity = (self.playerTransform.pos - self.transform.pos) * self.phys.maxVel
-        #applying force
-        self.phys.TryAccumulateForce((desiredVelocity - self.phys.vel) * weight)
 
     #wander works mostly by using already existing game objects structure
     def Wander(self, weight):
