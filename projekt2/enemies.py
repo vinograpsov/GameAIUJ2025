@@ -1,3 +1,5 @@
+
+'''
 import game_object
 import random
 import enums
@@ -113,18 +115,6 @@ class Enemy():
             self.mainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(resultPoint, True), self.debugCol, 1)
         if enums.DebugFlag.OBSTACLE in self.debugFlag:
             self.mainCamera.RenderWireframe(self.obstacleAvoidanceDebug.GetComp('Model'))
-        
-        '''
-        if enums.DebugFlag.WALL in self.debugFlag:
-            mainFeeler = Vector([1, 0]) * self.wallDetectionRange
-            #main feeler
-            self.mainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(mainFeeler, True), self.debugCol, 1)
-            #side feelers
-            mainFeeler = Vector([mainFeeler.x() / 2, mainFeeler.y()])
-            #print(Vector([15, 0]).Rotate(DegToRad(45)).data)
-            self.mainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(mainFeeler.Rotated(DegToRad(45)), True), self.debugCol, 1)
-            self.mainCamera.RenderRawLine(self.transform.pos, self.transform.LocalToGlobal(mainFeeler.Rotated(DegToRad(-45)), True), self.debugCol, 1)
-        '''
 
     #corrects object transform, so that it always faces the direction it is going (by velocity)
     def UpdateForwardDirection(self):
@@ -404,3 +394,5 @@ class Enemy():
 
         #print(steeringForce.data)
         self.phys.TryAccumulateForce(steeringForce * weight)
+
+'''

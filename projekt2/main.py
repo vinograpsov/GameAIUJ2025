@@ -1,4 +1,4 @@
-#python ligraries
+#python libraries
 import pygame
 import time
 import random, math, sys
@@ -10,7 +10,7 @@ import collisions
 import physics
 import enums
 
-import enemies
+import bots
 
 pygame.init()
 
@@ -70,28 +70,28 @@ def main():
     #----------------------------------------
     #Game objects containers
     #----------------------------------------
-    GlobalObjects = []
+    GlobalObjects = [] #game objects
     Obstacles = [] #game objects
     Borders = [] #game objects
-    Enemies = [] #physic object
-    FlockingGroups = [] #list of lists of game objects, so that it supports multiple flocks at the same time
+    Bots = [] #game objects with physic object + BotAI
 
-    #create player object
+    #PLAYER IS SIMPLY BOT THAT CAN BE CONTROLLED BY OUTSIDE INPUT AND HAS NON FUNCTIONING AI
     Player = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
-    Player.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255], enums.RenderMode.POLYGON));
+    #Player.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255], enums.RenderMode.POLYGON));
+    Player.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, [0, 0, 255], 0))
     Player.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
     Player.AddComp(physics.PhysicObject(1))
+    Player.AddComp(bots.Bot()) #player is still considered a bot
+    #TO DO
+    #REPLACE PLAYER RAYCAST WITH RAILGUN WEAPON
     PlayerRaycast = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
     PlayerRaycast.SetParent(Player)
-    #Player.GetComp('PhysicObject').restitution = 1
 
     GlobalObjects.append(Player);
 
     #create cursor object
     Cursor = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
-    #Cursor = game_object.GameObject(transforms.Transform([size[0] / 2, size[1] / 2], 0, [15, 15]), [], None)
     Cursor.AddComp(rendering.Model('Assets\Cursor.obj', [255, 0, 0], enums.RenderMode.WIREFRAME))
-    #Cursor.AddComp(physics.Collider(0, [1, 1]))
     GlobalObjects.append(Cursor);
 
 
@@ -116,12 +116,10 @@ def main():
     Borders.append(Border2)
     Borders.append(Border3)
     Borders.append(Border4)
-    #Obstacles.append(Border1)
-    #Obstacles.append(Border2)
-    #Obstacles.append(Border3)
-    #Obstacles.append(Border4)
 
     #enviromental obstacles creation
+    #TO DO
+    #replace it by map creation
     for _ in range(10):
         borderDist = 50
         obstacleSize = random.randint(10, 50)
@@ -131,56 +129,30 @@ def main():
         GlobalObjects.append(CurObstacle)
         Obstacles.append(CurObstacle)
 
-    #enemies spawn
-    Enemies = []
-    for _ in range(30):
+    #TO DO
+    #bots spawns
+    #bots spawns in set positions (not random)
+    #btw we may randomize for now it for better testing
+    for _ in range(0):
         borderDist = 10
-        enemyPosition = Vector([random.randint(borderDist, MainCamera.windowSize[0] - borderDist), random.randint(borderDist, MainCamera.windowSize[0] - borderDist)])
-        CurEnemy = game_object.GameObject(Transform(enemyPosition, 0, Vector([15, 15])), [], None)
-        CurEnemy.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (255, 0, 0), 0))
-        #CurEnemy.AddComp(rendering.Model('Assets\Triangle.obj', [255, 0, 0], enums.RenderMode.POLYGON));
-        CurEnemy.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
-        CurEnemy.AddComp(physics.PhysicObject(1))
-        CurEnemy.AddComp(enemies.Enemy())
+        botPosition = Vector([random.randint(borderDist, MainCamera.windowSize[0] - borderDist), random.randint(borderDist, MainCamera.windowSize[0] - borderDist)])
+        CurBot = game_object.GameObject(Transform(botPosition, 0, Vector([15, 15])), [], None)
+        CurBot.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (255, 0, 0), 0))
+        #CurBot.AddComp(rendering.Model('Assets\Triangle.obj', [255, 0, 0], enums.RenderMode.POLYGON));
+        CurBot.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
+        CurBot.AddComp(physics.PhysicObject(1)) #?
+        CurBot.AddComp(bots.Bot())
 
-        #ENEMY AI AND PHYSICS SETUP
-        CurEnemy.GetComp('PhysicObject').maxForce = 2;
-        CurEnemyAI = CurEnemy.GetComp('Enemy')
-        #Arrive
-        CurEnemyAI.arriveDecelerationMultiplier = 0.8
-        #Hide
-        CurEnemyAI.hidingSpotDist = CurEnemy.transform.lscale.MaxComponent() * 2
-        #Wander
-        CurEnemyAI.wanderDistance = 48
-        CurEnemyAI.wanderRadius = 8
-        CurEnemyAI.wanderJitter = 4
-        #ObstacleAvoidance
-        CurEnemyAI.minObstacleAvoidanceLength = CurEnemy.transform.lscale.MaxComponent()
-        CurEnemyAI.breakMultiplier = 2
-        #WallAvoidance
-        CurEnemyAI.wallDetectionRange = CurEnemy.transform.lscale.MaxComponent() * 3
+        #BOT AI SETUP
+        CurBotAI = CurBot.GetComp('Bot')
+        #(...)
 
         #debug on / off
-        CurEnemyAI.debugFlag = enums.DebugFlag.WANDER | enums.DebugFlag.OBSTACLE | enums.DebugFlag.WALL
-        #CurEnemyAI.debugFlag = enums.DebugFlag.HIDE | enums.DebugFlag.ARRIVE
+        CurBotAI.debugFlag = enums.BotDebug.DIRECTION
 
-        CurEnemy.GetComp('PhysicObject').vel = Vector([1, 1])
         #values references setup
-        CurEnemyAI.Start(Player.transform, Player.GetComp('PhysicObject'), MainCamera)
-        Enemies.append(CurEnemy)
-        GlobalObjects.append(CurEnemy)
-
-
-
-    #create flocking activator object
-    #this object activates flocking behavior in enemies, it is separate manager since once activated, enemies become locked in created group
-    #FLOCKING ACTIVATOR IS NOT PART OF GLOBAL OBJECTS!!!!
-    FlockingActivator = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([15 * 4, 15 * 4])), [], None)
-
-    #only visible in debug mode
-    FlockingActivator.AddComp(enemies.FlockingActivator(90, 8))
-    FlockingActivator.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (255, 0, 0), 0))
-    
+        Bots.append(CurBot)
+        GlobalObjects.append(CurBot)
     
     #------------------------------------------------------------------
     #UPDATE
@@ -251,13 +223,16 @@ def main():
         #-----------------------------------------------
         #Player handling
         #-----------------------------------------------
-        Player.transform.FaceTowards(Cursor.transform);
-        #LATER MOVE PLAYER SPEED TO SOME SPECIAL CLASS
-        moveVector = Vector([LeftRightInput[0], UpDownInput[0]])
-        playerSpeed = 0.2
-        Player.GetComp('PhysicObject').maxVelocity = 0.2
-        Player.GetComp('PhysicObject').vel += moveVector * playerSpeed
+        if Player != None: #we can have no player
+            Player.transform.FaceTowards(Cursor.transform);
+            #LATER MOVE PLAYER SPEED TO SOME SPECIAL CLASS
+            moveVector = Vector([LeftRightInput[0], UpDownInput[0]])
+            playerSpeed = 0.2
+            Player.GetComp('PhysicObject').maxVelocity = 0.2
+            Player.GetComp('PhysicObject').vel += moveVector * playerSpeed
 
+        #TO DO
+        #remove this and create railgun weapon
         #debug version of raycast
         PlayerRaycast.transform.SynchGlobals()
         #print(PlayerRaycast.transform.isSynch)
@@ -267,6 +242,8 @@ def main():
         #Special Events
         #-----------------------------------------------
 
+        #TO DO
+        #replace to use weapon system, or make it so that weapon kills
         #killing enemies
         #print(raycastObject.GetComp('Enemy'))
         if raycastObject and raycastObject.GetComp('Enemy'):
@@ -274,9 +251,6 @@ def main():
             #Enemies.remove(raycastObject)
             #GlobalObjects.remove(raycastObject)
             #del raycastObject
-
-        #enemies grouping
-        FlockingActivator.GetComp('FlockingActivator').TryGroupEnemies(Enemies)
 
         #-----------------------------------------------
         #Collision handling
@@ -296,15 +270,10 @@ def main():
                 #check for every collider in object
                 for OtherCollider in GlobalObjects[j].GetComps('Collider'):
 
-                    #for PhysCollider in PhysicComponents[i].GetCompsInChilds('Collider'):
-
-                    #check if not self colliding
-                    #if OtherCollider.gameObject.GetObjsInParents('PhysicObject') == PhysicComponents[i].gameObject:
-                        #continue
-
                     PhysCollider = PhysicComponents[i].gameObject.GetComp('Collider')
-                    if PhysCollider:
-                        PhysCollider.ResolveCollision(OtherCollider)
+                    #UNUSED, we no longer need to resolve any collisions
+                    #if PhysCollider:
+                    #    PhysCollider.ResolveCollision(OtherCollider)
                
 
         #-----------------------------------------------
@@ -313,8 +282,7 @@ def main():
         MainCamera.Clear()
         
         PlayerRaycast.transform.SynchGlobals()
-        #Player.transform.SynchGlobals()
-        #print(PlayerRaycast.transform.pos.data)
+
         MainCamera.RenderRawLine(PlayerRaycast.transform.pos, raycastPoint, (255, 0, 0), 1)
 
 
@@ -325,62 +293,31 @@ def main():
                 MainCamera.RenderPrimitive(Primitive)
 
         #ENEMIES DEBUG!!!
-        for Object in Enemies:
-            EnemyAI = Object.GetComp('Enemy')
-            EnemyAI.Debug()
-            #print(EnemyAI.phys.vel.data)
+        for Object in Bots:
+            BotAI = Object.GetComp('Bot')
+            BotAI.Debug()
 
         #-----------------------------------------------
         #Physics execution
         #-----------------------------------------------
+
         Player.GetComp('PhysicObject').ExecutePos()
         Player.transform.SynchGlobals()
 
-        #enemy logic
+        #-----------------------------------------------
+        #AI logic
+        #-----------------------------------------------
 
-        #flocking behavior
-        for FlockingGroup in FlockingActivator.GetComp('FlockingActivator').flockingGroups:
-
-            for Enemy in FlockingGroup:
-                #print(len(FlockingGroup))
-                EnemyAI = Enemy.GetComp('Enemy')
-
-                ExtendedObstacles = (Obstacles + Enemies)
-                ExtendedObstacles.remove(Enemy) #this may cause problems
-                EnemyAI.ObstacleAvoidance(0.4, ExtendedObstacles)
-                EnemyAI.WallAvoidance(0.4, Borders)
-                EnemyAI.Seek(1, Player.transform.pos)
-                #EnemyAI.Separation(10, FlockingGroup)
-                #EnemyAI.Arrive(1, Player.transform.pos, enums.ArriveStyle.FAST)
-                #here goes special flocking behaviors
-
-                #EnemyAI.Cohesion(100, FlockingGroup)
-                #EnemyAI.Alignment(1, FlockingGroup)
-
-        #singular enemy
-        for Object in Enemies:
-            for Enemy in Object.GetComps('Enemy'):
+        #singular bot
+        for Object in Bots:
+            for Bot in Object.GetComps('Bot'):
                 pass
-
-                #update enemy AI sequentially
-                ExtendedObstacles = (Obstacles + Enemies)
-                ExtendedObstacles.remove(Object) #this may cause problems
-                
-                if not Enemy.isAttacking:
-                    Enemy.ObstacleAvoidance(0.4, ExtendedObstacles)
-                    Enemy.WallAvoidance(0.4, Borders)
-                    Enemy.Hide(0.2, Obstacles)
-                    Enemy.Wander(1)
-                else:
-                    pass
-                    #Enemy.ObstacleAvoidance(0.4, ExtendedObstacles)
-                    #Enemy.WallAvoidance(0.4, Borders)
-                    #Enemy.Arrive(1, Player.transform.pos, enums.ArriveStyle.FAST)
             
+            #physics execution for bots
             for Phys in Object.GetComps('PhysicObject'):
                 Phys.UpdateVelocity()
-                #first rotate the enemy towards it's velocity
-                Enemy.UpdateForwardDirection()
+                #first rotate the bot towards it's velocity
+                Bot.UpdateForwardDirection()
                 Phys.ExecutePos()
 
 
@@ -391,67 +328,3 @@ if __name__ == '__main__':
     main()
     pygame.quit()
     sys.exit()
-
-'''
-clock = pygame.time.Clock()
-FPS = 60
-
-obstacles = []
-for _ in range(10):
-    x = random.randint(50, WIDTH - 50)
-    y = random.randint(50, HEIGHT - 50)
-    radius = random.randint(20, 100)
-    color = (0, 255, 0)
-    obstacles.append(Obstacle(x, y, radius, color))
-
-
-player = Player(WIDTH // 2, HEIGHT // 2, debug=True)
-
-
-enemies = []
-for _ in range(5):
-    x = random.randint(50, WIDTH - 50)
-    y = random.randint(50, HEIGHT - 50)
-    enemies.append(Enemy(x, y))
-
-
-running = True
-while running:
-    clock.tick(FPS)
-    
-    for event in pygame.event.get():
-        if  event.type == pygame.QUIT:
-            running = False
-
-    player.update_angle()
-    player.handle_input()
-    
-
-
-    for o in obstacles:
-        player.resolve_collision(o)
-            
-
-    for e in enemies:
-        e.update(player)
-         
-        for o in obstacles:
-            e.resolve_collision(o)
-
-    screen.fill((50, 50, 50))
-    pygame.draw.rect(screen, (0,0,0), (0,0, WIDTH, HEIGHT), 10)
-
-    for o in obstacles:
-        o.draw(screen)
-
-    for e in enemies:
-        e.draw(screen)
-
-    player.draw(screen)
-
-
-    pygame.display.flip()
-
-pygame.quit()
-sys.exit()
-'''

@@ -2,6 +2,7 @@ import game_object
 from transforms import *
 import enums
 
+#COLLISION SYSTEM REQUIRES REWRITING AS POLYGON IS NOT A SPECIFIC COLLIDER BUT A BUNCH OF LINE COLLIDERS
 class Collider():
     def __init__(self, type): #type is collider type enum, size is vect2
         self.gameObject = None
@@ -32,6 +33,9 @@ class Collider():
                 return True
 
     #can properly handle only one collider per physic object
+    #UNUSED!!!!!! as project2 does not require nor use any kind of collision response so only checking for collisions is neccesarry
+    #still kept in case it might be useful later
+    '''
     def ResolveCollision(self, other):
         trans = self.gameObject.transform
         targetTrans = other.gameObject.transform
@@ -91,7 +95,7 @@ class Collider():
 
             if other.type == enums.ColliderType.SPHERE:
                 pass
-
+    '''
 
 
 #raycast is actually just a special case of obstacle avoidance algorithm
@@ -134,8 +138,7 @@ class Raycast():
         return result, transPivot.LocalToGlobal(Vector([hit, 0]), True) #reposition also scales, possible bug
 
 
-    #THIS IS A BOOK REQUIREMENT TO USE SUCH FUNCTION (SPECIFICALLY WALL AVOIDANCE)
-
+#THIS IS A BOOK REQUIREMENT TO USE SUCH FUNCTION (SPECIFICALLY WALL AVOIDANCE)
 def LineIntersection2D(LineStart1, LineEnd1, LineStart2, LineEnd2, FirstLineIntersectionDist, IntersectionPoint):
 
     rTop = (LineStart1.y()-LineStart2.y())*(LineEnd2.x()-LineStart2.x())-(LineStart1.x()-LineStart2.x())*(LineEnd2.y()-LineStart2.y());

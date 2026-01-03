@@ -15,18 +15,13 @@ class ColliderType(Enum):
 	EMPTY = 0
 	SPHERE = 1
 	LINE = 2 #border is inverse box, but requires special code
+	POLYGON = 3 #polygon is in reality a container of line colliders
 
-class DebugFlag(Flag):
+class BotDebug(Flag):
+	DIRECTION = auto()
+	#(...)
+
+class ProjectileDebug(Flag):
 	DIRECTION = auto()
 	VELOCITY = auto()
-	ARRIVE = auto()
-	WANDER = auto()
-	OBSTACLE = auto()
-	WALL = auto()
-	HIDE = auto()
-
-#used by AI
-class ArriveStyle(Enum):
-	FAST = 1
-	NORMAL = 2
-	SLOW = 3
+	#(...)
