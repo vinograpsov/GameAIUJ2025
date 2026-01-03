@@ -162,6 +162,7 @@ class Model():
         self.col = col
         self.renderMode = renderMode
 
+    #Alternate init, would use it but I have no idea how to do this in python
     '''
     def __init__(self, file, col):
         self.gameObject = None;
@@ -173,8 +174,6 @@ class Model():
         self.renderMode = enums.RenderMode.WIREFRAME
     '''
 
-
-#LATER ADD ENUMS
 class Primitive():
 
     def __init__(self, type, col, width):
@@ -183,6 +182,7 @@ class Primitive():
         self.col = col
         self.width = width
 
+    #Alternate init, would use it but I have no idea how to do this in python
     '''
     def __init__(self, type, col):
         self.gameObject = None
@@ -201,6 +201,7 @@ class LinePrimitive(Primitive):
         self.startTrans = startTrans
         self.endTrans = endTrans
     
+    #Alternate init, would use it but I have no idea how to do this in python
     '''
     def __init__(self, col, startTrans, endTrans):
         self.gameObject = None
@@ -211,6 +212,7 @@ class LinePrimitive(Primitive):
         self.endTrans = endTrans
     '''
 
+#UNUSED, but may come in handy at some point
 class Text():
 
     def __init__(self, fontFile, content, col):
@@ -227,10 +229,6 @@ class Text():
         trans.SynchGlobals()
 
         self.font = pygame.font.Font(self.file, int(max(trans.scale)))
-        #DownLeft = transforms.Reposition([-1, -1], trans)
-        #upRight = transforms.Reposition([1, 1], trans)
-        #DownLeft[1] = windowSize[1] - DownLeft[1]
-        #upRight[1] = windowSize[1] - upRight[1]
         center = transforms.Reposition([0, 0], trans)
         center[1] = windowSize[1] - center[1] - self.font.size(self.content)[1] / 2
         center[0] -= self.font.size(self.content)[0] / 2

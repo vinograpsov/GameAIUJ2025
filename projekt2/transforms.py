@@ -192,13 +192,6 @@ class Vector:
                 return False #all vector segment must be of different sign for them to be fully opposite
         return True
 
-    '''returns min ignoring - values and returns them without changing their original sign
-    @staticmethod
-    def AbsMin(v1, v2):
-        if abs(v1) < abs(v2):
-            return v1
-        return v2
-    '''
 
     '''constructs a normalized vector based on rotation in radians'''
     @staticmethod
@@ -250,7 +243,8 @@ class Vector:
             return self #do nothing
         return (self / length) * threshold
 
-    '''despite name returns max axis value from one vector'''
+    #TO DO: should it do this ignoring sign or not? or maybe create both cases
+    '''returns max axis value from one vector'''
     def MaxComponent(self):
         return max(self.data)
 
@@ -371,11 +365,5 @@ class Transform:
         
         self.lrot += min(abs(idealTarget), strength) * math.copysign(1, idealTarget)
         self.lrot %= math.pi * 2
-        
-        #TargetRot = VectToDeg(SubVect(other.pos, self.pos)) #calculates direction and converts to rot
-        #idealTarget = absMin(TargetRot - self.lrot, (180 + TargetRot) % 360 - (180 + self.lrot) % 360)
-
-        #self.lrot += min(abs(idealTarget), strength) * math.copysign(1, idealTarget)
-        #self.lrot %= 360
  
         self.Desynch()
