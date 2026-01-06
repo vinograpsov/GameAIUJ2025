@@ -5,7 +5,7 @@ from rendering import Model
 from transforms import *
 import enums
 
-class CollsionSolver():
+class CollisionSolver():
 
     @staticmethod
     def CheckCollision(collider, other):
@@ -19,7 +19,7 @@ class CollsionSolver():
         if collider.type == enums.ColliderType.SPHERE:
             if other.type == enums.ColliderType.SPHERE:
                 if trans.Distance(target) < MaxVect(trans.scale) * self.size + MaxVect(target.scale) * other.size:
-                    return true
+                    return True
 
             #no longer working
             if other.type == enums.ColliderType.LINE:
@@ -33,7 +33,35 @@ class CollsionSolver():
 
             #POLYGON COLLISION DOES NOT WORK WHEN SPHERE IS FULLY INSIDE A POLYGON, IT WORKS ONLY ON EDGES AND YES THIS IS REQUIREMENT BY THE BOOK
             if other.type == enums.ColliderType.POLYGON:
-                pass
+                    for connection in other.edges:
+                        end1 = target.Reposition(Vector(other.verts[connection[0] - 1]))
+                        end2 = target.Reposition(Vector(other.verts[connection[1] - 1]))
+                        #if any of polygon edges collides return true
+                        if CollisionSolver.LineSphereIntersectionCheck(end1, end2, trans.pos, trans.scale.MaxComponent()):
+                            return True
+        return False
+
+    @staticmethod
+    def LineSphereIntersectionCheck(LineStart, LineEnd, SphereCenter, SphereSize):
+        if CollisionSolver.LinePointDistSquared(LineStart, LineEnd, SphereCenter) < SphereSize * SphereSize:
+            return True
+        return False
+
+    @staticmethod
+    def LinePointDistSquared(LineStart, LineEnd, PointPos):
+        AngleToStart = Vector.Dot(PointPos - LineStart, LineEnd - LineStart)
+
+        if AngleToStart <= 0:
+            return (PointPos - LineStart).LengthSquared()
+
+        AngleToEnd = Vector.Dot(PointPos - LineEnd, LineStart - LineEnd)
+
+        if AngleToEnd <= 0:
+            return (PointPos - LineEnd).LengthSquared()
+
+        #middle
+        closestPoint = LineStart + ((LineEnd - LineStart) * AngleToStart) / (AngleToStart + AngleToEnd)
+        return (PointPos - closestPoint).LengthSquared()
 
     #THIS IS A BOOK REQUIREMENT, faster version of the function that only checks
     @staticmethod
@@ -215,8 +243,8 @@ class Raycast():
                 colliderTrans.SynchGlobals()
                 if collider.type == enums.ColliderType.POLYGON:
                     for connection in collider.edges:
-                        end1 = colliderTrans.Reposition(Vector(collider.verts[connection[0] - 1])).data
-                        end2 = colliderTrans.Reposition(Vector(collider.verts[connection[1] - 1])).data
+                        end1 = colliderTrans.Reposition(Vector(collider.verts[connection[0] - 1]))
+                        end2 = colliderTrans.Reposition(Vector(collider.verts[connection[1] - 1]))
                         #if any of polygon edges collides return true
                         if CollsionSolver.LineIntersection2DCheck(transPivot.pos, endPoint, end1, end2):
                             return True

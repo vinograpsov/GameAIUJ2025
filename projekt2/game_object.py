@@ -69,10 +69,20 @@ class GameObject:
             #also schould be debug but not for now
             self.components.remove(toRemove)
 
-    def GetComps(self, compName):
+    '''returns first component of specified type'''
+    def GetComp(self, compType):
+        for comp in self.components:
+            if isinstance(comp, compType):
+                return comp
+        #debugging
+        #print("LogWarning: no " + compType.__class__.__name__ + "found")
+        return None
+
+    '''returns all components of specified type'''
+    def GetComps(self, compType):
         result = []
         for comp in self.components:
-            if comp.__class__.__name__ == compName:
+            if isinstance(comp, compType):
                 result.append(comp)
         #debugging
         if result == []:
@@ -80,13 +90,17 @@ class GameObject:
             pass
         return result
 
-    def GetComp(self, compName):
-        for comp in self.components:
-            if comp.__class__.__name__ == compName:
-                return comp
+    '''returns all components of specified type in reversed order'''
+    def GetCompsReverse(self, compType):
+        result = []
+        for i in range(len(self.components) - 1, -1, -1):
+            if isinstance(comp, compType):
+                result.append(comp)
         #debugging
-        #print("LogWarning: no " + comp.__class__.__name__ + "found")
-        return None
+        if result == []:
+            #print("LogWarning: no " + str(compType) + "found")
+            pass
+        return result
 
     '''returns all childs with the specified component, if GameObject is required, returns ALL childs'''
     def GetObjsInChilds(self, requiredComp):
@@ -112,14 +126,26 @@ class GameObject:
             result.extend(self.parent.GetObjsInParents(requiredComp))
         return result
 
-    #made better in future
+
     #unused for now
-    def GetCompsInChilds(self, compName):
+    '''deep searches for all components in children of object'''
+    def GetCompsInChilds(self, compType):
         result = []
         for child in self.childs:
-            if child.childs: #if child of an object has childs itself
-                result.extend(child.GetCompsInChilds(compName))
+            if len(child.childs) > 0: #if child of an object has childs itself
+                result.extend(child.GetCompsInChilds(compType))
             for comp in child.components:
-                if comp.__class__.__name__ == compName:
+                if isinstance(comp, compType):
                     result.append(comp)
+        return result
+
+    '''deep searches for all components in children of object'''
+    def GetCompsInChildsReversed(self, compType):
+        result = []
+        for i in range(len(self.childs) - 1, -1, -1):
+            if len(self.childs[i].childs) > 0: #if child of an object has childs itself
+                result.extend(child.GetCompsInChildsReversed(compType))
+            for j in range(len(child.components) - 1, -1, -1):
+                if isinstance(child.components[j], compType):
+                    result.append(child.components[j])
         return result

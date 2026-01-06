@@ -1,6 +1,6 @@
 # Blender 3.6.2
 # www.blender.org
-mtllib map.mtl
+mtllib Map.mtl
 o Map
 v -0.500000 0.300000 -0.000000
 v -0.500000 -0.700000 -0.000000
