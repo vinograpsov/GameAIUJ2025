@@ -126,16 +126,6 @@ def main():
     Map.AddComp(collisions.PolygonCollider(enums.ColliderType.POLYGON, 'Assets/Map.obj'))
     GlobalObjects.append(Map)
 
-
-    for _ in range(10):
-        borderDist = 50
-        obstacleSize = random.randint(10, 50)
-        CurObstacle = game_object.GameObject(Transform(Vector([random.randint(borderDist, MainCamera.windowSize[0] - borderDist), random.randint(borderDist, MainCamera.windowSize[1] - borderDist)]), 0, Vector([obstacleSize, obstacleSize])), [], None)
-        CurObstacle.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
-        CurObstacle.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (0, 255, 0), 0))
-        GlobalObjects.append(CurObstacle)
-        Obstacles.append(CurObstacle)
-
     #TO DO
     #bots spawns
     #bots spawns in set positions (not random)
@@ -265,9 +255,9 @@ def main():
 
         #now for testing collision with map
         if collisions.CollisionSolver.CheckCollision(Player.GetComp(collisions.Collider), Map.GetComp(collisions.Collider)):
-            Player.GetComp(rendering.Primitive).col = [0, 255, 0]
+            Player.GetComp(rendering.RenderObject).col = [0, 255, 0]
         else:
-            Player.GetComp(rendering.Primitive).col = [255, 0, 0]
+            Player.GetComp(rendering.RenderObject).col = [255, 0, 0]
 
 
         #get all physic components in game: (as collision reaction happens only for them)
