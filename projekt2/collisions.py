@@ -33,12 +33,12 @@ class CollisionSolver():
 
             #POLYGON COLLISION DOES NOT WORK WHEN SPHERE IS FULLY INSIDE A POLYGON, IT WORKS ONLY ON EDGES AND YES THIS IS REQUIREMENT BY THE BOOK
             if other.type == enums.ColliderType.POLYGON:
-                    for connection in other.edges:
-                        end1 = target.Reposition(Vector(other.verts[connection[0] - 1]))
-                        end2 = target.Reposition(Vector(other.verts[connection[1] - 1]))
-                        #if any of polygon edges collides return true
-                        if CollisionSolver.LineSphereIntersectionCheck(end1, end2, trans.pos, trans.scale.MaxComponent()):
-                            return True
+                for connection in other.edges:
+                    end1 = target.Reposition(Vector(other.verts[connection[0] - 1]))
+                    end2 = target.Reposition(Vector(other.verts[connection[1] - 1]))
+                    #if any of polygon edges collides return true
+                    if CollisionSolver.LineSphereIntersectionCheck(end1, end2, trans.pos, trans.scale.MaxComponent()):
+                        return True
         return False
 
     @staticmethod
