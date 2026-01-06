@@ -1,11 +1,6 @@
 #import pygame
 import transforms
 
-def GetObjGlobally(requiredComp):
-    pass
-
-
-
 class GameObject:
     #transform
     #childs

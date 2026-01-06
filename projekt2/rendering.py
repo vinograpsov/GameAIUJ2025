@@ -120,7 +120,15 @@ class Camera():
             #pygame.draw.circle(self.screen, model.col, drawPos, 2)
         pygame.draw.polygon(self.screen, model.col, points, 0)
 
-class Model():
+
+'''empty class for all classes suitable for rendering'''
+class RenderObject():
+
+    def __init__(self, col):
+        self.gameObject = None
+        self.col = col
+
+class Model(RenderObject):
 
     '''loads model from assets in game's memory'''
     @staticmethod
@@ -142,23 +150,17 @@ class Model():
                 Vertices.append([float(lineData[1]), float(lineData[2])])
             if lineData[0] == 'l': #edges
                 Edges.append([int(lineData[1]), int(lineData[2])])
-
-
         bothResults.append(Vertices)
         bothResults.append(Edges)
-
-        #print(bothResults)
-
         model.close()
         return bothResults
     
     def __init__(self, file, col, renderMode):
-        self.gameObject = None;
+        super().__init__(col)
         self.file = file
         modelData = self.LoadModel(self.file)
         self.verts = modelData[0]
         self.edges = modelData[1]
-        self.col = col
         self.renderMode = renderMode
 
     #Alternate init, would use it but I have no idea how to do this in python
@@ -173,12 +175,11 @@ class Model():
         self.renderMode = enums.RenderMode.WIREFRAME
     '''
 
-class Primitive():
+class Primitive(RenderObject):
 
     def __init__(self, type, col, width):
-        self.gameObject = None
+        super().__init__(col)
         self.type = type
-        self.col = col
         self.width = width
 
     #Alternate init, would use it but I have no idea how to do this in python
