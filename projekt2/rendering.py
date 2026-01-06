@@ -123,9 +123,10 @@ class Camera():
 class Model():
 
     '''loads model from assets in game's memory'''
-    def LoadModel(self):
+    @staticmethod
+    def LoadModel(filename):
         bothResults = [] #this will result both vertices and edges in 2 2 dimensional lists
-        model = open(self.file, "r")
+        model = open(filename, "r")
         if model == None:
             print("DebugError: cannot find file " + file)
 
@@ -149,16 +150,14 @@ class Model():
         #print(bothResults)
 
         model.close()
-        self.verts = Vertices
-        self.edges = Edges
         return bothResults
     
     def __init__(self, file, col, renderMode):
         self.gameObject = None;
         self.file = file
-        modelData = self.LoadModel()
-        #self.verts = modelData[0]
-        #self.edges = modelData[1]
+        modelData = self.LoadModel(self.file)
+        self.verts = modelData[0]
+        self.edges = modelData[1]
         self.col = col
         self.renderMode = renderMode
 

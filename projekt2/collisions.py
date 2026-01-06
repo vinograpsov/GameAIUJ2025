@@ -1,36 +1,88 @@
+from functools import singledispatchmethod
+
 import game_object
+from rendering import Model
 from transforms import *
 import enums
 
-#COLLISION SYSTEM REQUIRES REWRITING AS POLYGON IS NOT A SPECIFIC COLLIDER BUT A BUNCH OF LINE COLLIDERS
-class Collider():
-    def __init__(self, type): #type is collider type enum, size is vect2
-        self.gameObject = None
-        self.type = type
-        self.size = 1 #size is unused (complicates too much)
-        self.isTrigger = False
+class CollsionSolver():
 
-    def CheckCollision(self, other):
-        trans = self.gameObject.transform
+    @staticmethod
+    def CheckCollision(collider, other):
+        trans = collider.gameObject.transform
         target = other.gameObject.transform
         trans.SynchGlobals()
         target.SynchGlobals()
         
-        #only possible collision shapes are sphere <-> sphere sphere <-> border
+        #only possible collision shapes are sphere <-> sphere sphere <-> line, sphere <-> polygon
 
-        if other.type == enums.ColliderType.SPHERE:
-            if trans.Distance(target) < MaxVect(trans.scale) * self.size + MaxVect(target.scale) * other.size:
-                return true
+        if collider.type == enums.ColliderType.SPHERE:
+            if other.type == enums.ColliderType.SPHERE:
+                if trans.Distance(target) < MaxVect(trans.scale) * self.size + MaxVect(target.scale) * other.size:
+                    return true
 
-        #no longer working
-        if other.type == enums.ColliderType.LINE:
-            firstScaledSize = trans.scale * self.size
-            secondScaledSize = target.scale * other.size
-            posFromCenter = abs(trans.pos - target.pos);
-            if posFromCenter[0] + scaledSize > target.scale[0] * other.size:
-                return True
-            if posFromCenter[1]+ scaledSize > target.scale[1] * other.size:
-                return True
+            #no longer working
+            if other.type == enums.ColliderType.LINE:
+                firstScaledSize = trans.scale * self.size
+                secondScaledSize = target.scale * other.size
+                posFromCenter = abs(trans.pos - target.pos);
+                if posFromCenter[0] + scaledSize > target.scale[0] * other.size:
+                    return True
+                if posFromCenter[1]+ scaledSize > target.scale[1] * other.size:
+                    return True
+
+            #POLYGON COLLISION DOES NOT WORK WHEN SPHERE IS FULLY INSIDE A POLYGON, IT WORKS ONLY ON EDGES AND YES THIS IS REQUIREMENT BY THE BOOK
+            if other.type == enums.ColliderType.POLYGON:
+                pass
+
+    #THIS IS A BOOK REQUIREMENT, faster version of the function that only checks
+    @staticmethod
+    def LineIntersection2DCheck(LineStart1, LineEnd1, LineStart2, LineEnd2):
+
+        rTop = (LineStart1.y()-LineStart2.y())*(LineEnd2.x()-LineStart2.x())-(LineStart1.x()-LineStart2.x())*(LineEnd2.y()-LineStart2.y());
+        sTop = (LineStart1.y()-LineStart2.y())*(LineEnd1.x()-LineStart1.x())-(LineStart1.x()-LineStart2.x())*(LineEnd1.y()-LineStart1.y());
+
+        Bot = (LineEnd1.x()-LineStart1.x())*(LineEnd2.y()-LineStart2.y())-(LineEnd1.y()-LineStart1.y())*(LineEnd2.x()-LineStart2.x());
+
+        if (Bot == 0): #parallel
+            return False
+
+        r = rTop / Bot;
+        s = sTop / Bot;
+
+        if (r > 0) and (r < 1) and (s > 0) and (s < 1):
+            #lines intersect
+            return True
+
+        #lines do not intersect
+        return False
+    
+    @staticmethod
+    def LineIntersection2DPoint(LineStart1, LineEnd1, LineStart2, LineEnd2, FirstLineIntersectionDist, IntersectionPoint):
+
+        rTop = (LineStart1.y()-LineStart2.y())*(LineEnd2.x()-LineStart2.x())-(LineStart1.x()-LineStart2.x())*(LineEnd2.y()-LineStart2.y());
+        sTop = (LineStart1.y()-LineStart2.y())*(LineEnd1.x()-LineStart1.x())-(LineStart1.x()-LineStart2.x())*(LineEnd1.y()-LineStart1.y());
+
+        Bot = (LineEnd1.x()-LineStart1.x())*(LineEnd2.y()-LineStart2.y())-(LineEnd1.y()-LineStart1.y())*(LineEnd2.x()-LineStart2.x());
+
+        if (Bot == 0): #parallel
+            return False, FirstLineIntersectionDist, IntersectionPoint
+
+        r = rTop / Bot;
+        s = sTop / Bot;
+
+        if (r > 0) and (r < 1) and (s > 0) and (s < 1):
+            #lines intersect
+            FirstLineIntersectionDist = Vector.Dist(LineStart1, LineEnd1) * r
+
+            IntersectionPoint = LineStart1 + (LineEnd1 - LineStart1) * r
+
+            return True, FirstLineIntersectionDist, IntersectionPoint
+
+        #lines do not intersect
+        FirstLineIntersectionDist = 0
+        return False, 0, IntersectionPoint
+
 
     #can properly handle only one collider per physic object
     #UNUSED!!!!!! as project2 does not require nor use any kind of collision response so only checking for collisions is neccesarry
@@ -98,9 +150,89 @@ class Collider():
     '''
 
 
+#COLLISION SYSTEM REQUIRES REWRITING AS POLYGON IS NOT A SPECIFIC COLLIDER BUT A BUNCH OF LINE COLLIDERS
+class Collider():
+    def __init__(self, type): #type is collider type enum, size is vect2
+        self.gameObject = None
+        self.type = type
+        self.size = 1 #size is unused (complicates too much)
+        self.isTrigger = False
+
+    def CheckCollision(self, other):
+        trans = self.gameObject.transform
+        target = other.gameObject.transform
+        trans.SynchGlobals()
+        target.SynchGlobals()
+        
+        #only possible collision shapes are sphere <-> sphere sphere <-> border
+
+        if other.type == enums.ColliderType.SPHERE:
+            if trans.Distance(target) < MaxVect(trans.scale) * self.size + MaxVect(target.scale) * other.size:
+                return true
+
+        #no longer working
+        if other.type == enums.ColliderType.LINE:
+            firstScaledSize = trans.scale * self.size
+            secondScaledSize = target.scale * other.size
+            posFromCenter = abs(trans.pos - target.pos);
+            if posFromCenter[0] + scaledSize > target.scale[0] * other.size:
+                return True
+            if posFromCenter[1]+ scaledSize > target.scale[1] * other.size:
+                return True
+
+
+class PolygonCollider(Collider):
+
+    def __init__(self, type, file): #type is collider type enum
+        self.gameObject = None
+        self.type = type
+        self.size = 1 #size is unused (complicates too much)
+        self.isTrigger = False
+        #model loading
+        self.file = file
+        modelData = Model.LoadModel(self.file)
+        self.verts = modelData[0]
+        self.edges = modelData[1]
+
 #raycast is actually just a special case of obstacle avoidance algorithm
 #it works the same, but has inifinite range and 0 width
 class Raycast():
+
+    #"ray" functions as line collider with definite start and end
+    @staticmethod
+    def CheckRay(transPivot, endPoint, sceneObjects): #endpoint is optional type
+        transPivot.SynchGlobals()
+        #calculate automatic (near infinite) endpoint if not given
+        if endPoint == None:
+            endPoint = transPivot.LocalToGlobal(Vector([8192, 0]), True)
+        
+        endDist = Vector.Dist(transPivot.pos, endPoint)
+        #for now made only with polygons
+
+        for Object in sceneObjects:
+            for collider in Object.GetComps('Collider'):
+                colliderTrans = collider.gameObject.transform
+                colliderTrans.SynchGlobals()
+                if collider.type == enums.ColliderType.POLYGON:
+                    for connection in collider.edges:
+                        end1 = colliderTrans.Reposition(Vector(collider.verts[connection[0] - 1])).data
+                        end2 = colliderTrans.Reposition(Vector(collider.verts[connection[1] - 1])).data
+                        #if any of polygon edges collides return true
+                        if CollsionSolver.LineIntersection2DCheck(transPivot.pos, endPoint, end1, end2):
+                            return True
+                elif collider.type == enums.ColliderType.SPHERE:
+                    #1. check if outside of range (not here)
+                    #2. convert to local space
+                    localColliderPos = transPivot.GlobalToLocal(colliderTrans.pos, True)
+                    #3. discard objects behind ray (yes, also objects that eventually clip into ray)
+                    #and objects that are outside of range (this time also taking in account collider size)
+                    colliderRadius = colliderTrans.scale.MaxComponent()
+                    if localColliderPos.x() < 0 or localColliderPos.x() - colliderRadius > endDist:
+                        continue
+                    #4. check if collision occurs (broad collision case)
+                    if abs(localColliderPos.y()) - colliderRadius <= 0:
+                        return True
+        return False
 
     #ray is always casted in the forward direction of a transform
     #by the book raycast will ignore collider when it starts inside it, that means that raycast by default will not trigger on the caster (player)
@@ -136,30 +268,3 @@ class Raycast():
                     hit = contactPoint
                     result = collider.gameObject
         return result, transPivot.LocalToGlobal(Vector([hit, 0]), True) #reposition also scales, possible bug
-
-
-#THIS IS A BOOK REQUIREMENT TO USE SUCH FUNCTION (SPECIFICALLY WALL AVOIDANCE)
-def LineIntersection2D(LineStart1, LineEnd1, LineStart2, LineEnd2, FirstLineIntersectionDist, IntersectionPoint):
-
-    rTop = (LineStart1.y()-LineStart2.y())*(LineEnd2.x()-LineStart2.x())-(LineStart1.x()-LineStart2.x())*(LineEnd2.y()-LineStart2.y());
-    sTop = (LineStart1.y()-LineStart2.y())*(LineEnd1.x()-LineStart1.x())-(LineStart1.x()-LineStart2.x())*(LineEnd1.y()-LineStart1.y());
-
-    Bot = (LineEnd1.x()-LineStart1.x())*(LineEnd2.y()-LineStart2.y())-(LineEnd1.y()-LineStart1.y())*(LineEnd2.x()-LineStart2.x());
-
-    if (Bot == 0): #parallel
-        return False, FirstLineIntersectionDist, IntersectionPoint
-
-    r = rTop / Bot;
-    s = sTop / Bot;
-
-    if (r > 0) and (r < 1) and (s > 0) and (s < 1):
-        #lines intersect
-        FirstLineIntersectionDist = Vector.Dist(LineStart1, LineEnd1) * r
-
-        IntersectionPoint = LineStart1 + (LineEnd1 - LineStart1) * r
-
-        return True, FirstLineIntersectionDist, IntersectionPoint
-
-    #lines do not intersect
-    FirstLineIntersectionDist = 0
-    return False, 0, IntersectionPoint

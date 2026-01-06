@@ -96,6 +96,7 @@ def main():
 
 
     #WORLD BORDER
+    #TO DO: REPLACE WORLD BORDER WITH POLYGON COLLIDER (OR MAP)
     MainBorder = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([MainCamera.windowSize[0], MainCamera.windowSize[1]])), [], None)
     Border1 = game_object.GameObject(Transform(Vector([0.5, 0]), DegToRad(180), Vector([0.1, 0.1])), [], MainBorder)
     Border1.AddComp(collisions.Collider(enums.ColliderType.LINE))
