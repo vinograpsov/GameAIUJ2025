@@ -21,6 +21,9 @@ class BotDebug(Flag):
 	DIRECTION = auto()
 	#(...)
 
+class WeaponDebug(Flag):
+	LINEOFSIGHT = auto()
+
 class ProjectileDebug(Flag):
 	DIRECTION = auto()
 	VELOCITY = auto()

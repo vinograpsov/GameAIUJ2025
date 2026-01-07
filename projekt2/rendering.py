@@ -5,6 +5,8 @@ import enums
 
 pygame.font.init()
 
+MainCamera = None
+
 class Camera():
     #Window Size is NOT a vector
     def __init__(self, windowSize, clearColor, windowName):
