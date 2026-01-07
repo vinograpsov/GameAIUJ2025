@@ -69,8 +69,9 @@ class Camera():
 
 
     def RenderRawPoint(self, pos, col, size):
-        pos.data[1] = self.windowSize[1] - pos.data[1]
-        pygame.draw.circle(self.screen, col, pos.data, size, 0)
+        drawPos = pos.data.copy()
+        drawPos[1] = self.windowSize[1] - drawPos[1]
+        pygame.draw.circle(self.screen, col, drawPos, size, 0)
 
     '''
     def RenderRawCircle(self, pos, size, col, width):
