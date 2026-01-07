@@ -90,6 +90,8 @@ def main():
     PlayerWeapon.AddComp(weapons.Railgun(Player, 0, 4096, 100)) #for debug weapon has no cooldown and nearly infinite ammo
     PlayerWeapon.SetParent(Player)
 
+    PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER
+
     GlobalObjects.append(Player);
 
     #create cursor object
@@ -252,8 +254,9 @@ def main():
         
         PlayerWeapon.transform.SynchGlobals()
 
-        #testing raycast collision with map
-        PlayerWeapon.GetComp(weapons.Railgun).ShowLinePointer([Map], [])
+        #test raycast collision by player weapon
+        if enums.WeaponDebug.LINEPOINTER in PlayerWeapon.GetComp(weapons.Railgun).debugFlag:
+            PlayerWeapon.GetComp(weapons.Railgun).ShowLinePointer([Map], [])
 
 
         for Object in GlobalObjects:

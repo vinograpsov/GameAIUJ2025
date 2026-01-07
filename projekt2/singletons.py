@@ -2,3 +2,6 @@
 (objects declared here are defined in main in start section)'''
 
 MainCamera = None
+
+'''list of objects that require destroying after some time'''
+TemporalObjects = []

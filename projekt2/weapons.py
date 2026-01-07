@@ -3,6 +3,7 @@ from transforms import *
 import game_object
 import physics
 import collisions
+import enums
 import singletons
 
 class Weapon():
@@ -14,6 +15,8 @@ class Weapon():
 		self.lastTimeShot = 0
 		self.ammo = ammo
 		self.projectileSpeed = projectileSpeed
+
+		self.debugFlag = enums.WeaponDebug(0)
 		pass
 
 	def TryShoot(self):
@@ -23,6 +26,22 @@ class Weapon():
 		self.lastTimeShot = time.time()
 		return True
 		#print("pif paf you have shizofrenia")
+
+	'''debug function'''
+	def ShowLinePointer(self, obstacleObjects, botObjects):
+		
+		#now version for debugging
+		trans = self.gameObject.transform
+		trans.SynchGlobals()
+
+		#first limit ray to nearest obstacle
+		endPoint = collisions.Raycast.CastRay(trans, obstacleObjects)[1]
+
+		#endPoint = trans.Reposition(Vector([8, 0])) #4096
+		col = [255, 0, 0]
+		if collisions.Raycast.CheckRay(trans, endPoint, botObjects):
+			col = [0, 255, 0]
+		singletons.MainCamera.RenderRawLine(trans.pos, endPoint, col, 1)
 
 
 class Railgun(Weapon):
@@ -49,29 +68,13 @@ class Railgun(Weapon):
 			hittedBot.DealDamage(self.damage)
 
 		#TO DO
-		#create temporal visual effect
-		
-		singletons.MainCamera.RenderRawPoint(endPoint, [192, 192, 0], 5)
-		singletons.MainCamera.RenderRawLine(trans.pos, endPoint, [192, 192, 0], 1)
+		#make visual clues appear for longer then just one frame
+		singletons.MainCamera.RenderRawPoint(endPoint, [255, 255, 0], 5)
+		singletons.MainCamera.RenderRawLine(trans.pos, endPoint, [255, 255, 0], 1)
 
 		#TO DO
-		#add sound here
+		#add sound at the weapon's owner (yes, weapon owner, not weapon) origin
 		return True
-
-	def ShowLinePointer(self, obstacleObjects, botObjects):
-		
-		#now version for debugging
-		trans = self.gameObject.transform
-		trans.SynchGlobals()
-
-		#first limit ray to nearest obstacle
-		endPoint = collisions.Raycast.CastRay(trans, obstacleObjects)[1]
-
-		#endPoint = trans.Reposition(Vector([8, 0])) #4096
-		col = [255, 0, 0]
-		if collisions.Raycast.CheckRay(trans, endPoint, obstacleObjects):
-			col = [0, 255, 0]
-		singletons.MainCamera.RenderRawLine(trans.pos, endPoint, col, 1)
 
 class RocketLauncher(Weapon):
 
