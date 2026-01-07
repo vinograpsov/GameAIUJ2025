@@ -1,5 +1,7 @@
 from functools import singledispatchmethod
 
+from torch import diff
+
 import game_object
 from rendering import Model
 from transforms import *
@@ -18,27 +20,38 @@ class CollisionSolver():
 
         if collider.type == enums.ColliderType.SPHERE:
             if other.type == enums.ColliderType.SPHERE:
-                if trans.Distance(target) < MaxVect(trans.scale) * self.size + MaxVect(target.scale) * other.size:
+                if trans.Distance(target) < trans.scale.MaxComponent() * collider.size + trans.scale.MaxComponent() * other.size:
                     return True
 
             #no longer working
             if other.type == enums.ColliderType.LINE:
-                firstScaledSize = trans.scale * self.size
+                firstScaledSize = trans.scale * collider.size
                 secondScaledSize = target.scale * other.size
-                posFromCenter = abs(trans.pos - target.pos);
-                if posFromCenter[0] + scaledSize > target.scale[0] * other.size:
+
+                sphereRadius = trans.scale.MaxComponent() * collider.size
+                
+                diff = trans.pos - target.pos
+
+                distX = abs(diff.x())
+                distY = abs(diff.y())
+
+                
+                halfWidth = target.scale.x() * other.size
+                halfHeight = target.scale.y() * other.size
+
+                if distX + sphereRadius > halfWidth:
                     return True
-                if posFromCenter[1]+ scaledSize > target.scale[1] * other.size:
+                if distY + sphereRadius > halfHeight:
                     return True
 
             #POLYGON COLLISION DOES NOT WORK WHEN SPHERE IS FULLY INSIDE A POLYGON, IT WORKS ONLY ON EDGES AND YES THIS IS REQUIREMENT BY THE BOOK
             if other.type == enums.ColliderType.POLYGON:
-                    for connection in other.edges:
-                        end1 = target.Reposition(Vector(other.verts[connection[0] - 1]))
-                        end2 = target.Reposition(Vector(other.verts[connection[1] - 1]))
-                        #if any of polygon edges collides return true
-                        if CollisionSolver.LineSphereIntersectionCheck(end1, end2, trans.pos, trans.scale.MaxComponent()):
-                            return True
+                for connection in other.edges:
+                    end1 = target.Reposition(Vector(other.verts[connection[0] - 1]))
+                    end2 = target.Reposition(Vector(other.verts[connection[1] - 1]))
+                    #if any of polygon edges collides return true
+                    if CollisionSolver.LineSphereIntersectionCheck(end1, end2, trans.pos, trans.scale.MaxComponent()):
+                        return True
         return False
 
     @staticmethod
@@ -86,7 +99,7 @@ class CollisionSolver():
         return False
     
     @staticmethod
-    def LineIntersection2DPoint(LineStart1, LineEnd1, LineStart2, LineEnd2, FirstLineIntersectionDist, IntersectionPoint):
+    def LineIntersection2DPoint(LineStart1, LineEnd1, LineStart2, LineEnd2):
 
         rTop = (LineStart1.y()-LineStart2.y())*(LineEnd2.x()-LineStart2.x())-(LineStart1.x()-LineStart2.x())*(LineEnd2.y()-LineStart2.y());
         sTop = (LineStart1.y()-LineStart2.y())*(LineEnd1.x()-LineStart1.x())-(LineStart1.x()-LineStart2.x())*(LineEnd1.y()-LineStart1.y());
@@ -94,7 +107,7 @@ class CollisionSolver():
         Bot = (LineEnd1.x()-LineStart1.x())*(LineEnd2.y()-LineStart2.y())-(LineEnd1.y()-LineStart1.y())*(LineEnd2.x()-LineStart2.x());
 
         if (Bot == 0): #parallel
-            return False, FirstLineIntersectionDist, IntersectionPoint
+            return False, 0, Vector([0, 0])
 
         r = rTop / Bot;
         s = sTop / Bot;
@@ -109,7 +122,7 @@ class CollisionSolver():
 
         #lines do not intersect
         FirstLineIntersectionDist = 0
-        return False, 0, IntersectionPoint
+        return False, 0, Vector([0, 0])
 
 
     #can properly handle only one collider per physic object
@@ -195,17 +208,17 @@ class Collider():
         #only possible collision shapes are sphere <-> sphere sphere <-> border
 
         if other.type == enums.ColliderType.SPHERE:
-            if trans.Distance(target) < MaxVect(trans.scale) * self.size + MaxVect(target.scale) * other.size:
-                return true
+            if trans.Distance(target) < trans.scale.MaxComponent() * self.size + trans.scale.MaxComponent() * other.size:
+                return True
 
         #no longer working
         if other.type == enums.ColliderType.LINE:
             firstScaledSize = trans.scale * self.size
             secondScaledSize = target.scale * other.size
             posFromCenter = abs(trans.pos - target.pos);
-            if posFromCenter[0] + scaledSize > target.scale[0] * other.size:
+            if posFromCenter[0] + firstScaledSize > target.scale[0] * other.size:
                 return True
-            if posFromCenter[1]+ scaledSize > target.scale[1] * other.size:
+            if posFromCenter[1]+ secondScaledSize > target.scale[1] * other.size:
                 return True
 
 
@@ -231,14 +244,14 @@ class Raycast():
     def CheckRay(transPivot, endPoint, sceneObjects): #endpoint is optional type
         transPivot.SynchGlobals()
         #calculate automatic (near infinite) endpoint if not given
-        if endPoint == None:
+        if not endPoint:
             endPoint = transPivot.LocalToGlobal(Vector([8192, 0]), True)
         
         endDist = Vector.Dist(transPivot.pos, endPoint)
         #for now made only with polygons
 
         for Object in sceneObjects:
-            for collider in Object.GetComps('Collider'):
+            for collider in Object.GetComps(Collider):
                 colliderTrans = collider.gameObject.transform
                 colliderTrans.SynchGlobals()
                 if collider.type == enums.ColliderType.POLYGON:
@@ -246,7 +259,7 @@ class Raycast():
                         end1 = colliderTrans.Reposition(Vector(collider.verts[connection[0] - 1]))
                         end2 = colliderTrans.Reposition(Vector(collider.verts[connection[1] - 1]))
                         #if any of polygon edges collides return true
-                        if CollsionSolver.LineIntersection2DCheck(transPivot.pos, endPoint, end1, end2):
+                        if CollisionSolver.LineIntersection2DCheck(transPivot.pos, endPoint, end1, end2):
                             return True
                 elif collider.type == enums.ColliderType.SPHERE:
                     #1. check if outside of range (not here)
@@ -262,37 +275,81 @@ class Raycast():
                         return True
         return False
 
+    '''returns a list of all objects that intersects with ray'''
+    def CollectRay(transPivot, endPoint, sceneObjects): #endpoint is optional type
+        result = []
+        transPivot.SynchGlobals()
+        #calculate automatic (near infinite) endpoint if not given
+        if not endPoint:
+            endPoint = transPivot.LocalToGlobal(Vector([8192, 0]), True)
+        
+        endDist = Vector.Dist(transPivot.pos, endPoint)
+
+        for Object in sceneObjects:
+            for collider in Object.GetComps(Collider):
+                colliderTrans = collider.gameObject.transform
+                colliderTrans.SynchGlobals()
+                if collider.type == enums.ColliderType.POLYGON:
+                    for connection in collider.edges:
+                        end1 = colliderTrans.Reposition(Vector(collider.verts[connection[0] - 1]))
+                        end2 = colliderTrans.Reposition(Vector(collider.verts[connection[1] - 1]))
+                        #if any of polygon edges collides return true
+                        if CollisionSolver.LineIntersection2DCheck(transPivot.pos, endPoint, end1, end2):
+                            result.append(collider.gameObject)
+                elif collider.type == enums.ColliderType.SPHERE:
+                    if CollisionSolver.LineSphereIntersectionCheck(transPivot.pos, endPoint, colliderTrans.pos, colliderTrans.scale.MaxComponent()):
+                        result.append(collider.gameObject)
+        return result
+
     #ray is always casted in the forward direction of a transform
     #by the book raycast will ignore collider when it starts inside it, that means that raycast by default will not trigger on the caster (player)
     @staticmethod
     def CastRay(transPivot, sceneObjects):
         result = None
-        hit = 100000 #some arbitrary high number as ray highest range
+        hit = 8192.0 #some arbitrary high number as ray highest range
+        contactPoint = hit
+        #calculate automatic (near infinite) endpoint if not given
+        endPoint = transPivot.LocalToGlobal(Vector([8192, 0]), True)
+
         transPivot.SynchGlobals()
         for Object in sceneObjects:
-            for collider in Object.GetComps('Collider'):
-                if collider.type != enums.ColliderType.SPHERE:
-                    continue
+            for collider in Object.GetComps(Collider):
                 colliderTrans = collider.gameObject.transform
                 colliderTrans.SynchGlobals()
-                #1. check if outside of range (skip)
-                #2. convert to local space
-                localColliderPos = transPivot.GlobalToLocal(colliderTrans.pos, True)
-                #3. discard objects behind ray (yes, also objects that eventually clip into ray)
-                if localColliderPos.x() < 0:
-                    continue
-                #4. check if collision occurs (broad collision case)
-                colliderRadius = colliderTrans.scale.MaxComponent()
-                if abs(localColliderPos.y()) - colliderRadius > 0:
-                    continue
-                #5. calculate contact point (narrow collision case)
-                sqrtPart = math.sqrt(colliderRadius * colliderRadius - localColliderPos.y() * localColliderPos.y())
-                contactPoint = localColliderPos.x() - sqrtPart
-                if contactPoint <= 0: #closer contact point behind ray, calculate further contact instead
-                    contactPoint = localColliderPos.x() + sqrtPart
+
+                contactPoint = hit
+                if collider.type == enums.ColliderType.SPHERE:
+                    #1. check if outside of range (skip)
+                    #2. convert to local space
+                    localColliderPos = transPivot.GlobalToLocal(colliderTrans.pos, True)
+                    #3. discard objects behind ray (yes, also objects that eventually clip into ray)
+                    if localColliderPos.x() < 0:
+                        continue
+                    #4. check if collision occurs (broad collision case)
+                    colliderRadius = colliderTrans.scale.MaxComponent()
+                    if abs(localColliderPos.y()) - colliderRadius > 0:
+                        continue
+                    #5. calculate contact point (narrow collision case)
+                    sqrtPart = math.sqrt(colliderRadius * colliderRadius - localColliderPos.y() * localColliderPos.y())
+                    contactPoint = localColliderPos.x() - sqrtPart
+                    if contactPoint <= 0: #closer contact point behind ray, calculate further contact instead
+                        contactPoint = localColliderPos.x() + sqrtPart
+
+                if collider.type == enums.ColliderType.POLYGON:
+                    for connection in collider.edges:
+                        end1 = colliderTrans.Reposition(Vector(collider.verts[connection[0] - 1]))
+                        end2 = colliderTrans.Reposition(Vector(collider.verts[connection[1] - 1]))
+
+                        doesHit, partialContactPoint = CollisionSolver.LineIntersection2DPoint(transPivot.pos, endPoint, end1, end2)[0:2]
+                        if not doesHit:
+                            continue
+                        if partialContactPoint < contactPoint:
+                            contactPoint = partialContactPoint
+                    
                 #6. compare contact point to old contact point
                 #also update contact point to closest and returning object
                 if contactPoint < hit:
                     hit = contactPoint
                     result = collider.gameObject
-        return result, transPivot.LocalToGlobal(Vector([hit, 0]), True) #reposition also scales, possible bug
+
+        return result, transPivot.LocalToGlobal(Vector([hit, 0]), True)
