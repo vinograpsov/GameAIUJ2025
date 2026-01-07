@@ -3,7 +3,7 @@ from transforms import *
 import game_object
 import physics
 import collisions
-import rendering
+import singletons
 
 class Weapon():
 
@@ -51,8 +51,8 @@ class Railgun(Weapon):
 		#TO DO
 		#create temporal visual effect
 		
-		rendering.MainCamera.RenderRawPoint(endPoint, [192, 192, 0], 5)
-		rendering.MainCamera.RenderRawLine(trans.pos, endPoint, [192, 192, 0], 1)
+		singletons.MainCamera.RenderRawPoint(endPoint, [192, 192, 0], 5)
+		singletons.MainCamera.RenderRawLine(trans.pos, endPoint, [192, 192, 0], 1)
 
 		#TO DO
 		#add sound here
@@ -71,7 +71,7 @@ class Railgun(Weapon):
 		col = [255, 0, 0]
 		if collisions.Raycast.CheckRay(trans, endPoint, obstacleObjects):
 			col = [0, 255, 0]
-		rendering.MainCamera.RenderRawLine(trans.pos, endPoint, col, 1)
+		singletons.MainCamera.RenderRawLine(trans.pos, endPoint, col, 1)
 
 class RocketLauncher(Weapon):
 
