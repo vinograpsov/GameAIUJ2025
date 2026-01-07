@@ -294,7 +294,7 @@ class Raycast():
     def CastRay(transPivot, sceneObjects):
         result = None
         hit = 8192.0 #some arbitrary high number as ray highest range
-        contactPoint = 0.0
+        contactPoint = hit
         #calculate automatic (near infinite) endpoint if not given
         endPoint = transPivot.LocalToGlobal(Vector([8192, 0]), True)
 
@@ -304,6 +304,7 @@ class Raycast():
                 colliderTrans = collider.gameObject.transform
                 colliderTrans.SynchGlobals()
 
+                contactPoint = hit
                 if collider.type == enums.ColliderType.SPHERE:
                     #1. check if outside of range (skip)
                     #2. convert to local space
@@ -325,15 +326,18 @@ class Raycast():
                     for connection in collider.edges:
                         end1 = colliderTrans.Reposition(Vector(collider.verts[connection[0] - 1]))
                         end2 = colliderTrans.Reposition(Vector(collider.verts[connection[1] - 1]))
-                        #if any of polygon edges collides return true
-                        doesHit, contactPoint = CollisionSolver.LineIntersection2DPoint(transPivot.pos, endPoint, end1, end2)[0:2]
+
+                        doesHit, partialContactPoint = CollisionSolver.LineIntersection2DPoint(transPivot.pos, endPoint, end1, end2)[0:2]
                         if not doesHit:
                             continue
+                        if partialContactPoint < contactPoint:
+                            contactPoint = partialContactPoint
                     
                 #6. compare contact point to old contact point
                 #also update contact point to closest and returning object
                 if contactPoint < hit:
                     hit = contactPoint
+                    print(hit)
                     result = collider.gameObject
 
-        return result, transPivot.LocalToGlobal(Vector([hit, 0]), True) #reposition also scales, possible bug
+        return result, transPivot.LocalToGlobal(Vector([hit, 0]), True)

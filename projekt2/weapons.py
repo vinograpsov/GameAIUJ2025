@@ -52,7 +52,7 @@ class Railgun(Weapon):
 		#create temporal visual effect
 		
 		rendering.MainCamera.RenderRawPoint(endPoint, [192, 192, 0], 5)
-		#rendering.MainCamera.RenderRawLine(trans.pos, trans.LocalToGlobal(Vector([128, 0]), True), [192, 192, 0], 1)
+		#rendering.MainCamera.RenderRawLine(trans.pos, endPoint, [192, 192, 0], 1)
 
 		#TO DO
 		#add sound here
