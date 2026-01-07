@@ -21,7 +21,7 @@ FPS = 60
 
 #already at start create camera as global object
 CameraObject = game_object.GameObject(Transform(Vector([800 / 2, 600 / 2]), 0, Vector([1, 1])), [], None)
-CameraObject.AddComp(rendering.Camera([800, 600], (255, 255, 255), "Stable Cobra Deathmatch Mega Bestseller 6000"))
+CameraObject.AddComp(rendering.Camera([800, 600], (64, 64, 64), "Stable Cobra Deathmatch Mega Bestseller 6000"))
 singletons.MainCamera = CameraObject.GetComp(rendering.Camera)
 
 def GetFixedMousePos(windowSize):
@@ -87,7 +87,7 @@ def main():
     #TO DO
     #REPLACE PLAYER RAYCAST WITH RAILGUN WEAPON
     PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-    PlayerWeapon.AddComp(weapons.Railgun(Player, 0, 4096, 100)) #for debug weapon has no cooldown and nearly infinite ammo
+    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 100)) #for debug weapon has no cooldown and nearly infinite ammo
     PlayerWeapon.SetParent(Player)
 
     PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER
@@ -127,7 +127,7 @@ def main():
     #TO DO
     #replace it by map creation
     Map = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([singletons.MainCamera.windowSize[0] / 2, singletons.MainCamera.windowSize[1] / 2])), [], None)
-    Map.AddComp(rendering.Model('Assets\Map.obj', [64, 64, 64], enums.RenderMode.WIREFRAME));
+    Map.AddComp(rendering.Model('Assets\Map.obj', [128, 128, 128], enums.RenderMode.WIREFRAME));
     Map.AddComp(collisions.PolygonCollider(enums.ColliderType.POLYGON, 'Assets/Map.obj'))
     GlobalObjects.append(Map)
 
