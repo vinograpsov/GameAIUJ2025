@@ -231,14 +231,14 @@ class Raycast():
     def CheckRay(transPivot, endPoint, sceneObjects): #endpoint is optional type
         transPivot.SynchGlobals()
         #calculate automatic (near infinite) endpoint if not given
-        if endPoint == None:
+        if not endPoint:
             endPoint = transPivot.LocalToGlobal(Vector([8192, 0]), True)
         
         endDist = Vector.Dist(transPivot.pos, endPoint)
         #for now made only with polygons
 
         for Object in sceneObjects:
-            for collider in Object.GetComps('Collider'):
+            for collider in Object.GetComps(Collider):
                 colliderTrans = collider.gameObject.transform
                 colliderTrans.SynchGlobals()
                 if collider.type == enums.ColliderType.POLYGON:
@@ -246,7 +246,7 @@ class Raycast():
                         end1 = colliderTrans.Reposition(Vector(collider.verts[connection[0] - 1]))
                         end2 = colliderTrans.Reposition(Vector(collider.verts[connection[1] - 1]))
                         #if any of polygon edges collides return true
-                        if CollsionSolver.LineIntersection2DCheck(transPivot.pos, endPoint, end1, end2):
+                        if CollisionSolver.LineIntersection2DCheck(transPivot.pos, endPoint, end1, end2):
                             return True
                 elif collider.type == enums.ColliderType.SPHERE:
                     #1. check if outside of range (not here)
@@ -270,7 +270,7 @@ class Raycast():
         hit = 100000 #some arbitrary high number as ray highest range
         transPivot.SynchGlobals()
         for Object in sceneObjects:
-            for collider in Object.GetComps('Collider'):
+            for collider in Object.GetComps(Collider):
                 if collider.type != enums.ColliderType.SPHERE:
                     continue
                 colliderTrans = collider.gameObject.transform

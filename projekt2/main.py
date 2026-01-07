@@ -10,6 +10,7 @@ import collisions
 import physics
 import enums
 
+import weapons
 import bots
 
 pygame.init()
@@ -84,8 +85,9 @@ def main():
     Player.AddComp(bots.Bot()) #player is still considered a bot
     #TO DO
     #REPLACE PLAYER RAYCAST WITH RAILGUN WEAPON
-    PlayerRaycast = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-    PlayerRaycast.SetParent(Player)
+    PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
+    PlayerWeapon.AddComp(weapons.Railgun(0, 4096)) #for debug weapon has no cooldown and nearly infinite ammo
+    PlayerWeapon.SetParent(Player)
 
     GlobalObjects.append(Player);
 
@@ -231,9 +233,9 @@ def main():
         #TO DO
         #remove this and create railgun weapon
         #debug version of raycast
-        PlayerRaycast.transform.SynchGlobals()
-        #print(PlayerRaycast.transform.isSynch)
-        #raycastObject, raycastPoint = collisions.Raycast.CastRay(PlayerRaycast.transform, GlobalObjects)
+        PlayerWeapon.transform.SynchGlobals()
+        #print(PlayerWeapon.transform.isSynch)
+        #raycastObject, raycastPoint = collisions.Raycast.CastRay(PlayerWeapon.transform, GlobalObjects)
 
         #-----------------------------------------------
         #Special Events
@@ -284,10 +286,13 @@ def main():
         #-----------------------------------------------
         MainCamera.Clear()
         
-        PlayerRaycast.transform.SynchGlobals()
+        PlayerWeapon.transform.SynchGlobals()
+
+        #testing raycast collision with map
+        PlayerWeapon.GetComp(weapons.Railgun).ShowLinePointer(MainCamera, [Map])
 
         #raycast rendering, to remove
-        #MainCamera.RenderRawLine(PlayerRaycast.transform.pos, raycastPoint, (255, 0, 0), 1)
+        #MainCamera.RenderRawLine(PlayerWeapon.transform.pos, raycastPoint, (255, 0, 0), 1)
 
 
         for Object in GlobalObjects:
