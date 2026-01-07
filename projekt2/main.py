@@ -9,7 +9,7 @@ import rendering
 import collisions
 import physics
 import enums
-
+import navigation
 import bots
 
 pygame.init()
@@ -127,14 +127,14 @@ def main():
     GlobalObjects.append(Map)
 
 
-    for _ in range(10):
-        borderDist = 50
-        obstacleSize = random.randint(10, 50)
-        CurObstacle = game_object.GameObject(Transform(Vector([random.randint(borderDist, MainCamera.windowSize[0] - borderDist), random.randint(borderDist, MainCamera.windowSize[1] - borderDist)]), 0, Vector([obstacleSize, obstacleSize])), [], None)
-        CurObstacle.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
-        CurObstacle.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (0, 255, 0), 0))
-        GlobalObjects.append(CurObstacle)
-        Obstacles.append(CurObstacle)
+    # for _ in range(10):
+    #     borderDist = 50
+    #     obstacleSize = random.randint(10, 50)
+    #     CurObstacle = game_object.GameObject(Transform(Vector([random.randint(borderDist, MainCamera.windowSize[0] - borderDist), random.randint(borderDist, MainCamera.windowSize[1] - borderDist)]), 0, Vector([obstacleSize, obstacleSize])), [], None)
+    #     CurObstacle.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
+    #     CurObstacle.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (0, 255, 0), 0))
+    #     GlobalObjects.append(CurObstacle)
+    #     Obstacles.append(CurObstacle)
 
     #TO DO
     #bots spawns
@@ -161,6 +161,18 @@ def main():
         Bots.append(CurBot)
         GlobalObjects.append(CurBot)
     
+
+
+    #------------------------------------------------------------------
+    #TEST FLOODFILL
+    #------------------------------------------------------------------
+
+    allObstacles = Obstacles + Borders + [Map]
+    NavGraph = navigation.NavigationGraph(30, 15)
+
+    start_point = Vector([100, 100])
+    NavGraph.generateFloodFill(start_point, allObstacles)
+
     #------------------------------------------------------------------
     #UPDATE
     #------------------------------------------------------------------
@@ -294,6 +306,8 @@ def main():
         #-----------------------------------------------
         MainCamera.Clear()
         
+        NavGraph.debugDraw(MainCamera)
+
         PlayerRaycast.transform.SynchGlobals()
 
         #raycast rendering, to remove
