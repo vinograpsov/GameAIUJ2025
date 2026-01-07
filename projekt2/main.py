@@ -86,7 +86,7 @@ def main():
     #TO DO
     #REPLACE PLAYER RAYCAST WITH RAILGUN WEAPON
     PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-    PlayerWeapon.AddComp(weapons.Railgun(Player, 0, 4096, 100)) #for debug weapon has no cooldown and nearly infinite ammo
+    PlayerWeapon.AddComp(weapons.Railgun(Player, 1, 4096, 100)) #for debug weapon has no cooldown and nearly infinite ammo
     PlayerWeapon.SetParent(Player)
 
     GlobalObjects.append(Player);
@@ -259,7 +259,7 @@ def main():
         PlayerWeapon.transform.SynchGlobals()
 
         #testing raycast collision with map
-        #PlayerWeapon.GetComp(weapons.Railgun).ShowLinePointer(rendering.MainCamera, [Map])
+        PlayerWeapon.GetComp(weapons.Railgun).ShowLinePointer([Map], [])
 
         #raycast rendering, to remove
         #rendering.MainCamera.RenderRawLine(PlayerWeapon.transform.pos, raycastPoint, (255, 0, 0), 1)

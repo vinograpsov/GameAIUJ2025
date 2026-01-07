@@ -337,7 +337,6 @@ class Raycast():
                 #also update contact point to closest and returning object
                 if contactPoint < hit:
                     hit = contactPoint
-                    print(hit)
                     result = collider.gameObject
 
         return result, transPivot.LocalToGlobal(Vector([hit, 0]), True)

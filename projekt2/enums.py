@@ -22,7 +22,7 @@ class BotDebug(Flag):
 	#(...)
 
 class WeaponDebug(Flag):
-	LINEOFSIGHT = auto()
+	LINEPOINTER = auto()
 
 class ProjectileDebug(Flag):
 	DIRECTION = auto()

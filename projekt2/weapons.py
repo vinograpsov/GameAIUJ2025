@@ -17,7 +17,7 @@ class Weapon():
 		pass
 
 	def TryShoot(self):
-		if self.ammo <= 0 and self.lastTimeShot + self.cooldown < time.time():
+		if self.ammo <= 0 or (self.lastTimeShot + self.cooldown) > time.time():
 			return False
 		self.ammo -= 1
 		self.lastTimeShot = time.time()
@@ -52,13 +52,13 @@ class Railgun(Weapon):
 		#create temporal visual effect
 		
 		rendering.MainCamera.RenderRawPoint(endPoint, [192, 192, 0], 5)
-		#rendering.MainCamera.RenderRawLine(trans.pos, endPoint, [192, 192, 0], 1)
+		rendering.MainCamera.RenderRawLine(trans.pos, endPoint, [192, 192, 0], 1)
 
 		#TO DO
 		#add sound here
 		return True
 
-	def ShowLinePointer(self, Camera, obstacleObjects, botObjects):
+	def ShowLinePointer(self, obstacleObjects, botObjects):
 		
 		#now version for debugging
 		trans = self.gameObject.transform
@@ -69,9 +69,9 @@ class Railgun(Weapon):
 
 		#endPoint = trans.Reposition(Vector([8, 0])) #4096
 		col = [255, 0, 0]
-		if collisions.Raycast.CheckRay(trans, endPoint, sceneObjects):
+		if collisions.Raycast.CheckRay(trans, endPoint, obstacleObjects):
 			col = [0, 255, 0]
-		Camera.RenderRawLine(trans.pos, endPoint, col, 1)
+		rendering.MainCamera.RenderRawLine(trans.pos, endPoint, col, 1)
 
 class RocketLauncher(Weapon):
 
