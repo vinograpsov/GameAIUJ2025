@@ -3,6 +3,7 @@ import pygame
 import time
 import random, math, sys
 #game libraries
+import singletons
 from transforms import *
 import game_object
 import rendering
@@ -10,6 +11,8 @@ import collisions
 import physics
 import enums
 import navigation
+
+import weapons
 import bots
 
 pygame.init()
@@ -19,8 +22,8 @@ FPS = 60
 
 #already at start create camera as global object
 CameraObject = game_object.GameObject(Transform(Vector([800 / 2, 600 / 2]), 0, Vector([1, 1])), [], None)
-CameraObject.AddComp(rendering.Camera([800, 600], (255, 255, 255), "Stable Cobra Deathmatch Mega Bestseller 6000"))
-MainCamera = CameraObject.GetComp(rendering.Camera)
+CameraObject.AddComp(rendering.Camera([800, 600], (92, 92, 92), "Stable Cobra Deathmatch Mega Bestseller 6000"))
+singletons.MainCamera = CameraObject.GetComp(rendering.Camera)
 
 def GetFixedMousePos(windowSize):
     pygamePos = pygame.mouse.get_pos()
@@ -76,7 +79,7 @@ def main():
     Bots = [] #game objects with physic object + BotAI
 
     #PLAYER IS SIMPLY BOT THAT CAN BE CONTROLLED BY OUTSIDE INPUT AND HAS NON FUNCTIONING AI
-    Player = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
+    Player = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
     Player.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, [0, 0, 255], 0))
     #Player.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255], enums.RenderMode.POLYGON));
     Player.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
@@ -84,20 +87,23 @@ def main():
     Player.AddComp(bots.Bot()) #player is still considered a bot
     #TO DO
     #REPLACE PLAYER RAYCAST WITH RAILGUN WEAPON
-    PlayerRaycast = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-    PlayerRaycast.SetParent(Player)
+    PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
+    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 100)) #for debug weapon has no cooldown and nearly infinite ammo
+    PlayerWeapon.SetParent(Player)
+
+    PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER
 
     GlobalObjects.append(Player);
 
     #create cursor object
-    Cursor = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
+    Cursor = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
     Cursor.AddComp(rendering.Model('Assets\Cursor.obj', [255, 0, 0], enums.RenderMode.WIREFRAME))
     GlobalObjects.append(Cursor);
 
 
     #WORLD BORDER
     #TO DO: REPLACE WORLD BORDER WITH POLYGON COLLIDER (OR MAP)
-    MainBorder = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([MainCamera.windowSize[0], MainCamera.windowSize[1]])), [], None)
+    MainBorder = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([singletons.MainCamera.windowSize[0], singletons.MainCamera.windowSize[1]])), [], None)
     Border1 = game_object.GameObject(Transform(Vector([0.5, 0]), DegToRad(180), Vector([0.1, 0.1])), [], MainBorder)
     Border1.AddComp(collisions.Collider(enums.ColliderType.LINE))
     Border2 = game_object.GameObject(Transform(Vector([0, 0.5]), DegToRad(270), Vector([1, 1])), [], MainBorder)
@@ -121,8 +127,8 @@ def main():
     #enviromental obstacles creation
     #TO DO
     #replace it by map creation
-    Map = game_object.GameObject(Transform(Vector(MainCamera.windowSize) / 2, 0, Vector([MainCamera.windowSize[0] / 2, MainCamera.windowSize[1] / 2])), [], None)
-    Map.AddComp(rendering.Model('Assets\Map.obj', [64, 64, 64], enums.RenderMode.WIREFRAME));
+    Map = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([singletons.MainCamera.windowSize[0] / 2, singletons.MainCamera.windowSize[1] / 2])), [], None)
+    Map.AddComp(rendering.Model('Assets\Map.obj', [192, 192, 192], enums.RenderMode.WIREFRAME));
     Map.AddComp(collisions.PolygonCollider(enums.ColliderType.POLYGON, 'Assets/Map.obj'))
     GlobalObjects.append(Map)
 
@@ -142,7 +148,7 @@ def main():
     #btw we may randomize for now it for better testing
     for _ in range(0):
         borderDist = 10
-        botPosition = Vector([random.randint(borderDist, MainCamera.windowSize[0] - borderDist), random.randint(borderDist, MainCamera.windowSize[0] - borderDist)])
+        botPosition = Vector([random.randint(borderDist, singletons.MainCamera.windowSize[0] - borderDist), random.randint(borderDist, singletons.MainCamera.windowSize[0] - borderDist)])
         CurBot = game_object.GameObject(Transform(botPosition, 0, Vector([15, 15])), [], None)
         CurBot.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (255, 0, 0), 0))
         #CurBot.AddComp(rendering.Model('Assets\Triangle.obj', [255, 0, 0], enums.RenderMode.POLYGON));
@@ -236,7 +242,7 @@ def main():
                 MouseInputs[0] = [MouseInputs[0][0] + MouseInputs[1][0], MouseInputs[0][1] + MouseInputs[1][1], MouseInputs[0][2] + MouseInputs[1][2]]
 
 
-        Cursor.transform.lpos = GetWorldMousePos(MainCamera.windowSize, MainCamera.gameObject.transform.lpos)
+        Cursor.transform.lpos = GetWorldMousePos(singletons.MainCamera.windowSize, singletons.MainCamera.gameObject.transform.lpos)
         Cursor.transform.Desynch()
 
         #-----------------------------------------------
@@ -249,13 +255,6 @@ def main():
             playerSpeed = 0.2
             Player.GetComp(physics.PhysicObject).maxVelocity = 0.2
             Player.GetComp(physics.PhysicObject).vel += moveVector * playerSpeed
-
-        #TO DO
-        #remove this and create railgun weapon
-        #debug version of raycast
-        PlayerRaycast.transform.SynchGlobals()
-        #print(PlayerRaycast.transform.isSynch)
-        #raycastObject, raycastPoint = collisions.Raycast.CastRay(PlayerRaycast.transform, GlobalObjects)
 
         #-----------------------------------------------
         #Special Events
@@ -272,15 +271,43 @@ def main():
             #del raycastObject
 
         #-----------------------------------------------
+        #Global rendering
+        #-----------------------------------------------
+        singletons.MainCamera.Clear()
+        
+        PlayerWeapon.transform.SynchGlobals()
+
+        #test raycast collision by player weapon
+        if enums.WeaponDebug.LINEPOINTER in PlayerWeapon.GetComp(weapons.Railgun).debugFlag:
+            PlayerWeapon.GetComp(weapons.Railgun).ShowLinePointer([Map], [])
+
+
+        for Object in GlobalObjects:
+            for Model in Object.GetComps(rendering.Model):
+                singletons.MainCamera.RenderWireframe(Model)
+            for Primitive in Object.GetComps(rendering.Primitive):
+                singletons.MainCamera.RenderPrimitive(Primitive)
+
+        #ENEMIES DEBUG!!!
+        for Object in Bots:
+            BotAI = Object.GetComp(bots.Bot)
+            BotAI.Debug()
+
+        #-----------------------------------------------
         #Collision handling
         #-----------------------------------------------
 
         #now for testing collision with map
+        '''
         if collisions.CollisionSolver.CheckCollision(Player.GetComp(collisions.Collider), Map.GetComp(collisions.Collider)):
-            Player.GetComp(rendering.Primitive).col = [0, 255, 0]
+            Player.GetComp(rendering.RenderObject).col = [0, 255, 0]
         else:
-            Player.GetComp(rendering.Primitive).col = [255, 0, 0]
+            Player.GetComp(rendering.RenderObject).col = [255, 0, 0]
+        '''
 
+        #if player keeps mouse button down he tries to shoot
+        if MouseInputs[0][0] > 0:
+            PlayerWeapon.GetComp(weapons.Weapon).TryShoot([Map], [])
 
         #get all physic components in game: (as collision reaction happens only for them)
         PhysicComponents = []
@@ -299,31 +326,6 @@ def main():
                     #UNUSED, we no longer need to resolve any collisions
                     #if PhysCollider:
                     #    PhysCollider.ResolveCollision(OtherCollider)
-               
-
-        #-----------------------------------------------
-        #Global rendering
-        #-----------------------------------------------
-        MainCamera.Clear()
-        
-        NavGraph.debugDraw(MainCamera)
-
-        PlayerRaycast.transform.SynchGlobals()
-
-        #raycast rendering, to remove
-        #MainCamera.RenderRawLine(PlayerRaycast.transform.pos, raycastPoint, (255, 0, 0), 1)
-
-
-        for Object in GlobalObjects:
-            for Model in Object.GetComps(rendering.Model):
-                MainCamera.RenderWireframe(Model)
-            for Primitive in Object.GetComps(rendering.Primitive):
-                MainCamera.RenderPrimitive(Primitive)
-
-        #ENEMIES DEBUG!!!
-        for Object in Bots:
-            BotAI = Object.GetComp(bots.Bot)
-            BotAI.Debug()
 
         #-----------------------------------------------
         #Physics execution

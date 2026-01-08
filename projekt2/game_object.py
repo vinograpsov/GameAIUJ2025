@@ -1,11 +1,6 @@
 #import pygame
 import transforms
 
-def GetObjGlobally(requiredComp):
-    pass
-
-
-
 class GameObject:
     #transform
     #childs
@@ -55,11 +50,14 @@ class GameObject:
             return self.parent
         return None
 
-    def AddComp(self, comp): #may add several components at once # not yet
+    '''returns added component back so it can be easily accesed'''
+    def AddComp(self, comp):
         self.components.append(comp)
         comp.gameObject = self
+        return comp
 
-    def RemoveComp(self, toRemove): #can remove specified component or an indexed component
+    '''can remove specified component or an indexed component'''
+    def RemoveComp(self, toRemove):
         if toRemove == type(int):
             if toRemove > components.len():
                 print("DebugError: index out of range")

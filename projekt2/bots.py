@@ -19,4 +19,7 @@ class Bot():
         if enums.BotDebug.DIRECTION in self.debugFlag:
             pass
 
+    def DealDamage(self, damage):
+        pass
+
     #HERE COMES WHOLE AI MUMBO JUMBO (state machine included)
