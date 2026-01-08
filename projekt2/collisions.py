@@ -39,10 +39,13 @@ class CollisionSolver():
                 halfWidth = target.scale.x() * other.size
                 halfHeight = target.scale.y() * other.size
 
-                if distX + sphereRadius > halfWidth:
-                    return True
-                if distY + sphereRadius > halfHeight:
-                    return True
+
+                if distX > halfWidth + sphereRadius:
+                    return False
+                if distY > halfHeight + sphereRadius:
+                    return False
+
+                return True
 
             #POLYGON COLLISION DOES NOT WORK WHEN SPHERE IS FULLY INSIDE A POLYGON, IT WORKS ONLY ON EDGES AND YES THIS IS REQUIREMENT BY THE BOOK
             if other.type == enums.ColliderType.POLYGON:

@@ -95,10 +95,10 @@ class NavigationGraph:
                 for obj in obstacles_list:
 
                     obj_colliders = obj.GetComps(collisions.Collider)
-                    poly_colliders = obj.GetComps(collisions.PolygonCollider)
+                    # poly_colliders = obj.GetComps(collisions.PolygonCollider)
 
-                    if poly_colliders:
-                        obj_colliders.extend(poly_colliders)
+                    # if poly_colliders:
+                    #     obj_colliders.extend(poly_colliders)
 
                     for other_collider in obj_colliders:
                         if collisions.CollisionSolver.CheckCollision(probe_collider, other_collider):
@@ -116,6 +116,7 @@ class NavigationGraph:
                         new_node.addNeighbor(current_node)
                         open_list.append(next_pos)
                         processed_keys.add(next_key)
+                        print("Node added at", next_pos)
 
         print(len(self.nodes), "nodes generated in", pygame.time.get_ticks() - start_time, "ms")
 
