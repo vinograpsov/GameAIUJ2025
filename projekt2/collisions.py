@@ -18,7 +18,7 @@ class CollisionSolver():
 
         if collider.type == enums.ColliderType.SPHERE:
             if other.type == enums.ColliderType.SPHERE:
-                if trans.Distance(target) < MaxVect(trans.scale) * self.size + MaxVect(target.scale) * other.size:
+                if trans.Distance(target) < trans.scale.MaxComponent() * self.size + trans.scale.MaxComponent() * other.size:
                     return True
 
             #no longer working
@@ -195,7 +195,7 @@ class Collider():
         #only possible collision shapes are sphere <-> sphere sphere <-> border
 
         if other.type == enums.ColliderType.SPHERE:
-            if trans.Distance(target) < MaxVect(trans.scale) * self.size + MaxVect(target.scale) * other.size:
+            if trans.Distance(target) < trans.scale.MaxComponent() * self.size + trans.scale.MaxComponent() * other.size:
                 return true
 
         #no longer working
