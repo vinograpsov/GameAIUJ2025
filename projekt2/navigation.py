@@ -27,11 +27,15 @@ class GraphNode:
 
 
 class NavigationGraph:
-    def __init__(self, step_size, bot_radius):
+    # idk how to do this without max width and height
+    def __init__(self, step_size, bot_radius, MAX_WIDTH = 800, MAX_HEIGHT = 600, MARGIN = 20):
         self.nodes = []
         self.step_size = step_size
         self.bot_radius = bot_radius
         self.node_map = {}
+        self.MAX_WIDTH = MAX_WIDTH
+        self.MAX_HEIGHT = MAX_HEIGHT
+        self.MARGIN = MARGIN
 
     def _pos_to_key(self, position):
         return (int(round(position.x())), int(round(position.y())))
@@ -73,9 +77,16 @@ class NavigationGraph:
             current_key = self._pos_to_key(current_pos)
             current_node = self.node_map[current_key]
 
+            if current_key not in self.node_map:
+                continue
+
             for direction in directions: 
                 next_pos = current_pos + direction * self.step_size
                 next_key = self._pos_to_key(next_pos)
+
+                if (next_pos.x() < self.MARGIN or next_pos.x() > self.MAX_WIDTH - self.MARGIN or 
+                    next_pos.y() < self.MARGIN or next_pos.y() > self.MAX_HEIGHT - self.MARGIN):
+                    continue
 
                 if next_key in self.node_map: 
                     neighbor_node = self.node_map[next_key]
@@ -86,7 +97,8 @@ class NavigationGraph:
 
                 if next_key in processed_keys:
                     continue
-
+                
+                processed_keys.add(next_key)
                 probe_obj.transform.pos = next_pos
                 probe_obj.transform.SynchGlobals()
 
@@ -109,14 +121,14 @@ class NavigationGraph:
                         break
 
                     if not is_colliding: 
+                        # processed_keys.add(next_key)
                         new_node = GraphNode(next_pos)
                         self.nodes.append(new_node)
                         self.node_map[next_key] = new_node
                         current_node.addNeighbor(new_node)
                         new_node.addNeighbor(current_node)
                         open_list.append(next_pos)
-                        processed_keys.add(next_key)
-                        print("Node added at", next_pos)
+                        print("Node added at", next_pos.x(), " ", next_pos.y())
 
         print(len(self.nodes), "nodes generated in", pygame.time.get_ticks() - start_time, "ms")
 

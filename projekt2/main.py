@@ -274,7 +274,7 @@ def main():
         #Global rendering
         #-----------------------------------------------
         singletons.MainCamera.Clear()
-        
+
         PlayerWeapon.transform.SynchGlobals()
 
         #test raycast collision by player weapon
@@ -350,6 +350,8 @@ def main():
                 Bot.UpdateForwardDirection()
                 Phys.ExecutePos()
 
+
+        NavGraph.debugDraw(singletons.MainCamera)
 
         pygame.display.flip();
 
