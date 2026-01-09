@@ -23,6 +23,8 @@ class BotDebug(Flag):
 
 class WeaponDebug(Flag):
 	LINEPOINTER = auto()
+	FIRESOUND = auto()
+	HITSOUND = auto()
 
 class ProjectileDebug(Flag):
 	DIRECTION = auto()

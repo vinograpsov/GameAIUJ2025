@@ -1,0 +1,7 @@
+# Blender 5.0.0
+# www.blender.org
+mtllib Line.mtl
+o Line
+v 0.000000 0.000000 0.000000
+v 1.000000 -0.000000 -0.000000
+l 1 2

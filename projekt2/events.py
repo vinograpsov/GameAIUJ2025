@@ -1,4 +1,7 @@
 import time
+
+import game_object
+from transforms import *
 import singletons
 import collisions
 import bots
@@ -9,6 +12,9 @@ class Timer():
 		self.gameObject = None
 		self.threshold = threshold
 		singletons.Timers.append(self)
+
+	def __del__(self):
+		singletons.Timers.remove(self)
 
 	def ResetTimer(self):
 		pass
@@ -51,10 +57,17 @@ class RealtimeTimer(Timer):
 
 class DestroyFPSTimer(FPSTimer):
 
+	def __init__(self, threshold):
+		self.gameObject = None
+		super().__init__(threshold)
+
 	def TimedEvent(self):
 		del(self.gameObject)
 
 class DestroyRealtimeTimer(RealtimeTimer):
+
+	def __init__(self, threshold):
+		super().__init__(threshold)
 
 	def TimedEvent(self):
 		del(self.gameObject)
@@ -76,6 +89,10 @@ class Trigger():
 		self.gameObject = None
 		self.collider = None
 		self.isActive = True
+		singletons.Triggers.append(self)
+
+	def __del__(self):
+		singletons.Triggers.remove(self)
 
 	def Start(self, isActive):
 		self.collider = self.gameObject.GetComp(collisions.Collider)
@@ -133,3 +150,11 @@ class SoundTrigger(Trigger):
 			#TO DO
 			#add sourceBot to triggeredBot sensory memory
 			pass
+
+
+'''visual effect is a rendering object that destroys itself after some time'''
+def SpawnVisualEffect(pos, rot, size, renderObject, time):
+	Effect = game_object.GameObject(Transform(pos, rot, size), [], None)
+	Effect.AddComp(renderObject)
+	Effect.AddComp(DestroyRealtimeTimer(time))
+	return Effect

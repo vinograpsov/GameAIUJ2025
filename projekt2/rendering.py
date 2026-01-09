@@ -1,6 +1,7 @@
 import pygame
 import transforms
 import enums
+import singletons
 #print
 
 pygame.font.init()
@@ -71,14 +72,10 @@ class Camera():
         drawPos[1] = self.windowSize[1] - drawPos[1]
         pygame.draw.circle(self.screen, col, drawPos, size, 0)
 
-    '''
-    def RenderRawCircle(self, pos, size, col, width):
-                    #for some reason rendering here does not require to flip y position
-            drawPos = pos.data
-            #drawPos = trans.pos.data
-            drawPos[1] = self.windowSize[1] - drawPos[1]
-            pygame.draw.circle(self.screen, col, drawPos, size, width)
-    '''
+    def RenderRawCircle(self, pos, col, size, width):
+        drawPos = pos.data.copy()
+        drawPos[1] = self.windowSize[1] - drawPos[1]
+        pygame.draw.circle(self.screen, col, drawPos, size, width)
 
     def RenderVertices(self, model):
         trans = model.gameObject.transform
@@ -128,6 +125,10 @@ class RenderObject():
     def __init__(self, col):
         self.gameObject = None
         self.col = col
+        singletons.RenderObjects.append(self)
+
+    def __del__(self):
+        singletons.RenderObjects.remove(self)
 
 class Model(RenderObject):
 

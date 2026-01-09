@@ -87,10 +87,10 @@ def main():
     #TO DO
     #REPLACE PLAYER RAYCAST WITH RAILGUN WEAPON
     PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 100)) #for debug weapon has no cooldown and nearly infinite ammo
+    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 100, 35, 0)) #for debug weapon has no cooldown and nearly infinite ammo
     PlayerWeapon.SetParent(Player)
 
-    PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER
+    PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND
 
     GlobalObjects.append(Player);
 
@@ -258,12 +258,18 @@ def main():
         if enums.WeaponDebug.LINEPOINTER in PlayerWeapon.GetComp(weapons.Railgun).debugFlag:
             PlayerWeapon.GetComp(weapons.Railgun).ShowLinePointer([Map], [])
 
-
+        
+        #TO DO
+        #rewrite this better
         for Object in GlobalObjects:
             for Model in Object.GetComps(rendering.Model):
                 singletons.MainCamera.RenderWireframe(Model)
             for Primitive in Object.GetComps(rendering.Primitive):
                 singletons.MainCamera.RenderPrimitive(Primitive)
+
+
+        for Renderer in singletons.RenderObjects:
+            singletons.MainCamera.Render(Renderer)
 
         #ENEMIES DEBUG!!!
         for Object in Bots:
@@ -327,6 +333,13 @@ def main():
                 Bot.UpdateForwardDirection()
                 Phys.ExecutePos()
 
+
+        #-----------------------------------------------
+        #Timets Update
+        #-----------------------------------------------
+
+        for Timer in singletons.Timers:
+            Timer.UpdateTimer()
 
         pygame.display.flip();
 

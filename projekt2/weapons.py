@@ -5,16 +5,20 @@ import physics
 import collisions
 import enums
 import singletons
+import events
+import rendering
 
 class Weapon():
 
-	def __init__(self, owner, cooldown, ammo, damage, projectileSpeed):
+	def __init__(self, owner, cooldown, ammo, damage, projectileSpeed, firingSoundRadius, projectileHitSoundRadius):
 		self.gameObject = None
 		self.owner = owner
 		self.cooldown = cooldown
 		self.lastTimeShot = 0
 		self.ammo = ammo
 		self.projectileSpeed = projectileSpeed
+		self.firingSoundRadius = firingSoundRadius
+		self.projectileHitSoundRadius = projectileHitSoundRadius
 
 		self.debugFlag = enums.WeaponDebug(0)
 		pass
@@ -38,16 +42,16 @@ class Weapon():
 		endPoint = collisions.Raycast.CastRay(trans, obstacleObjects)[1]
 
 		#endPoint = trans.Reposition(Vector([8, 0])) #4096
-		col = [255, 0, 0]
+		col = singletons.DebugPositiveCol
 		if collisions.Raycast.CheckRay(trans, endPoint, botObjects):
-			col = [0, 255, 0]
+			col = singletons.DebugNegativeCol
 		singletons.MainCamera.RenderRawLine(trans.pos, endPoint, col, 1)
 
 
 class Railgun(Weapon):
 
-	def __init__(self, owner, cooldown, ammo, damage):
-		super().__init__(owner, cooldown, ammo, damage, Vector([0, 0]))
+	def __init__(self, owner, cooldown, ammo, damage, firingSoundRadius, HitSoundRadius):
+		super().__init__(owner, cooldown, ammo, damage, Vector([0, 0]), firingSoundRadius, HitSoundRadius)
 
 	def TryShoot(self, obstacleObjects, botObjects):
 		if not super(Railgun, self).TryShoot():
@@ -69,11 +73,20 @@ class Railgun(Weapon):
 
 		#TO DO
 		#make visual clues appear for longer then just one frame
-		singletons.MainCamera.RenderRawPoint(endPoint, [255, 255, 0], 5)
-		singletons.MainCamera.RenderRawLine(trans.pos, endPoint, [255, 255, 0], 1)
+		
+		#TO DO change this to be more optimal by using line primitive
+		events.SpawnVisualEffect(trans.pos, Vector.ToRotation(endPoint - trans.pos), Vector([Vector.Dist(trans.pos, endPoint), Vector.Dist(trans.pos, endPoint)]), rendering.Model('Assets\Line.obj', [255, 255, 0], enums.RenderMode.WIREFRAME), 0.5)
+		#singletons.MainCamera.RenderRawPoint(endPoint, [255, 255, 0], 5)
+		#singletons.MainCamera.RenderRawLine(trans.pos, endPoint, [255, 255, 0], 1)
 
 		#TO DO
 		#add sound at the weapon's owner (yes, weapon owner, not weapon) origin
+		ownerTrans = self.owner.transform
+		ownerTrans.SynchGlobals()
+		SpawnSound(ownerTrans.pos, self.firingSoundRadius, self.owner)
+		#debug sound visibility
+		if enums.WeaponDebug.FIRESOUND in self.debugFlag:
+			singletons.MainCamera.RenderRawCircle(ownerTrans.pos, singletons.DebugCol, self.firingSoundRadius, 1)
 		return True
 
 class RocketLauncher(Weapon):
@@ -122,8 +135,12 @@ class ExplosiveProjectile():
 	pass
 
 '''this function correctly sets up sound object according to book requirements'''
-def SpawnSound():
-	pass
-
+def SpawnSound(pos, radius, source):
+	Sound = game_object.GameObject(Transform(pos, 0, Vector([radius, radius])), [], None)
+	Sound.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
 	#BOOK REQUIREMENT!!!
 	#SOUND MUST BE ACTIVE ONLY DURING ONE FRAME!
+	Sound.AddComp(events.DestroyFPSTimer(1))
+	triggerComp = Sound.AddComp(events.SoundTrigger(source))
+	triggerComp.Start(True)
+	return Sound

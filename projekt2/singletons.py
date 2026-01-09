@@ -3,5 +3,15 @@
 
 MainCamera = None
 
+DebugCol = [255, 0, 255]
+DebugNegativeCol = [153, 0, 255]
+DebugPositiveCol = [255, 0, 153]
+
+'''objects with a component for rendering'''
+RenderObjects = []
+
 '''list of objects that require destroying after some time'''
 Timers = []
+
+'''list of triggers'''
+Triggers = []
