@@ -121,13 +121,9 @@ class Projectile():
 class ExplosiveProjectile():
 	pass
 
-class Signal():
+'''this function correctly sets up sound object according to book requirements'''
+def SpawnSound():
 	pass
 
-'''explosion is a type of signal that deals damage to bots'''
-class Explosion(Signal):
-	pass
-
-'''sound is type of signal that gets registered in bots sensory memory'''
-class Sound(Signal):
-	pass
+	#BOOK REQUIREMENT!!!
+	#SOUND MUST BE ACTIVE ONLY DURING ONE FRAME!

@@ -83,7 +83,7 @@ def main():
     #Player.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255], enums.RenderMode.POLYGON));
     Player.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
     Player.AddComp(physics.PhysicObject(1))
-    Player.AddComp(bots.Bot()) #player is still considered a bot
+    Player.AddComp(bots.Bot(100)) #player is still considered a bot
     #TO DO
     #REPLACE PLAYER RAYCAST WITH RAILGUN WEAPON
     PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)

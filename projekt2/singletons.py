@@ -4,4 +4,4 @@
 MainCamera = None
 
 '''list of objects that require destroying after some time'''
-TemporalObjects = []
+Timers = []

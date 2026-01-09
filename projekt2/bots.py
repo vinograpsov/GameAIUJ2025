@@ -7,9 +7,11 @@ import sys
 
 class Bot():
 
-    def __init__(self):
+    def __init__(self, maxHealth):
         self.gameObject = None
         self.transform = None
+        self.maxHealth = maxHealth
+        self.health = maxHealth
 
         self.debugFlag = enums.BotDebug(0)
 
@@ -18,6 +20,9 @@ class Bot():
     def Debug(self):
         if enums.BotDebug.DIRECTION in self.debugFlag:
             pass
+
+    def Heal(self, damage):
+        self.health = min(self.health + damage, self.maxHealth)
 
     def DealDamage(self, damage):
         pass
