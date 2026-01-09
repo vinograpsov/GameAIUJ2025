@@ -72,7 +72,6 @@ def main():
     #----------------------------------------
     #Game objects containers
     #----------------------------------------
-    GlobalObjects = [] #game objects
     Obstacles = [] #game objects
     Borders = [] #game objects
     Bots = [] #game objects with physic object + BotAI
@@ -92,12 +91,9 @@ def main():
 
     PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND
 
-    GlobalObjects.append(Player);
-
     #create cursor object
     Cursor = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
     Cursor.AddComp(rendering.Model('Assets\Cursor.obj', [255, 0, 0], enums.RenderMode.WIREFRAME))
-    GlobalObjects.append(Cursor);
 
 
     #WORLD BORDER
@@ -112,12 +108,6 @@ def main():
     Border4 = game_object.GameObject(Transform(Vector([0, -0.5]), DegToRad(90), Vector([1, 1])), [], MainBorder)
     Border4.AddComp(collisions.Collider(enums.ColliderType.LINE))
 
-    GlobalObjects.append(MainBorder)
-    GlobalObjects.append(Border1)
-    GlobalObjects.append(Border2)
-    GlobalObjects.append(Border3)
-    GlobalObjects.append(Border4)
-
     Borders.append(Border1)
     Borders.append(Border2)
     Borders.append(Border3)
@@ -129,7 +119,6 @@ def main():
     Map = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([singletons.MainCamera.windowSize[0] / 2, singletons.MainCamera.windowSize[1] / 2])), [], None)
     Map.AddComp(rendering.Model('Assets\Map.obj', [192, 192, 192], enums.RenderMode.WIREFRAME));
     Map.AddComp(collisions.PolygonCollider(enums.ColliderType.POLYGON, 'Assets/Map.obj'))
-    GlobalObjects.append(Map)
 
     #TO DO
     #bots spawns
@@ -154,7 +143,6 @@ def main():
 
         #values references setup
         Bots.append(CurBot)
-        GlobalObjects.append(CurBot)
     
     #------------------------------------------------------------------
     #UPDATE
@@ -244,7 +232,7 @@ def main():
         #if raycastObject and raycastObject.GetComp('Enemy'):
             #pass
             #Enemies.remove(raycastObject)
-            #GlobalObjects.remove(raycastObject)
+            #singletons.GlobalObjects.remove(raycastObject)
             #del raycastObject
 
         #-----------------------------------------------
@@ -257,16 +245,6 @@ def main():
         #test raycast collision by player weapon
         if enums.WeaponDebug.LINEPOINTER in PlayerWeapon.GetComp(weapons.Railgun).debugFlag:
             PlayerWeapon.GetComp(weapons.Railgun).ShowLinePointer([Map], [])
-
-        
-        #TO DO
-        #rewrite this better
-        for Object in GlobalObjects:
-            for Model in Object.GetComps(rendering.Model):
-                singletons.MainCamera.RenderWireframe(Model)
-            for Primitive in Object.GetComps(rendering.Primitive):
-                singletons.MainCamera.RenderPrimitive(Primitive)
-
 
         for Renderer in singletons.RenderObjects:
             singletons.MainCamera.Render(Renderer)
@@ -294,16 +272,16 @@ def main():
 
         #get all physic components in game: (as collision reaction happens only for them)
         PhysicComponents = []
-        for i in range(0, len(GlobalObjects)):
-            iPhys = GlobalObjects[i].GetComp(physics.PhysicObject)
+        for i in range(0, len(singletons.GlobalObjects)):
+            iPhys = singletons.GlobalObjects[i].GetComp(physics.PhysicObject)
             if iPhys:
                 PhysicComponents.append(iPhys)
 
         #for every physic object, find colliders in all objects
         for i in range(0, len(PhysicComponents)):
-            for j in range(0, len(GlobalObjects)):
+            for j in range(0, len(singletons.GlobalObjects)):
                 #check for every collider in object
-                for OtherCollider in GlobalObjects[j].GetComps(collisions.Collider):
+                for OtherCollider in singletons.GlobalObjects[j].GetComps(collisions.Collider):
 
                     PhysCollider = PhysicComponents[i].gameObject.GetComp(collisions.Collider)
                     #UNUSED, we no longer need to resolve any collisions

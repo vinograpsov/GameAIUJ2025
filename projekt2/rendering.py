@@ -127,7 +127,7 @@ class RenderObject():
         self.col = col
         singletons.RenderObjects.append(self)
 
-    def __del__(self):
+    def Destroy(self):
         singletons.RenderObjects.remove(self)
 
 class Model(RenderObject):

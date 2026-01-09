@@ -13,7 +13,7 @@ class Timer():
 		self.threshold = threshold
 		singletons.Timers.append(self)
 
-	def __del__(self):
+	def Destroy(self):
 		singletons.Timers.remove(self)
 
 	def ResetTimer(self):
@@ -58,11 +58,10 @@ class RealtimeTimer(Timer):
 class DestroyFPSTimer(FPSTimer):
 
 	def __init__(self, threshold):
-		self.gameObject = None
 		super().__init__(threshold)
 
 	def TimedEvent(self):
-		del(self.gameObject)
+		self.gameObject.Destroy()
 
 class DestroyRealtimeTimer(RealtimeTimer):
 
@@ -70,7 +69,7 @@ class DestroyRealtimeTimer(RealtimeTimer):
 		super().__init__(threshold)
 
 	def TimedEvent(self):
-		del(self.gameObject)
+		self.gameObject.Destroy()
 
 
 class TriggerRespawnFPSTimer(FPSTimer):

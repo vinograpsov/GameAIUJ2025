@@ -7,8 +7,12 @@ DebugCol = [255, 0, 255]
 DebugNegativeCol = [153, 0, 255]
 DebugPositiveCol = [255, 0, 153]
 
+'''list off all game objects existing in program'''
+GlobalObjects = [] #game objects
+GlobalObjectsTest = []
+
 '''objects with a component for rendering'''
-RenderObjects = []
+RenderObjects = [] #render object class
 
 '''list of objects that require destroying after some time'''
 Timers = []
