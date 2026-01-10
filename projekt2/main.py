@@ -72,7 +72,11 @@ def main():
     #----------------------------------------
     #Game objects containers
     #----------------------------------------
-    Obstacles = [] #game objects
+
+    GeneralDebugFlag = enums.GeneralDebug.SPAWNPLAYER | enums.GeneralDebug.SPAWNDUMMY
+
+    #TO DO!
+    #move this to singletons
     Borders = [] #game objects
     Bots = [] #game objects with physic object + BotAI
 
@@ -82,7 +86,7 @@ def main():
     #Player.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255], enums.RenderMode.POLYGON));
     Player.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
     Player.AddComp(physics.PhysicObject(1))
-    Player.AddComp(bots.Bot(100)) #player is still considered a bot
+    Player.AddComp(bots.Bot(13, 100, math.pi)) #player is still considered a bot
     #TO DO
     #REPLACE PLAYER RAYCAST WITH RAILGUN WEAPON
     PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
@@ -95,6 +99,15 @@ def main():
     Cursor = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
     Cursor.AddComp(rendering.Model('Assets\Cursor.obj', [255, 0, 0], enums.RenderMode.WIREFRAME))
 
+    #SPAWN DEBUG DUMMY
+    Dummy = None
+    if enums.GeneralDebug.SPAWNDUMMY in GeneralDebugFlag:
+        Dummy = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
+        Dummy.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, [0, 0, 255], 0))
+        Dummy.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
+        Dummy.AddComp(physics.PhysicObject(1))
+        Dummy.AddComp(bots.Bot(13, 100, math.pi))
+        #dummy should later also hold a weapon
 
     #WORLD BORDER
     #TO DO: REPLACE WORLD BORDER WITH POLYGON COLLIDER (OR MAP)

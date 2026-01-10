@@ -21,7 +21,7 @@ class GameObject:
     '''custom destructor, the reason why it is not native function is because python natively do not supports destructors and __del__ or any other kind of native function is NOT a destructor for object'''
     def Destroy(self):
         #it is impossible to trully delete object in python, why why is it so...
-        if self in singletons.GlobalObjectsTest:
+        if self in singletons.GlobalObjects:
             singletons.GlobalObjects.remove(self)
         if self.parent:
             self.parent = None #this essentially releases this object from parent

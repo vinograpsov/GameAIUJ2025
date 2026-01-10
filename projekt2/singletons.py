@@ -3,6 +3,8 @@
 
 MainCamera = None
 
+GeneralDebugFlag = None
+
 DebugCol = [255, 0, 255]
 DebugNegativeCol = [153, 0, 255]
 DebugPositiveCol = [255, 0, 153]

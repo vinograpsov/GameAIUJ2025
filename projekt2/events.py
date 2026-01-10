@@ -4,7 +4,6 @@ import game_object
 from transforms import *
 import singletons
 import collisions
-import bots
 
 class Timer():
 
@@ -82,13 +81,6 @@ class DestroyRealtimeTimer(RealtimeTimer):
 	def TimedEvent(self):
 		self.gameObject.Destroy()
 
-
-class RemoveMemoryTimer():
-
-	def TimedEvent(self):
-		pass
-
-
 class TriggerRespawnFPSTimer(FPSTimer):
 
 	def TimedEvent(self):
@@ -120,6 +112,9 @@ class Trigger():
 
 	def TriggeredEvent(self, triggeredObject):
 		pass
+
+#import needs to be here to avoid circular imports
+import bots
 
 class HealthPickupTrigger(Trigger):
 	def __init__(self, health):

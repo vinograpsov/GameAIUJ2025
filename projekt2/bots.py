@@ -63,6 +63,20 @@ class Bot():
     def Debug(self):
         if enums.BotDebug.DIRECTION in self.debugFlag:
             pass
+        if enums.BotDebug.MEMORIES in self.debugFlag:
+            
+            #this is the same as getting "valid" memories, but is copied to showcase also invalid
+            result = []
+            curTime = time.time()
+
+            for memory in self.memories:
+                if curTime - memory.lastTimeSensed <= self.memorySpan:
+                    singletons.MainCamera.RenderRawPoint(memory.sensedPos, DebugPositiveCol, 5)
+                else:
+                    if memory.sensedPos: #if position was ever initialized
+                        singletons.MainCamera.RenderRawPoint(memory.sensedPos, DebugNegativeCol, 5)
+
+            return result
 
     def Heal(self, damage):
         self.health = min(self.health + damage, self.maxHealth)
