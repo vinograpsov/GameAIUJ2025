@@ -174,7 +174,7 @@ def main():
     #------------------------------------------------------------------
 
     allObstacles = Obstacles + Borders + [Map]
-    NavGraph = navigation.NavigationGraph(60, 15)
+    NavGraph = navigation.NavigationGraph(30, 15)
 
     start_point = Vector([100, 100])
     NavGraph.generateFloodFill(start_point, allObstacles)

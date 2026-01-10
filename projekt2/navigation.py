@@ -71,6 +71,8 @@ class NavigationGraph:
             Vector([-1, -1])
         ]
 
+        safe_radius_sq = (self.bot_radius * 1.5) ** 2
+
         while len(open_list) > 0:
             current_pos = open_list.pop(0)
             current_key = self._pos_to_key(current_pos)
@@ -124,12 +126,19 @@ class NavigationGraph:
                                     is_colliding = True
                                     break
 
+                                dist_sq = collisions.CollisionSolver.LinePointDistSquared(p1, p2, next_pos)
+                                if dist_sq < safe_radius_sq:
+                                    is_colliding = True
+                                    break
+
 
                         elif collider.type == enums.ColliderType.SPHERE:
-                            if collisions.CollisionSolver.LineSphereIntersectionCheck(current_pos, next_pos, collider_trans.pos, collider_trans.scale.MaxComponent()):
+                            dist_to_sphere = (collider_trans.pos - next_pos).LengthSquared()
+                            min_dist = (collider_trans.scale.MaxComponent() + self.bot_radius) ** 2
+                            # if collisions.CollisionSolver.LineSphereIntersectionCheck(current_pos, next_pos, collider_trans.pos, collider_trans.scale.MaxComponent()):
+                            if dist_to_sphere < min_dist:
                                 is_colliding = True
-                                
-
+                                break
 
                     if is_colliding:
                         break 
