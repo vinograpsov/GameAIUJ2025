@@ -43,11 +43,10 @@ class NavigationGraph:
     def generateFloodFill(self, start_pos, obstacles_list):
         start_time = pygame.time.get_ticks()
 
-        probe_transform = Transform(start_pos, 0 , Vector([self.bot_radius, self.bot_radius]))
-        probe_obj = game_object.GameObject(probe_transform, [], None)
-
-        probe_collider = collisions.Collider(enums.ColliderType.SPHERE)
-        probe_obj.AddComp(probe_collider)
+        # probe_transform = Transform(start_pos, 0 , Vector([self.bot_radius, self.bot_radius]))
+        # probe_obj = game_object.GameObject(probe_transform, [], None)
+        # probe_collider = collisions.Collider(enums.ColliderType.SPHERE)
+        # probe_obj.AddComp(probe_collider)
 
         open_list = []
         processed_keys = set()
@@ -99,36 +98,51 @@ class NavigationGraph:
                     continue
                 
                 processed_keys.add(next_key)
-                probe_obj.transform.pos = next_pos
-                probe_obj.transform.SynchGlobals()
+                # probe_obj.transform.pos = next_pos
+                # probe_obj.transform.SynchGlobals()
 
                 is_colliding = False
 
                 for obj in obstacles_list:
 
                     obj_colliders = obj.GetComps(collisions.Collider)
-                    # poly_colliders = obj.GetComps(collisions.PolygonCollider)
+                    poly_colliders = obj.GetComps(collisions.PolygonCollider)
+                    if poly_colliders:
+                        obj_colliders.extend(poly_colliders)
 
-                    # if poly_colliders:
-                    #     obj_colliders.extend(poly_colliders)
 
-                    for other_collider in obj_colliders:
-                        if collisions.CollisionSolver.CheckCollision(probe_collider, other_collider):
-                            is_colliding = True
-                            break
+                    for collider in obj_colliders:
+                        collider_trans = collider.gameObject.transform
+                        collider_trans.SynchGlobals()
+
+                        if collider.type == enums.ColliderType.POLYGON:
+                            for connection in collider.edges: 
+                                p1 = collider_trans.Reposition(Vector(collider.verts[connection[0] - 1]))
+                                p2 = collider_trans.Reposition(Vector(collider.verts[connection[1] - 1]))
+
+                                if collisions.CollisionSolver.LineIntersection2DCheck(current_pos, next_pos, p1, p2):
+                                    is_colliding = True
+                                    break
+
+
+                        elif collider.type == enums.ColliderType.SPHERE:
+                            if collisions.CollisionSolver.LineSphereIntersectionCheck(current_pos, next_pos, collider_trans.pos, collider_trans.scale.MaxComponent()):
+                                is_colliding = True
+                                
+
 
                     if is_colliding:
-                        break
+                        break 
 
-                    if not is_colliding: 
-                        # processed_keys.add(next_key)
-                        new_node = GraphNode(next_pos)
-                        self.nodes.append(new_node)
-                        self.node_map[next_key] = new_node
-                        current_node.addNeighbor(new_node)
-                        new_node.addNeighbor(current_node)
-                        open_list.append(next_pos)
-                        print("Node added at", next_pos.x(), " ", next_pos.y())
+                if not is_colliding: 
+                    # processed_keys.add(next_key)
+                    new_node = GraphNode(next_pos)
+                    self.nodes.append(new_node)
+                    self.node_map[next_key] = new_node
+                    current_node.addNeighbor(new_node)
+                    new_node.addNeighbor(current_node)
+                    open_list.append(next_pos)
+                    print("Node added at", next_pos.x(), " ", next_pos.y())
 
         print(len(self.nodes), "nodes generated in", pygame.time.get_ticks() - start_time, "ms")
 
