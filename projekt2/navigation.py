@@ -85,9 +85,9 @@ class NavigationGraph:
                 next_pos = current_pos + direction * self.step_size
                 next_key = self._pos_to_key(next_pos)
 
-                if (next_pos.x() < self.MARGIN or next_pos.x() > self.MAX_WIDTH - self.MARGIN or 
-                    next_pos.y() < self.MARGIN or next_pos.y() > self.MAX_HEIGHT - self.MARGIN):
-                    continue
+                # if (next_pos.x() < self.MARGIN or next_pos.x() > self.MAX_WIDTH - self.MARGIN or 
+                #     next_pos.y() < self.MARGIN or next_pos.y() > self.MAX_HEIGHT - self.MARGIN):
+                #     continue
 
                 if next_key in self.node_map: 
                     neighbor_node = self.node_map[next_key]
