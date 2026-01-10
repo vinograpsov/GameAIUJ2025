@@ -109,26 +109,8 @@ def main():
         Dummy.AddComp(bots.Bot(13, 100, math.pi))
         #dummy should later also hold a weapon
 
-    #WORLD BORDER
-    #TO DO: REPLACE WORLD BORDER WITH POLYGON COLLIDER (OR MAP)
-    MainBorder = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([singletons.MainCamera.windowSize[0], singletons.MainCamera.windowSize[1]])), [], None)
-    Border1 = game_object.GameObject(Transform(Vector([0.5, 0]), DegToRad(180), Vector([0.1, 0.1])), [], MainBorder)
-    Border1.AddComp(collisions.Collider(enums.ColliderType.LINE))
-    Border2 = game_object.GameObject(Transform(Vector([0, 0.5]), DegToRad(270), Vector([1, 1])), [], MainBorder)
-    Border2.AddComp(collisions.Collider(enums.ColliderType.LINE))
-    Border3 = game_object.GameObject(Transform(Vector([-0.5, 0]), 0, Vector([1, 1])), [], MainBorder)
-    Border3.AddComp(collisions.Collider(enums.ColliderType.LINE))
-    Border4 = game_object.GameObject(Transform(Vector([0, -0.5]), DegToRad(90), Vector([1, 1])), [], MainBorder)
-    Border4.AddComp(collisions.Collider(enums.ColliderType.LINE))
 
-    Borders.append(Border1)
-    Borders.append(Border2)
-    Borders.append(Border3)
-    Borders.append(Border4)
-
-    #enviromental obstacles creation
-    #TO DO
-    #replace it by map creation
+    #map creation
     Map = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([singletons.MainCamera.windowSize[0] / 2, singletons.MainCamera.windowSize[1] / 2])), [], None)
     Map.AddComp(rendering.Model('Assets\Map.obj', [192, 192, 192], enums.RenderMode.WIREFRAME));
     Map.AddComp(collisions.PolygonCollider(enums.ColliderType.POLYGON, 'Assets/Map.obj'))
