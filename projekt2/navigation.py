@@ -4,7 +4,7 @@ import enums
 import collisions
 import game_object
 import rendering 
-
+import heapq 
 
 
 
@@ -13,6 +13,7 @@ class GraphNode:
     def __init__(self, position):
         self.pos = position
         self.neighbors = []
+        self.parent = None
 
         self.parent = None
         self.g = 0
@@ -23,6 +24,10 @@ class GraphNode:
     def addNeighbor(self, node):
         if node not in self.neighbors:
             self.neighbors.append(node)
+
+    def __lt__(self, other):
+        return self.f < other.f
+
 
 
 
@@ -183,5 +188,119 @@ class NavigationGraph:
                                  
 
 
+
+class AStarSearch: 
+    def __init__(self, start_node, target_node):
+        self.start_node = start_node
+        self.target_node = target_node
+
+        self.open_list = []
+        self.closed_set = set()
+        self.came_from = {}
+
+        start_node.g = 0
+        start_node.h = self._heuristic(start_node.pos, target_node.pos)
+        start_node.f = start_node.g + start_node.h
+
+        heapq.heappush(self.open_list, start_node)
+        self.path_found = False 
+
+    def _heuristic(self, pos1, pos2):
+        diff = pos1 - pos2
+        return diff.Length()
+    
+    def run(self):
+        while len(self.open_list) > 0: 
+            current_node = heapq.heappop(self.open_list)
+
+            if current_node == self.target_node:
+                self.path_found = True 
+                return True 
+            
+            self.closed_set.add(current_node) 
+
+            for neighbor in current_node.neighbors: 
+                if neighbor in self.closed_set: 
+                    continue
+
+                dist_to_neighbor = self._heuristic(current_node.pos, neighbor.pos)
+                tentative_g = current_node.g + dist_to_neighbor
+
+                in_open_list = neighbor in self.open_list
+
+                if tentative_g < neighbor.g or not in_open_list:
+                    neighbor.parent = current_node
+                    neighbor.g = tentative_g 
+                    neighbor.h = self._heuristic(neighbor.pos, self.target_node.pos)
+                    neighbor.f = neighbor.g + neighbor.h
+
+                    if not in_open_list:
+                        heapq.heappush(self.open_list, neighbor)
+                    else: 
+                        heapq.heappush(self.open_list, neighbor)
+
+        return False
+
+
+    def get_path_as_vectors(self):
+        if not self.path_found:
+            return[]
+        path = []
+        curr = self.target_node
+        while curr is not None: 
+            path.append(curr.pos)
+            curr = curr.parent
+            if curr == self.start_node:
+                path.append(curr.pos)
+                break 
+
+        path.reverse()
+        return path 
+    
+
 class Pathfinder:
-    pass
+    def __init__(self, nav_graph):
+        self.nav_graph = nav_graph 
+        self.current_search = None 
+
+
+    def get_closest_node(self, position):
+        key = self.nav_graph._pos_to_key(position)
+
+        if key in self.nav_graph.node_map:
+            return self.nav_graph.node_map[key]
+        
+        closest_node = None 
+        min_dist_sq = float('inf')
+        
+        for node in self.nav_graph.nodes:
+            dist_sq = (node.pos - position).LengthSquared()
+            if dist_sq < min_dist_sq: 
+                min_dist_sq  = dist_sq 
+                closest_node = node
+
+        return closest_node
+    
+
+    def create_path_to_position(self, start_pos, target_pos):
+        start_node = self.get_closest_node(start_pos)
+        target_node = self.get_closest_node(target_pos)
+
+        if start_node is None or target_node is None: 
+            print("Pathfinder: out of bounds")
+            return []
+        
+
+
+        self.current_search = AStarSearch(start_node, target_node)
+        success = self.current_search.run()
+
+        if success: 
+            path = self.current_search.get_path_as_vectors()
+            if len(path) > 0:
+                path.append(target_pos)
+
+            return path
+        else: 
+            print("Pathfinder: no path")
+            return []

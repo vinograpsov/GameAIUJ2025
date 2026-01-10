@@ -179,6 +179,17 @@ def main():
     start_point = Vector([100, 100])
     NavGraph.generateFloodFill(start_point, allObstacles)
 
+
+
+    #-----------------------------------------------
+    # TEST A* 
+    #-----------------------------------------------
+
+
+    MyPathFinder = navigation.Pathfinder(NavGraph)
+    current_pass = []
+
+
     #------------------------------------------------------------------
     #UPDATE
     #------------------------------------------------------------------
@@ -351,7 +362,22 @@ def main():
                 Phys.ExecutePos()
 
 
+        
+
+
         NavGraph.debugDraw(singletons.MainCamera)
+
+        if pygame.mouse.get_pressed()[2]:
+            target_pos = Cursor.transform.pos
+            start_pos = Player.transform.pos
+
+            current_pass = MyPathFinder.create_path_to_position(start_pos, target_pos)
+
+        if len(current_pass) > 1: 
+            for i in range(len(current_pass) - 1):
+                p1 = NavGraph._world_to_screen(current_pass[i], singletons.MainCamera)
+                p2 = NavGraph._world_to_screen(current_pass[i + 1], singletons.MainCamera)
+                pygame.draw.line(pygame.display.get_surface(), (255,255,0), p1, p2, 3)
 
         pygame.display.flip();
 
