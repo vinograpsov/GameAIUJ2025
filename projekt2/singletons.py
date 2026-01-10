@@ -9,10 +9,12 @@ DebugPositiveCol = [255, 0, 153]
 
 '''list off all game objects existing in program'''
 GlobalObjects = [] #game objects
-GlobalObjectsTest = []
 
 '''objects with a component for rendering'''
 RenderObjects = [] #render object class
+
+'''list of map objects'''
+MapObjects = []
 
 '''list of objects that require destroying after some time'''
 Timers = []

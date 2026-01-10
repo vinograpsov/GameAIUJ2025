@@ -68,8 +68,12 @@ class GameObject:
                 return
             del self.components[toRemove]
         else:
-            #also schould be debug but not for now
-            self.components.remove(toRemove)
+            try:
+               toRemove.Destroy()
+               self.components.remove(toRemove)
+            except AttributeError:
+                #special destructor not defined
+                self.components.remove(toRemove)
 
     '''returns first component of specified type'''
     def GetComp(self, compType):

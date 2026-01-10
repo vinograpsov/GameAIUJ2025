@@ -44,7 +44,7 @@ class FPSTimer(Timer):
 class RealtimeTimer(Timer):
 
 	def __init__(self, threshold):
-		super().__init__(threshold)
+		super().__init__(threshold) 
 		self.ResetTimer()
 
 	def ResetTimer(self):
@@ -55,21 +55,38 @@ class RealtimeTimer(Timer):
 			self.TimedEvent()
 			self.lastTimedEvent = time.time()
 
-class DestroyFPSTimer(FPSTimer):
-
+'''
+class DeltaTimer(Timer):
 	def __init__(self, threshold):
-		super().__init__(threshold)
+		super().__init__(threshold) 
+		self.ResetTimer()
+
+	def ResetTimer(self):
+		self.lastFrameTime = time.time()
+		self.deltaTime = 0
+
+	def UpdateTimer(self):
+		deltaTime = time.time() - 
+		if time.time() >= self.lastTimedEvent + self.threshold:
+			self.TimedEvent()
+			self.lastTimedEvent = time.time()
+'''
+
+class DestroyFPSTimer(FPSTimer):
 
 	def TimedEvent(self):
 		self.gameObject.Destroy()
 
 class DestroyRealtimeTimer(RealtimeTimer):
 
-	def __init__(self, threshold):
-		super().__init__(threshold)
-
 	def TimedEvent(self):
 		self.gameObject.Destroy()
+
+
+class RemoveMemoryTimer():
+
+	def TimedEvent(self):
+		pass
 
 
 class TriggerRespawnFPSTimer(FPSTimer):
@@ -90,7 +107,7 @@ class Trigger():
 		self.isActive = True
 		singletons.Triggers.append(self)
 
-	def __del__(self):
+	def Destroy(self):
 		singletons.Triggers.remove(self)
 
 	def Start(self, isActive):
@@ -141,14 +158,28 @@ class SoundTrigger(Trigger):
 		super().__init__()
 		self.source = source
 
-	def TriggeredEvent(self, triggeredObject):
+	def TriggeredEvent(self, triggeredObject, mapObjects):
 		triggeredBot = triggeredObject.GetComp(bots.Bot)
 		sourceBot = self.source.GetComp(bots.Bot)
 		#if triggered object and source have bots
 		if triggeredBot and sourceBot:
 			#TO DO
-			#add sourceBot to triggeredBot sensory memory
-			pass
+			curMemory = triggeredBot.TryCreateMemory(sourceBot)
+			
+			#WHY
+			#WTF
+			#why are we checking (and setting) if bot is within line of sight? (sound in real live travel through solid, you know? (especially around objects))
+			#and why memory only updates it's position when there is line of sight?!?
+			if not collisions.Raycast.CheckRay(trans, sourceTrans.pos, mapObjects):
+				triggerTrans = self.gameObject.transform
+				triggerTrans.SynchGlobals()
+
+				curMemory.isInLineOfSight = True
+				curMemory.sensedPos = triggerTrans.pos
+			else:
+				curMemory.isInLineOfSight = False
+		
+			curMemory.lastTimeSensed = time.time()
 
 
 '''visual effect is a rendering object that destroys itself after some time'''
