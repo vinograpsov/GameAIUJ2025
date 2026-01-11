@@ -24,7 +24,8 @@ class GeneralDebug(Flag):
 class BotDebug(Flag):
 	DIRECTION = auto() #unused
 	FIELDOFVIEW = auto() #unused
-	MEMORIES = auto()
+	VISION = auto()
+	MEMORYPOSITIONS = auto()
 	#(...)
 
 class WeaponDebug(Flag):

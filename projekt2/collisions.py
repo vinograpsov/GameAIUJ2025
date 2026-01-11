@@ -18,7 +18,7 @@ class CollisionSolver():
 
         if collider.type == enums.ColliderType.SPHERE:
             if other.type == enums.ColliderType.SPHERE:
-                if trans.Distance(target) < trans.scale.MaxComponent() * self.size + trans.scale.MaxComponent() * other.size:
+                if Vector.Dist(trans.pos, target.pos) < trans.scale.MaxComponent() * collider.size + target.scale.MaxComponent() * other.size:
                     return True
 
             #no longer working

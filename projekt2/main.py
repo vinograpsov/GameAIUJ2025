@@ -75,22 +75,22 @@ def main():
 
     GeneralDebugFlag = enums.GeneralDebug.SPAWNPLAYER | enums.GeneralDebug.SPAWNDUMMY
 
-    #TO DO!
-    #move this to singletons
-    Borders = [] #game objects
-    Bots = [] #game objects with physic object + BotAI
-
     #PLAYER IS SIMPLY BOT THAT CAN BE CONTROLLED BY OUTSIDE INPUT AND HAS NON FUNCTIONING AI
     Player = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
     Player.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, [0, 0, 255], 0))
     #Player.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255], enums.RenderMode.POLYGON));
     Player.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
     Player.AddComp(physics.PhysicObject(1))
-    Player.AddComp(bots.Bot(13, 100, math.pi)) #player is still considered a bot
+    Player.AddComp(bots.Bot(3, 100, math.pi)) #player is still considered a bot
+    singletons.Bots.append(Player)
+
+    #Player.GetComp(bots.Bot).debugFlag = enums.BotDebug.VISION | enums.BotDebug.MEMORYPOSITIONS
+
+    
     #TO DO
     #REPLACE PLAYER RAYCAST WITH RAILGUN WEAPON
     PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 100, 35, 0)) #for debug weapon has no cooldown and nearly infinite ammo
+    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 100, 60, 0)) #for debug weapon has no cooldown and nearly infinite ammo
     PlayerWeapon.SetParent(Player)
 
     PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND
@@ -102,12 +102,15 @@ def main():
     #SPAWN DEBUG DUMMY
     Dummy = None
     if enums.GeneralDebug.SPAWNDUMMY in GeneralDebugFlag:
-        Dummy = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
+        Dummy = game_object.GameObject(Transform(Vector([singletons.MainCamera.windowSize[0] / 2, singletons.MainCamera.windowSize[1] / 2 - 20]), 0, Vector([15, 15])), [], None)
         Dummy.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, [0, 0, 255], 0))
         Dummy.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
         Dummy.AddComp(physics.PhysicObject(1))
-        Dummy.AddComp(bots.Bot(13, 100, math.pi))
+        Dummy.AddComp(bots.Bot(3, 100, math.pi))
         #dummy should later also hold a weapon
+        singletons.Bots.append(Dummy)
+
+        Dummy.GetComp(bots.Bot).debugFlag = enums.BotDebug.VISION | enums.BotDebug.MEMORYPOSITIONS
 
 
     #map creation
@@ -214,7 +217,6 @@ def main():
             #LATER MOVE PLAYER SPEED TO SOME SPECIAL CLASS
             moveVector = Vector([LeftRightInput[0], UpDownInput[0]])
             playerSpeed = 0.2
-            Player.GetComp(physics.PhysicObject).maxVelocity = 0.2
             Player.GetComp(physics.PhysicObject).vel += moveVector * playerSpeed
 
         #-----------------------------------------------
@@ -246,7 +248,7 @@ def main():
             singletons.MainCamera.Render(Renderer)
 
         #ENEMIES DEBUG!!!
-        for Object in Bots:
+        for Object in singletons.Bots:
             BotAI = Object.GetComp(bots.Bot)
             BotAI.Debug()
 
@@ -288,23 +290,32 @@ def main():
         #Physics execution
         #-----------------------------------------------
 
-        Player.GetComp(physics.PhysicObject).ExecutePos()
-        Player.transform.SynchGlobals()
-
         #-----------------------------------------------
         #AI logic
         #-----------------------------------------------
 
+        for object in singletons.Bots:
+            botAI = object.GetComp(bots.Bot)
+
+            #TO DO
+            #reduce number of vision calls like in the book
+            #vision
+            botAI.UpdateVision(singletons.Bots, singletons.MapObjects)
+            #hearing
+            botAI.UpdateHearing(singletons.Sounds, singletons.MapObjects)
+
+            #dummy does not act, but can still be a receiver and can use it's perception
+            if object == Dummy:
+                continue
+
         #singular bot
-        for Object in Bots:
-            for Bot in Object.GetComps(bots.Bot):
-                pass
+        for Object in singletons.Bots:
             
             #physics execution for bots
             for Phys in Object.GetComps(physics.PhysicObject):
                 Phys.UpdateVelocity()
                 #first rotate the bot towards it's velocity
-                Bot.UpdateForwardDirection()
+                #Bot.UpdateForwardDirection() #part of old project, could this still be important?
                 Phys.ExecutePos()
 
 

@@ -107,8 +107,8 @@ class Trigger():
 		self.isActive = isActive
 
 	def CheckIfTriggered(collider):
-		if isActive and CollisionSolver.CheckCollision(self.collider, collider):
-			self.TriggerEvent(collider.gameObject)
+		if self.isActive and collisions.CollisionSolver.CheckCollision(self.collider, collider):
+			self.TriggeredEvent(collider.gameObject)
 
 	def TriggeredEvent(self, triggeredObject):
 		pass
@@ -152,25 +152,38 @@ class SoundTrigger(Trigger):
 	def __init__(self, source): #source is by default bot's object that created the sound
 		super().__init__()
 		self.source = source
+		singletons.Sounds.append(self)
+
+	def Destroy(self):
+		super().Destroy()
+		singletons.Sounds.remove(self)
+
+	#messy spagghetti code because of inverse way triggers works in book
+	def CheckIfTriggered(self, collider, mapObjects):
+		if self.isActive and collisions.CollisionSolver.CheckCollision(self.collider, collider):
+			self.TriggeredEvent(collider.gameObject, mapObjects)
 
 	def TriggeredEvent(self, triggeredObject, mapObjects):
 		triggeredBot = triggeredObject.GetComp(bots.Bot)
 		sourceBot = self.source.GetComp(bots.Bot)
 		#if triggered object and source have bots
 		if triggeredBot and sourceBot:
-			#TO DO
+
+			trans = self.gameObject.transform
+			trans.SynchGlobals()
+			triggeredTrans = triggeredObject.transform
+			triggeredTrans.SynchGlobals()
+
 			curMemory = triggeredBot.TryCreateMemory(sourceBot)
 			
 			#WHY
 			#WTF
 			#why are we checking (and setting) if bot is within line of sight? (sound in real live travel through solid, you know? (especially around objects))
 			#and why memory only updates it's position when there is line of sight?!?
-			if not collisions.Raycast.CheckRay(trans, sourceTrans.pos, mapObjects):
-				triggerTrans = self.gameObject.transform
-				triggerTrans.SynchGlobals()
+			if not collisions.Raycast.CheckRay(trans, triggeredTrans.pos, mapObjects):
 
 				curMemory.isInLineOfSight = True
-				curMemory.sensedPos = triggerTrans.pos
+				curMemory.sensedPos = triggeredTrans.pos.copy()
 			else:
 				curMemory.isInLineOfSight = False
 		

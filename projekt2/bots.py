@@ -16,7 +16,6 @@ class MemoryRecord():
     #as it is done in the book initialization fills with garbage data
     #yes, this fills with garbage data because oherwise every other logic in the book falls apart
     def __init__(self, source):
-        super().__init__(threshold)
         self.source = source
         self.sensedPos = None #yup, this is stupid
         self.lastTimeSensed = -1024 #garbage data, initializing and leaving memory with such data will make the source activily remembered by just running application for long enough 
@@ -63,20 +62,16 @@ class Bot():
     def Debug(self):
         if enums.BotDebug.DIRECTION in self.debugFlag:
             pass
-        if enums.BotDebug.MEMORIES in self.debugFlag:
+        if enums.BotDebug.MEMORYPOSITIONS in self.debugFlag:
             
             #this is the same as getting "valid" memories, but is copied to showcase also invalid
-            result = []
             curTime = time.time()
-
             for memory in self.memories:
                 if curTime - memory.lastTimeSensed <= self.memorySpan:
-                    singletons.MainCamera.RenderRawPoint(memory.sensedPos, DebugPositiveCol, 5)
+                    singletons.MainCamera.RenderRawPoint(memory.sensedPos, singletons.DebugPositiveCol, 5)
                 else:
                     if memory.sensedPos: #if position was ever initialized
-                        singletons.MainCamera.RenderRawPoint(memory.sensedPos, DebugNegativeCol, 5)
-
-            return result
+                        singletons.MainCamera.RenderRawPoint(memory.sensedPos, singletons.DebugNegativeCol, 5)
 
     def Heal(self, damage):
         self.health = min(self.health + damage, self.maxHealth)
@@ -99,18 +94,19 @@ class Bot():
     
     '''this function creates memory if not existing and returns it, when already existing returns existing'''
     def TryCreateMemory(self, source):
-        memory = FindMemoryOfSpecificSource(source)
+        memory = self.FindMemoryOfSpecificSource(source)
         #memory of source not existing, create new memory
         if not memory:
-            memory = self.gameObject.AddComp(MemoryFragment())
+            memory = self.gameObject.AddComp(MemoryRecord(source))
+            self.memories.append(memory)
         return memory
 
     #BOOK REQUIREMENT
     #for some reason all outside game logic uses only this as an entry point
     #just like with triggers it works in reverse, so that we first fetch specific bot and only them makes calculations on him, why idk"
-    def FindMemoryOfSpecificSource(self, bot):
+    def FindMemoryOfSpecificSource(self, source):
         for memory in self.memories:
-            if memory.source == bot:
+            if memory.source == source:
                 return memory
         #debugging
         print("requested bot not in memory")
@@ -128,29 +124,33 @@ class Bot():
         return result
 
     #in book vision is located in sensory memory, but since we can have our own structure I decided to place it in bot
-    def UpdateVision(self, sceneBots, mapObjects):
+    def UpdateVision(self, sourceObjects, mapObjects):
         
-        for bot in sceneBots:
+        for object in sourceObjects:
+            sourceBot = object.GetComp(Bot)
             #do not check visibility whit itself
-            if bot == self:
+            if sourceBot == self:
                 continue
             
             #straight up create bot's memory record, right now it contains garbage data and is volatile
-            curMemory = TryCreateMemory(bot)
+            curMemory = self.TryCreateMemory(sourceBot)
 
             #vision checks from CENTER of both owner and source
             trans = self.gameObject.transform
             trans.SynchGlobals()
-            sourceTrans = source.gameObject.transform
+            sourceTrans = sourceBot.gameObject.transform
             sourceTrans.SynchGlobals()
             #bots are visible if there is no collision with MAP objects, this check ignores other bots
             if not collisions.Raycast.CheckRay(trans, sourceTrans.pos, mapObjects):
                 
+                if enums.BotDebug.VISION in self.debugFlag:
+                    singletons.MainCamera.RenderRawLine(trans.pos, sourceTrans.pos, singletons.DebugPositiveCol, 1)
+
                 curMemory.isInLineOfSight = True
 
-                if CheckFieldOfView(sourceTrans.pos):
+                if self.CheckFieldOfView(sourceTrans.pos):
                     curMemory.lastTimeSensed = time.time()
-                    curMemory.sensedPos = sourceTrans.pos
+                    curMemory.sensedPos = sourceTrans.pos.copy()
                     curMemory.lastTimeVisible = time.time()
 
                     #when source just started being visible
@@ -163,6 +163,10 @@ class Bot():
                     #POSITION OF MEMORY HAS NOT BEEN UPDATED, IT CONTAINS INCORRECT DATA!!!
 
             else: #when source not in line of sight (then we also sets within fov as failed)
+                
+                if enums.BotDebug.VISION in self.debugFlag:
+                    singletons.MainCamera.RenderRawLine(trans.pos, sourceTrans.pos, singletons.DebugNegativeCol, 1)
+                
                 curMemory.isInLineOfSight = False
                 curMemory.isWithinFOV = False
                 #WARNING! IN THIS SCENARIO WE NEVER SETTED UP ANY TIMERS NOR POSITION, SO MEMORY RECORD MAY CONTAIN OUTDATED OR STRAIGHT UP NOT INITIALIZED DATA
@@ -170,11 +174,11 @@ class Bot():
 
 
     #slightly different than in the book, bot searches for sound triggers, not gets notified by trigger manager (because there is no trigger manager)
-    def UpdateHearing(self, soundTriggerObjects, mapObjects):
+    def UpdateHearing(self, soundTriggers, mapObjects):
         
         #actual logic regarding sensory memory located in sound trigger class
-        for object in soundTriggerObjects:
-            object.GetComp(events.SoundTrigger).CheckIfTriggered(self.gameObject, mapObjects)
+        for trigger in soundTriggers:
+            trigger.CheckIfTriggered(self.gameObject.GetComp(collisions.Collider), mapObjects)
 
     #HERE COMES WHOLE AI MUMBO JUMBO (state machine included)
 
