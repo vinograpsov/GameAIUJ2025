@@ -60,8 +60,21 @@ class Bot():
 
     #this function is used to render debug objects based on the debug flag
     def Debug(self):
+        trans = self.gameObject.transform
+        trans.SynchGlobals()
+
         if enums.BotDebug.DIRECTION in self.debugFlag:
             pass
+        if enums.BotDebug.FIELDOFVIEW in self.debugFlag:
+            fovDebugMult = 3 #used for displaying fov above player size when debugging
+
+            lowBound = trans.rot - self.fov / 2
+            highBound = trans.rot + self.fov / 2
+            maxScale = trans.scale.MaxComponent()
+            singletons.MainCamera.RenderRawLine(trans.pos, trans.pos + Vector.RotToVect(lowBound) * maxScale * fovDebugMult, singletons.DebugCol, 1)
+            singletons.MainCamera.RenderRawLine(trans.pos, trans.pos + Vector.RotToVect(highBound) * maxScale * fovDebugMult, singletons.DebugCol, 1)
+            singletons.MainCamera.RenderRawArc(trans.pos, singletons.DebugCol, trans.scale * fovDebugMult, lowBound, highBound, 1)
+
         if enums.BotDebug.MEMORYPOSITIONS in self.debugFlag:
             
             #this is the same as getting "valid" memories, but is copied to showcase also invalid

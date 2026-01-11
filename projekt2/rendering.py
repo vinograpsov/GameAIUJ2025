@@ -66,7 +66,6 @@ class Camera():
 
         pygame.draw.line(self.screen, col, startDrawPos, endDrawPos, width)
 
-
     def RenderRawPoint(self, pos, col, size):
         drawPos = pos.data.copy()
         drawPos[1] = self.windowSize[1] - drawPos[1]
@@ -76,6 +75,13 @@ class Camera():
         drawPos = pos.data.copy()
         drawPos[1] = self.windowSize[1] - drawPos[1]
         pygame.draw.circle(self.screen, col, drawPos, size, width)
+
+    def RenderRawArc(self, pos, col, size, startRot, endRot, width):
+        drawPos = pos.data.copy()
+        drawPos[1] = self.windowSize[1] - drawPos[1]
+        drawSize = size.data.copy()
+        drawDimensions = [drawPos[0] - drawSize[0], drawPos[1] - drawSize[1], drawSize[0] * 2, drawSize[1] * 2]
+        pygame.draw.arc(self.screen, col, drawDimensions, startRot, endRot, width)
 
     def RenderVertices(self, model):
         trans = model.gameObject.transform

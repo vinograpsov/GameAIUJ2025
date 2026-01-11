@@ -84,6 +84,7 @@ def main():
     Player.AddComp(bots.Bot(3, 100, math.pi)) #player is still considered a bot
     singletons.Bots.append(Player)
 
+    Player.GetComp(bots.Bot).debugFlag = enums.BotDebug.FIELDOFVIEW
     #Player.GetComp(bots.Bot).debugFlag = enums.BotDebug.VISION | enums.BotDebug.MEMORYPOSITIONS
 
     
