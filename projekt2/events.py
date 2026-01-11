@@ -183,7 +183,7 @@ class SoundTrigger(Trigger):
 			if not collisions.Raycast.CheckRay(trans, triggeredTrans.pos, mapObjects):
 
 				curMemory.isInLineOfSight = True
-				curMemory.sensedPos = triggeredTrans.pos.copy()
+				curMemory.sensedPos = trans.pos.copy()
 			else:
 				curMemory.isInLineOfSight = False
 		
