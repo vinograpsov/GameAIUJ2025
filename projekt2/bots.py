@@ -86,11 +86,26 @@ class Bot():
                     if memory.sensedPos: #if position was ever initialized
                         singletons.MainCamera.RenderRawPoint(memory.sensedPos, singletons.DebugNegativeCol, 5)
 
+    def Kill(self):
+        pass
+                        
     def Heal(self, damage):
         self.health = min(self.health + damage, self.maxHealth)
 
-    def DealDamage(self, damage):
-        pass
+    def DealDamage(self, damage, source):
+
+        #TO DO
+        #bot is being informed about by whom he was shot, but by other means then memory
+        #(I yet need to read that one)
+        
+        #if source is not null then add source to memory
+        #if source:
+            #curMemory = self.TryCreateMemory(source)
+            #curMemory.lastTimeSensed = time.time()
+        
+        self.health -= damage
+        if self.health < 0:
+            self.Kill()
 
     '''returns true if given point is within field of view, FOV is always set to 90deg'''
     def CheckFieldOfView(self, point):

@@ -91,7 +91,9 @@ def main():
     #TO DO
     #REPLACE PLAYER RAYCAST WITH RAILGUN WEAPON
     PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 100, 60, 0)) #for debug weapon has no cooldown and nearly infinite ammo
+    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 60, 60, 0)) #for debug weapon has no cooldown and nearly infinite ammo
+    
+    PlayerWeapon.AddComp(weapons.RocketLauncher(Player, 0.4, 4096, 35, 1, Vector([5, 5]), 120, 60))
     PlayerWeapon.SetParent(Player)
 
     PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND
@@ -288,10 +290,6 @@ def main():
                     #    PhysCollider.ResolveCollision(OtherCollider)
 
         #-----------------------------------------------
-        #Physics execution
-        #-----------------------------------------------
-
-        #-----------------------------------------------
         #AI logic
         #-----------------------------------------------
 
@@ -309,7 +307,11 @@ def main():
             if object == Dummy:
                 continue
 
-        #singular bot
+
+        #-----------------------------------------------
+        #Physics execution
+        #-----------------------------------------------
+
         for Object in singletons.Bots:
             
             #physics execution for bots

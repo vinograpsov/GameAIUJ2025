@@ -5,6 +5,8 @@ MainCamera = None
 
 GeneralDebugFlag = None
 
+ProjectileColor = [255, 255, 0]
+
 DebugCol = [255, 0, 255]
 DebugNegativeCol = [255, 0, 153]
 DebugPositiveCol = [153, 0, 255]
