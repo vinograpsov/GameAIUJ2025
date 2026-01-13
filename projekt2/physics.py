@@ -1,5 +1,6 @@
 import game_object
 from transforms import *
+import singletons
 
 class PhysicObject():
 
@@ -16,6 +17,11 @@ class PhysicObject():
         self.accForceTotalMagnitude = 0
         self.maxVelocity = 32768 #this number is a placeholder (it is supposed to be infinity by default)
         self.maxForce = 32768 #this number is a placeholder (it is supposed to be infinity by default)
+
+        singletons.PhysicObjects.append(self)
+
+    def Destroy(self):
+        singletons.PhysicObjects.remove(self)
     
     def ApplyForce(self, forceVect):
         self.vel += forceVect / self.mass #* time

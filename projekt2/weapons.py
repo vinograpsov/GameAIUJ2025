@@ -111,7 +111,7 @@ class RocketLauncher(Weapon):
 		ownerTrans.SynchGlobals()
 		#spawn projectile
 		newProj = ExplosiveProjectile(self.owner, self.damage, Vector.RotToVect(trans.rot) * 8192, 0.8, self.projectileSpeed, self.blastRadius)
-		newRend = rendering.Model('Assets\Rocket.obj', singletons.ProjectileColor, enums.RenderMode.WIREFRAME)
+		newRend = rendering.Model('Assets\Triangle.obj', singletons.ProjectileColor, enums.RenderMode.WIREFRAME)
 		SpawnProjectile(newProj, newRend, ownerTrans.pos, trans.rot, self.projectileScale, Vector([0, 0]))
 		del(newProj)
 		del(newRend)
@@ -132,6 +132,10 @@ class Projectile(events.Trigger):
 		self.damage = damage
 		self.collider = None
 		self.physicObject = None
+
+	def Destroy(self):
+		singletons.Projectiles.remove(self.gameObject)
+		del(self)
 
 	#unimplemented
 	#def TriggeredEvent(self, triggeredObject):
@@ -155,7 +159,7 @@ class ExplosiveProjectile(Projectile):
 	def UpdatePhysics(self):
 		#BOOK REQUIREMENT
 		#this is stupid, every frame we calculate the same value for velocity, we could just only set up this at the start
-		self.physicObject.vel = Vector.RotToVect(self.gameObject.transform.rot) * projectileSpeed
+		self.physicObject.vel = Vector.RotToVect(self.gameObject.transform.rot) * self.projectileSpeed
 
 	#okay, so every trigger works inverse, but this one works normally, ehhhhh
 	def CheckIfTriggered(self, botObjects, mapObjects):
@@ -171,20 +175,21 @@ class ExplosiveProjectile(Projectile):
 		curPos = trans.pos.copy()
 		curLpos = trans.lpos.copy()
 		trans.lpos = trans.lpos - self.physicObject.vel
-		trans.SynchGlobals()
+		trans.Desynch()
 
+		botObjectsWithoutSource = botObjects.copy()
+		botObjectsWithoutSource.remove(self.source)
 		#if I understood this function correctly in the book it retruns closest origin to projectile origin, what in such use case (which is book's use case) will return closest bot to the END of line, not start
-		closestBot = collisions.Raycast.GetClosestOriginAlongRay(trans, curPos, curPos, botObjects)
-		
+		closestObject = collisions.Raycast.GetClosestOriginAlongRay(trans, curPos, curPos, botObjectsWithoutSource)
 
 		#collision with bot
-		if (closestBot):
-
+		if (closestObject):
+			closestBot = closestObject.GetComp(bots.Bot)
 			#BOOK REQUIREMENT?
 			#OR JUST AN OVERSIGHT THAT WE SHOULD NOT FOLLOW?
 			#here in the book we send info to bot that has been hit, but just after that we send same info to all bots in area
 			#including also closest bot, so closest bot gets damaged 2 times!!!
-			closestBot.DealDamage(damage, self.source)
+			closestBot.DealDamage(self.damage, self.source)
 
 			#deal explosion damage
 			self.TriggeredEvent(botObjects, mapObjects)
@@ -195,10 +200,15 @@ class ExplosiveProjectile(Projectile):
 			#lack of return causes the rocket to explode 2 times in same game tick
 			#if it happens to collide with bot and map at the same time
 
+
+
 		isMapCollision, mapContactPoint = collisions.Raycast.CastRay(trans, curPos, mapObjects)
-		
+		singletons.MainCamera.RenderRawLine(trans.pos, curPos, singletons.DebugCol, 8)
+		#singletons.MainCamera.RenderRawLine(trans.pos, curPos, singletons.DebugCol, 8)
+		#print(str(mapContactPoint.data) + " " + str(curPos.data))
+
 		trans.lpos = curLpos.copy()
-		trans.SynchGlobals()
+		trans.Desynch()
 		del(curPos)
 		del(curLpos)
 
@@ -212,12 +222,12 @@ class ExplosiveProjectile(Projectile):
 			return
 
 		#reached (somwheat) target destination
-		targetDiff = trans.pos - targetPos
-		if Vector.Dot(targetDiff, targetDiff) < targetRadius * targetRadius:
+		targetDiff = trans.pos - self.targetPos
+		if Vector.Dot(targetDiff, targetDiff) < self.targetRadius * self.targetRadius:
 			self.TriggeredEvent(botObjects, mapObjects)
 
 	def TriggeredEvent(self, botObjects, mapObjects):
-		trans = self.gameObject.transform.pos
+		trans = self.gameObject.transform
 		trans.SynchGlobals()
 
 		events.SpawnVisualEffect(trans.pos, 0, Vector([self.blastRadius, self.blastRadius]), rendering.Primitive(enums.PrimitiveType.SPHERE, singletons.ProjectileColor, 1), 0.3)
@@ -231,8 +241,8 @@ class ExplosiveProjectile(Projectile):
 				#in the book we only check if inside collider, we do not check line of sight
 				#that means explosion deals damage THROUGH WALLS!!!
 				#okay, also why in other places we calculate dist^2 to gain performance, but not here???
-				if Vector.Dist(trans.pos, botTrans) < self.blastRadius + botTrans.scale.MaxComponent():
-					bot.DealDamage(damage, self.source) #yes, explosion deals equal damage anywhere in the range
+				if Vector.Dist(trans.pos, botTrans.pos) < self.blastRadius + botTrans.scale.MaxComponent():
+					bot.DealDamage(self.damage, self.source) #yes, explosion deals equal damage anywhere in the range
 
 '''this function correctly sets up sound object according to book requirements'''
 def SpawnSound(pos, radius, source):
@@ -247,7 +257,7 @@ def SpawnSound(pos, radius, source):
 
 '''does not initiates projectile, but sets up new projectile to be fully functional'''
 def SpawnProjectile(newProj, newRenderer, pos, rot, scale, initialVelocity):
-	object = game_object.GameObject(Transform(pos, rot, scale), [], None)
+	object = game_object.GameObject(Transform(pos.copy(), rot, scale.copy()), [], None)
 	if newRenderer:
 		object.AddComp(newRenderer)
 	else:
@@ -256,7 +266,10 @@ def SpawnProjectile(newProj, newRenderer, pos, rot, scale, initialVelocity):
 	projectile = object.AddComp(newProj)
 	projectile.collider = object.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
 
-	projectilePhysics = projectile.AddComp(physics.PhysicObject(1))
+	projectilePhysics = object.AddComp(physics.PhysicObject(1))
 	projectilePhysics.vel = initialVelocity
+	projectile.physicObject = projectilePhysics
 
-	return projectile
+	singletons.Projectiles.append(object)
+
+	return object

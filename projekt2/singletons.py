@@ -17,6 +17,9 @@ GlobalObjects = [] #game objects
 '''objects with a component for rendering'''
 RenderObjects = [] #render object class
 
+'''physic components'''
+PhysicObjects = [] #physic object class
+
 '''list of map objects'''
 MapObjects = []
 
@@ -31,3 +34,6 @@ Sounds = [] #sound trigger component
 
 '''list of bot objects'''
 Bots = [] #gameobject
+
+'''list of projectile objects'''
+Projectiles = [] #gameobject

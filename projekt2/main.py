@@ -89,9 +89,9 @@ def main():
     del(PlayerBot)
     
     PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
+    #PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
     
-    #PlayerWeapon.AddComp(weapons.RocketLauncher(Player, 0.4, 4096, 35, 1, Vector([5, 5]), 120, 60))
+    PlayerWeapon.AddComp(weapons.RocketLauncher(Player, 0.4, 4096, 35, 1, Vector([12, 12]), 120, 60))
     PlayerWeapon.SetParent(Player)
 
     PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND
@@ -267,7 +267,13 @@ def main():
 
         #if player keeps mouse button down he tries to shoot
         if MouseInputs[0][0] > 0:
-            PlayerWeapon.GetComp(weapons.Railgun).TryShoot([Map], singletons.Bots)
+            #PlayerWeapon.GetComp(weapons.Railgun).TryShoot([Map], singletons.Bots)
+            PlayerWeapon.GetComp(weapons.RocketLauncher).TryShoot()
+
+        for Object in singletons.Projectiles:
+            projectile = Object.GetComp(weapons.Projectile)
+            if isinstance(projectile, weapons.ExplosiveProjectile):
+                projectile.CheckIfTriggered(singletons.Bots, singletons.MapObjects)
 
         #get all physic components in game: (as collision reaction happens only for them)
         PhysicComponents = []
@@ -310,15 +316,14 @@ def main():
         #Physics execution
         #-----------------------------------------------
 
-        #print(len(singletons.Bots))
-        for Object in singletons.Bots:
-            
-            #physics execution for bots
-            for Phys in Object.GetComps(physics.PhysicObject):
-                Phys.UpdateVelocity()
-                #first rotate the bot towards it's velocity
-                #Bot.UpdateForwardDirection() #part of old project, could this still be important?
-                Phys.ExecutePos()
+        for Object in singletons.Projectiles:
+            projectile = Object.GetComp(weapons.Projectile)
+            projectile.UpdatePhysics()
+
+        for Phys in singletons.PhysicObjects:
+            Phys.UpdateVelocity()
+            Phys.ExecutePos()
+
 
 
         #-----------------------------------------------
