@@ -283,7 +283,7 @@ class Raycast():
                         if CollisionSolver.LineIntersection2DCheck(transPivot.pos, endPoint, end1, end2):
                             result.append(collider.gameObject)
                 elif collider.type == enums.ColliderType.SPHERE:
-                    if LineSphereIntersectionCheck(transPivot.pos, endPoint, colliderTrans.pos, colliderTrans.scale.MaxComponent()):
+                    if CollisionSolver.LineSphereIntersectionCheck(transPivot.pos, endPoint, colliderTrans.pos, colliderTrans.scale.MaxComponent()):
                         result.append(collider.gameObject)
         return result
 

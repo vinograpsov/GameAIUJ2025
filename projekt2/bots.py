@@ -1,5 +1,6 @@
 import time
 import math #used only in one line, in FOV check
+import gc
 
 import game_object
 from transforms import *
@@ -24,6 +25,9 @@ class MemoryRecord():
         self.isWithinFOV = False
         self.isInLineOfSight = False
         #bot is considered visible when both in FOV and line of sight are trues
+
+    def Destroy(self):
+        self.source = None
 
     #BOOK REQUIREMENT
     #MEMORY FRAGMENT IS NOT DESTROYED WHEN PASSING TIME THRESHOLD, IT STAYS IN SENSORY MEMORY FOREVER!!!
@@ -57,12 +61,20 @@ class Bot():
 
         self.debugFlag = enums.BotDebug(0)
 
+    def Destroy(self):
+        singletons.Bots.remove(self.gameObject)
+        self.memories = None
+
+        for botObject in singletons.Bots:
+            botObject.GetComp(Bot).RemoveFromMemory(self.gameObject)
 
     #this function is used to render debug objects based on the debug flag
     def Debug(self):
         trans = self.gameObject.transform
         trans.SynchGlobals()
-
+        #text debugs
+        if enums.BotDebug.HEALTH in self.debugFlag:
+            print(self.health)
         if enums.BotDebug.DIRECTION in self.debugFlag:
             pass
         if enums.BotDebug.FIELDOFVIEW in self.debugFlag:
@@ -87,7 +99,7 @@ class Bot():
                         singletons.MainCamera.RenderRawPoint(memory.sensedPos, singletons.DebugNegativeCol, 5)
 
     def Kill(self):
-        pass
+        self.gameObject.Destroy()
                         
     def Heal(self, damage):
         self.health = min(self.health + damage, self.maxHealth)
@@ -102,6 +114,8 @@ class Bot():
         #if source:
             #curMemory = self.TryCreateMemory(source)
             #curMemory.lastTimeSensed = time.time()
+
+        print("damage dealt")
         
         self.health -= damage
         if self.health < 0:
@@ -119,6 +133,14 @@ class Bot():
         return False
 
     #SENSORY MEMORY
+
+    def RemoveFromMemory(self, source):
+        for memory in self.memories:
+            if memory.source == source:
+                self.memories.remove(memory)
+                memory.Destroy()
+                return
+        print("trying to remove unexisting memory")
     
     '''this function creates memory if not existing and returns it, when already existing returns existing'''
     def TryCreateMemory(self, source):
@@ -156,7 +178,7 @@ class Bot():
         
         for object in sourceObjects:
             sourceBot = object.GetComp(Bot)
-            #do not check visibility whit itself
+            #do not check visibility whith itself
             if sourceBot == self:
                 continue
             

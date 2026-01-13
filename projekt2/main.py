@@ -81,19 +81,17 @@ def main():
     #Player.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255], enums.RenderMode.POLYGON));
     Player.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
     Player.AddComp(physics.PhysicObject(1))
-    Player.AddComp(bots.Bot(3, 100, math.pi)) #player is still considered a bot
+    PlayerBot = Player.AddComp(bots.Bot(3, 100, math.pi)) #player is still considered a bot
     singletons.Bots.append(Player)
 
-    Player.GetComp(bots.Bot).debugFlag = enums.BotDebug.FIELDOFVIEW
-    #Player.GetComp(bots.Bot).debugFlag = enums.BotDebug.VISION | enums.BotDebug.MEMORYPOSITIONS
-
+    PlayerBot.debugFlag = enums.BotDebug.FIELDOFVIEW
+    #PlayerBot.debugFlag = enums.BotDebug.VISION | enums.BotDebug.MEMORYPOSITIONS
+    del(PlayerBot)
     
-    #TO DO
-    #REPLACE PLAYER RAYCAST WITH RAILGUN WEAPON
     PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 60, 60, 0)) #for debug weapon has no cooldown and nearly infinite ammo
+    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
     
-    PlayerWeapon.AddComp(weapons.RocketLauncher(Player, 0.4, 4096, 35, 1, Vector([5, 5]), 120, 60))
+    #PlayerWeapon.AddComp(weapons.RocketLauncher(Player, 0.4, 4096, 35, 1, Vector([5, 5]), 120, 60))
     PlayerWeapon.SetParent(Player)
 
     PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND
@@ -244,8 +242,8 @@ def main():
         PlayerWeapon.transform.SynchGlobals()
 
         #test raycast collision by player weapon
-        if enums.WeaponDebug.LINEPOINTER in PlayerWeapon.GetComp(weapons.Railgun).debugFlag:
-            PlayerWeapon.GetComp(weapons.Railgun).ShowLinePointer([Map], [])
+        if enums.WeaponDebug.LINEPOINTER in PlayerWeapon.GetComp(weapons.Weapon).debugFlag:
+            PlayerWeapon.GetComp(weapons.Weapon).ShowLinePointer([Map], singletons.Bots)
 
         for Renderer in singletons.RenderObjects:
             singletons.MainCamera.Render(Renderer)
@@ -269,7 +267,7 @@ def main():
 
         #if player keeps mouse button down he tries to shoot
         if MouseInputs[0][0] > 0:
-            PlayerWeapon.GetComp(weapons.Weapon).TryShoot([Map], [])
+            PlayerWeapon.GetComp(weapons.Railgun).TryShoot([Map], singletons.Bots)
 
         #get all physic components in game: (as collision reaction happens only for them)
         PhysicComponents = []
@@ -312,6 +310,7 @@ def main():
         #Physics execution
         #-----------------------------------------------
 
+        #print(len(singletons.Bots))
         for Object in singletons.Bots:
             
             #physics execution for bots

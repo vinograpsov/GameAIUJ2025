@@ -17,12 +17,17 @@ class Weapon():
 		self.cooldown = cooldown
 		self.lastTimeShot = 0
 		self.ammo = ammo
+		self.damage = damage
 		self.projectileSpeed = projectileSpeed
 		self.projectileScale = projectileScale
 		self.firingSoundRadius = firingSoundRadius
 
 		self.debugFlag = enums.WeaponDebug(0)
 		pass
+
+	def Destroy(self):
+		pass
+		#self.owner = None
 
 	def TryShoot(self):
 		if self.ammo <= 0 or (self.lastTimeShot + self.cooldown) > time.time():
@@ -40,7 +45,7 @@ class Weapon():
 		trans.SynchGlobals()
 
 		#first limit ray to nearest obstacle
-		endPoint = collisions.Raycast.CastRay(trans, obstacleObjects)[1]
+		endPoint = collisions.Raycast.CastRay(trans, None, obstacleObjects)[1]
 
 		#endPoint = trans.Reposition(Vector([8, 0])) #4096
 		col = singletons.DebugPositiveCol
@@ -65,12 +70,14 @@ class Railgun(Weapon):
 		endPoint = collisions.Raycast.CastRay(trans, None, obstacleObjects)[1]
 
 		#deal damage to all bots in ray (but not the owner)
-		hittedBots = collisions.Raycast.CollectRay(trans, endPoint, botObjects)
+		hittedObjects = collisions.Raycast.CollectRay(trans, endPoint, botObjects)
 		
-		for hittedBot in hittedBots:
-			if hittedBot == self.owner:
-				continue
-			hittedBot.DealDamage(self.damage)
+		for hittedObject in hittedObjects:
+			hittedBot = hittedObject.GetComp(bots.Bot)
+			if hittedBot:
+				if hittedObject == self.owner:
+					continue
+				hittedBot.DealDamage(self.damage, self.owner)
 
 		#TO DO
 		#make visual clues appear for longer then just one frame
