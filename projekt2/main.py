@@ -91,7 +91,7 @@ def main():
     PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
     #PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
     
-    PlayerWeapon.AddComp(weapons.RocketLauncher(Player, 0.4, 4096, 35, 1, Vector([12, 12]), 120, 60))
+    PlayerWeapon.AddComp(weapons.RocketLauncher(Player, 0.4, 4096, 35, 2, Vector([12, 12]), 120, 60))
     PlayerWeapon.SetParent(Player)
 
     PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND

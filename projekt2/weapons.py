@@ -111,7 +111,7 @@ class RocketLauncher(Weapon):
 		ownerTrans.SynchGlobals()
 		#spawn projectile
 		newProj = ExplosiveProjectile(self.owner, self.damage, Vector.RotToVect(trans.rot) * 8192, 0.8, self.projectileSpeed, self.blastRadius)
-		newRend = rendering.Model('Assets\Triangle.obj', singletons.ProjectileColor, enums.RenderMode.WIREFRAME)
+		newRend = rendering.Model('Assets\Rocket.obj', singletons.ProjectileColor, enums.RenderMode.WIREFRAME)
 		SpawnProjectile(newProj, newRend, ownerTrans.pos, trans.rot, self.projectileScale, Vector([0, 0]))
 		del(newProj)
 		del(newRend)
@@ -135,7 +135,9 @@ class Projectile(events.Trigger):
 
 	def Destroy(self):
 		singletons.Projectiles.remove(self.gameObject)
-		del(self)
+		self.source = None
+		self.collider = None
+		self.physicObject = None
 
 	#unimplemented
 	#def TriggeredEvent(self, triggeredObject):
@@ -167,6 +169,8 @@ class ExplosiveProjectile(Projectile):
 		if not self.isActive:
 			return False
 
+		hasImpacted = False
+
 		#BOOK REQUIREMENT
 		#this function returns incorrect results, because it compares object ORIGINS and not their contact points with ray
 		#so if contact with object is far along ray, but it's origin is close, it will prioretize this object against others
@@ -185,6 +189,8 @@ class ExplosiveProjectile(Projectile):
 		#collision with bot
 		if (closestObject):
 			closestBot = closestObject.GetComp(bots.Bot)
+
+			hasImpacted = True
 			#BOOK REQUIREMENT?
 			#OR JUST AN OVERSIGHT THAT WE SHOULD NOT FOLLOW?
 			#here in the book we send info to bot that has been hit, but just after that we send same info to all bots in area
@@ -203,9 +209,7 @@ class ExplosiveProjectile(Projectile):
 
 
 		isMapCollision, mapContactPoint = collisions.Raycast.CastRay(trans, curPos, mapObjects)
-		singletons.MainCamera.RenderRawLine(trans.pos, curPos, singletons.DebugCol, 8)
 		#singletons.MainCamera.RenderRawLine(trans.pos, curPos, singletons.DebugCol, 8)
-		#print(str(mapContactPoint.data) + " " + str(curPos.data))
 
 		trans.lpos = curLpos.copy()
 		trans.Desynch()
@@ -214,17 +218,26 @@ class ExplosiveProjectile(Projectile):
 
 		#collision with map
 		if isMapCollision:
+			hasImpacted = True
+
 			self.TriggeredEvent(botObjects, mapObjects)
 			#BOOK REQUIREMENT
 			#setting projectile position to contact point makes sense, but NOT AFTER we already dealt the damage, WTF?
 			trans.lpos = mapContactPoint.copy()
 			trans.SynchGlobals()
+
+			self.gameObject.Destroy()
 			return
 
 		#reached (somwheat) target destination
 		targetDiff = trans.pos - self.targetPos
 		if Vector.Dot(targetDiff, targetDiff) < self.targetRadius * self.targetRadius:
+			hasImpacted = True
 			self.TriggeredEvent(botObjects, mapObjects)
+
+		if hasImpacted:
+			print("trying to del projectile")
+			self.gameObject.Destroy()
 
 	def TriggeredEvent(self, botObjects, mapObjects):
 		trans = self.gameObject.transform
