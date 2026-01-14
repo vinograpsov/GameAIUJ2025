@@ -218,15 +218,8 @@ class Vector:
         length = self.Length()
         if length == 0:
             return self
-        self.data = self / length
+        self.data = (self / length).data
         return self
-
-    '''returns normalized version of the vector without changing original reference'''
-    def Normalized(self):
-        length = self.Length()
-        if length == 0:
-            return self
-        return self / length
 
     '''capps vector so that it's magnitude is no bigger then threshold'''
     def Truncate(self, threshold):
@@ -347,9 +340,15 @@ class Transform:
     def FaceTowards(self, other):
         #First update both object's globals
         self.SynchGlobals()
-        other.SynchGlobals()
+        target_pos = None 
 
-        TargetRot = (other.pos - self.pos).ToRotation() #calculates direction and converts to rot
+        if hasattr(other, "SynchGlobals"):
+            other.SynchGlobals()
+            target_pos = other.pos
+        else: 
+            target_pos = other
+
+        TargetRot = (target_pos - self.pos).ToRotation() #calculates direction and converts to rot
         self.lrot = TargetRot
 
         self.Desynch()

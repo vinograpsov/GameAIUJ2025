@@ -146,22 +146,28 @@ def main():
     #bots spawns
     #bots spawns in set positions (not random)
     #btw we may randomize for now it for better testing
-    for _ in range(0):
-        borderDist = 10
-        botPosition = Vector([random.randint(borderDist, singletons.MainCamera.windowSize[0] - borderDist), random.randint(borderDist, singletons.MainCamera.windowSize[0] - borderDist)])
+    for _ in range(1):
+        borderDist = 50
+        botPosition = Vector([150, 150])
+        # botPosition = Vector([random.randint(borderDist, singletons.MainCamera.windowSize[0] - borderDist), random.randint(borderDist, singletons.MainCamera.windowSize[0] - borderDist)])
         CurBot = game_object.GameObject(Transform(botPosition, 0, Vector([15, 15])), [], None)
         CurBot.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (255, 0, 0), 0))
         #CurBot.AddComp(rendering.Model('Assets\Triangle.obj', [255, 0, 0], enums.RenderMode.POLYGON));
         CurBot.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
         CurBot.AddComp(physics.PhysicObject(1)) #?
-        CurBot.AddComp(Bot())
+        # CurBot.AddComp(Bot())
+
+        bot_ai = bots.Bot(100)
+        CurBot.AddComp(bot_ai)
+        bot_ai.gameObject = CurBot
+
 
         #BOT AI SETUP
-        CurBotAI = CurBot.GetComp('Bot')
+        # CurBotAI = CurBot.GetComp('Bot')
         #(...)
 
         #debug on / off
-        CurBotAI.debugFlag = enums.BotDebug.DIRECTION
+        # CurBotAI.debugFlag = enums.BotDebug.DIRECTION
 
         #values references setup
         Bots.append(CurBot)
@@ -193,6 +199,8 @@ def main():
     #------------------------------------------------------------------
     #UPDATE
     #------------------------------------------------------------------
+
+    path_vectors = []
 
     while 1:
         clock.tick(FPS)
@@ -351,17 +359,17 @@ def main():
 
         #singular bot
         for Object in Bots:
-            for Bot in Object.GetComps(bots.Bot):
-                pass
+
+            BotComp = Object.GetComp(bots.Bot)
+            if BotComp:           
+                BotComp.update()
+
+            physComp = Object.GetComp(physics.PhysicObject)
+            if physComp: 
+                physComp.ExecutePos()
+
             
-            #physics execution for bots
-            for Phys in Object.GetComps(physics.PhysicObject):
-                Phys.UpdateVelocity()
-                #first rotate the bot towards it's velocity
-                Bot.UpdateForwardDirection()
-                Phys.ExecutePos()
-
-
+            Object.transform.SynchGlobals()
         
 
 
@@ -369,15 +377,19 @@ def main():
 
         if pygame.mouse.get_pressed()[2]:
             target_pos = Cursor.transform.pos
-            start_pos = Player.transform.pos
+            
+            if len(Bots) > 0:
 
-            current_pass = MyPathFinder.create_path_to_position(start_pos, target_pos)
+                bot = Bots[0].GetComp(bots.Bot)
+                start_pos = Bots[0].transform.pos
 
-        if len(current_pass) > 1: 
-            for i in range(len(current_pass) - 1):
-                p1 = NavGraph._world_to_screen(current_pass[i], singletons.MainCamera)
-                p2 = NavGraph._world_to_screen(current_pass[i + 1], singletons.MainCamera)
-                pygame.draw.line(pygame.display.get_surface(), (255,255,0), p1, p2, 3)
+                path_vectors = MyPathFinder.create_path_to_position(start_pos, target_pos)
+
+                if path_vectors:
+                    bot.set_path(path_vectors)
+                else:
+                    print("No path found")
+
 
         pygame.display.flip();
 

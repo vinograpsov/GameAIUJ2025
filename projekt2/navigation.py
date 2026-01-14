@@ -198,6 +198,8 @@ class AStarSearch:
         self.closed_set = set()
         self.came_from = {}
 
+        self.start_node.parent = None
+
         start_node.g = 0
         start_node.h = self._heuristic(start_node.pos, target_node.pos)
         start_node.f = start_node.g + start_node.h
@@ -245,15 +247,23 @@ class AStarSearch:
     def get_path_as_vectors(self):
         if not self.path_found:
             return[]
+        
+        SAFETY_COUNTER = 0
+        MAX_LOOPS = 1000
+
         path = []
         curr = self.target_node
         while curr is not None: 
             path.append(curr.pos)
             curr = curr.parent
             if curr == self.start_node:
-                path.append(curr.pos)
                 break 
-
+            
+            SAFETY_COUNTER += 1
+            if SAFETY_COUNTER > MAX_LOOPS:
+                print("Infinite loop detected")
+                break
+            
         path.reverse()
         return path 
     
@@ -304,3 +314,30 @@ class Pathfinder:
         else: 
             print("Pathfinder: no path")
             return []
+
+
+
+
+class Path: 
+    def __init__(self, waypoints):
+        self.waypoints = waypoints
+        self.cur_waypoint_idx = 0
+        self.looped = False 
+        self.finished = False
+    
+    def current_waypoint(self):
+        if self.cur_waypoint_idx < len(self.waypoints):
+            return self.waypoints[self.cur_waypoint_idx]
+        return self.waypoints[-1]
+    
+    def set_next_waypoint(self):
+        if len(self.waypoints) == 0: 
+            return 
+        
+        if self.cur_waypoint_idx < len(self.waypoints) - 1: 
+            self.cur_waypoint_idx += 1
+        else: 
+            self.finished = True 
+    
+    def is_finished(self):
+        return self.finished
