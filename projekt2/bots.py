@@ -51,19 +51,27 @@ class MemoryRecord():
 
 class Bot():
 
-    def __init__(self, memorySpan, maxHealth, fov):
+    def __init__(self, memorySpan, maxHealth, fov, accuracy, reactionTime, aimingPersistance):
         self.gameObject = None
+        self.weapon = None
         self.memories = [] #list of memory records
         self.memorySpan = memorySpan
         self.maxHealth = maxHealth
         self.health = maxHealth
         self.fov = fov
 
+        #bot aiming inaccuracy
+        self.accuracy = accuracy
+        self.reactionTime = reactionTime
+        self.aimingPersistance = aimingPersistance #the time bot will continue to aim at target after target already dissapeared
+        self.lastTimeReacted = time.time()
+
         self.debugFlag = enums.BotDebug(0)
 
     def Destroy(self):
         singletons.Bots.remove(self.gameObject)
         self.memories = None
+        self.weapon = None
 
         for botObject in singletons.Bots:
             botObject.GetComp(Bot).RemoveFromMemory(self.gameObject)
@@ -97,6 +105,68 @@ class Bot():
                 else:
                     if memory.sensedPos: #if position was ever initialized
                         singletons.MainCamera.RenderRawPoint(memory.sensedPos, singletons.DebugNegativeCol, 5)
+    
+    '''this function is equivalent of tergeting system from book'''
+    def GetClosestValiableMemory(self):
+        memories = self.GetValidMemoryRecords()
+        if len(memories) <= 0:
+            return None
+        result = memories[0]
+        trans = self.gameObject.transform
+        trans.SynchGlobals()
+        targetTrans = memories[0].source.gameObject.transform
+        targetTrans.SynchGlobals()
+        minDist = Vector.DistSquared(trans.pos, targetTrans.pos)
+
+        for memory in memories:
+            targetTrans = memory.source.gameObject.transform
+            targetTrans.SynchGlobals()
+            curDist = Vector.DistSquared(trans.pos, targetTrans.pos)
+            if curDist < minDist:
+                minDist = curDist
+                result = memory
+        return result
+
+    def TryAimAndShoot(self, mapObjects):
+        possibleTargetMemory = self.GetClosestValiableMemory()
+
+        if not possibleTargetMemory:
+            return
+
+        #aim only if there is line of sight or last sensed lower the persistance
+        if possibleTargetMemory.isInLineOfSight or time.time() - possibleTargetMemory.lastTimeVisible < self.aimingPersistance:
+
+            trans = self.gameObject.transform
+            trans.SynchGlobals()
+            targetTrans = possibleTargetMemory.source.gameObject.transform
+            targetTrans.SynchGlobals()
+
+            #in the book it uses actual bot position, not source pos created by sensory memory
+            #shootingRot = self.weapon.Aim(possibleTargetMemory.sourcePos, self.accuracy)
+            #BOOK REUIREMENT?
+            #OR JUST AN OVERSIGHT THAT WE SHOULD NOT FOLLOW?
+            #BOOK USES HERE POSITION OF THE BOT, **NOT** SAVED POSITION WHEN BOT WAS LAST SENSED
+            #THAT MEANS THAT WHEN WE AIM AT ALREADY NOT VISIBLE ENEMY THE BOT WILL FOLLOW HIM WITH XRAY VISION
+            shootingRot = (targetTrans.pos - trans.pos).ToRotation()
+
+            #set bot rotation to visually show that he is looking at the opponent
+            #this is not his shooting direction btw
+            trans.lrot = shootingRot
+            trans.Desynch()
+
+            #also to actually shoot target must be visible (not memory of target)
+            #and it must be visibe for some time
+            if not collisions.Raycast.CheckRay(trans, targetTrans.pos, mapObjects) and time.time() - possibleTargetMemory.timeBecameVisible > self.reactionTime:
+                
+                #perform actual aiming algorithm
+                shootingRot = self.weapon.Aim(possibleTargetMemory.source.gameObject, self.accuracy)
+                #rotate again to face shooting direction
+                #BOOK OVERSIGHT?
+                #Yes, that means that bot will briefly look at exacly where he is shooting when TRYING to shoot, not when actually shooting
+                trans.lrot = shootingRot
+                trans.Desynch()
+
+                self.weapon.TryShoot(singletons.MapObjects, singletons.Bots)
 
     def Kill(self):
         self.gameObject.Destroy()

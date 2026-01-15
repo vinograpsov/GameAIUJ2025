@@ -81,12 +81,11 @@ def main():
     #Player.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255], enums.RenderMode.POLYGON));
     Player.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
     Player.AddComp(physics.PhysicObject(1))
-    PlayerBot = Player.AddComp(bots.Bot(3, 100, math.pi)) #player is still considered a bot
+    PlayerBot = Player.AddComp(bots.Bot(3, 1000000000, math.pi, 0.1, 0.3, 1)) #player is still considered a bot
     singletons.Bots.append(Player)
 
     PlayerBot.debugFlag = enums.BotDebug.FIELDOFVIEW
     #PlayerBot.debugFlag = enums.BotDebug.VISION | enums.BotDebug.MEMORYPOSITIONS
-    del(PlayerBot)
     
     PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
     #PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
@@ -94,7 +93,11 @@ def main():
     PlayerWeapon.AddComp(weapons.RocketLauncher(Player, 0.4, 4096, 35, 2, Vector([12, 12]), 120, 60))
     PlayerWeapon.SetParent(Player)
 
-    PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND
+    PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.FIRESOUND
+
+    PlayerBot.weapon = PlayerWeapon.GetComp(weapons.Weapon)
+
+    del(PlayerBot)
 
     #create cursor object
     Cursor = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
@@ -104,11 +107,24 @@ def main():
     Dummy = None
     if enums.GeneralDebug.SPAWNDUMMY in GeneralDebugFlag:
         Dummy = game_object.GameObject(Transform(Vector([singletons.MainCamera.windowSize[0] / 2, singletons.MainCamera.windowSize[1] / 2 - 20]), 0, Vector([15, 15])), [], None)
-        Dummy.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, [0, 0, 255], 0))
+        Dummy.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255], enums.RenderMode.POLYGON));
+        #Dummy.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, [0, 0, 255], 0))
         Dummy.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
         Dummy.AddComp(physics.PhysicObject(1))
-        Dummy.AddComp(bots.Bot(3, 100, math.pi))
-        #dummy should later also hold a weapon
+        Dummy.AddComp(bots.Bot(3, 100, math.pi, 0.1, 0.3, 1))
+        
+        #dummy weapon
+        DummyWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
+        DummyWeapon.AddComp(weapons.Railgun(Dummy, 0.6, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
+    
+        #DummyWeapon.AddComp(weapons.RocketLauncher(Player, 0.4, 4096, 35, 2, Vector([12, 12]), 120, 60))
+        DummyWeapon.SetParent(Dummy)
+
+        DummyWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND
+
+        Dummy.GetComp(bots.Bot).weapon = DummyWeapon.GetComp(weapons.Weapon)
+
+
         singletons.Bots.append(Dummy)
 
         Dummy.GetComp(bots.Bot).debugFlag = enums.BotDebug.VISION | enums.BotDebug.MEMORYPOSITIONS
@@ -242,8 +258,6 @@ def main():
         PlayerWeapon.transform.SynchGlobals()
 
         #test raycast collision by player weapon
-        if enums.WeaponDebug.LINEPOINTER in PlayerWeapon.GetComp(weapons.Weapon).debugFlag:
-            PlayerWeapon.GetComp(weapons.Weapon).ShowLinePointer([Map], singletons.Bots)
 
         for Renderer in singletons.RenderObjects:
             singletons.MainCamera.Render(Renderer)
@@ -252,6 +266,8 @@ def main():
         for Object in singletons.Bots:
             BotAI = Object.GetComp(bots.Bot)
             BotAI.Debug()
+            BotWeapon = BotAI.weapon
+            BotWeapon.Debug()
 
         #-----------------------------------------------
         #Collision handling
@@ -307,10 +323,12 @@ def main():
             #hearing
             botAI.UpdateHearing(singletons.Sounds, singletons.MapObjects)
 
+            #dummy debug for shooting
+            if object != Player:
+                botAI.TryAimAndShoot(singletons.MapObjects)
             #dummy does not act, but can still be a receiver and can use it's perception
             if object == Dummy:
                 continue
-
 
         #-----------------------------------------------
         #Physics execution

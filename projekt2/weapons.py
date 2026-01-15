@@ -1,4 +1,6 @@
 import time
+import random
+
 from transforms import *
 import game_object
 import physics
@@ -26,7 +28,7 @@ class Weapon():
 		pass
 
 	def Destroy(self):
-		pass
+		self.owner = None
 		#self.owner = None
 
 	def TryShoot(self):
@@ -37,21 +39,27 @@ class Weapon():
 		return True
 		#print("pif paf you have shizofrenia")
 
-	'''debug function'''
-	def ShowLinePointer(self, obstacleObjects, botObjects):
-		
+	'''returns rotation that the weapon should be fired at'''
+	def Aim(self, target, inaccuracy):
+		self.gameObject.transform.SynchGlobals()
+		return self.gameObject.transform.rot
+
+	def Debug(self):
+
 		#now version for debugging
 		trans = self.gameObject.transform
 		trans.SynchGlobals()
 
-		#first limit ray to nearest obstacle
-		endPoint = collisions.Raycast.CastRay(trans, None, obstacleObjects)[1]
+		if enums.WeaponDebug.LINEPOINTER in self.debugFlag:
 
-		#endPoint = trans.Reposition(Vector([8, 0])) #4096
-		col = singletons.DebugPositiveCol
-		if collisions.Raycast.CheckRay(trans, endPoint, botObjects):
-			col = singletons.DebugNegativeCol
-		singletons.MainCamera.RenderRawLine(trans.pos, endPoint, col, 1)
+			#first limit ray to nearest obstacle
+			endPoint = collisions.Raycast.CastRay(trans, None, singletons.MapObjects)[1]
+
+			#endPoint = trans.Reposition(Vector([8, 0])) #4096
+			col = singletons.DebugPositiveCol
+			if collisions.Raycast.CheckRay(trans, endPoint, singletons.Bots):
+				col = singletons.DebugNegativeCol
+			singletons.MainCamera.RenderRawLine(trans.pos, endPoint, col, 1)
 
 
 class Railgun(Weapon):
@@ -95,6 +103,17 @@ class Railgun(Weapon):
 			singletons.MainCamera.RenderRawCircle(ownerTrans.pos, singletons.DebugCol, self.firingSoundRadius, 1)
 		return True
 
+	def Aim(self, target, inaccuracy):
+		ownerTrans = self.owner.transform
+		ownerTrans.SynchGlobals()
+		targetTrans = target.transform
+		targetTrans.SynchGlobals()
+
+		aimRot = (targetTrans.pos - ownerTrans.pos).ToRotation()
+		#here add inacurracy
+		aimRot += (random.random() * inaccuracy * 2) - inaccuracy
+		return aimRot
+
 class RocketLauncher(Weapon):
 
 	def __init__(self, owner, cooldown, ammo, damage, projectileSpeed, projectileScale, firingSoundRadius, blastRadius):
@@ -123,6 +142,28 @@ class RocketLauncher(Weapon):
 		if enums.WeaponDebug.FIRESOUND in self.debugFlag:
 			singletons.MainCamera.RenderRawCircle(ownerTrans.pos, singletons.DebugCol, self.firingSoundRadius, 1)
 		return True
+
+	def Aim(self, target, inaccuracy):
+		ownerTrans = self.owner.transform
+		ownerTrans.SynchGlobals()
+		targetTrans = target.transform
+		targetTrans.SynchGlobals()
+
+		aimRot = (targetTrans.pos - ownerTrans.pos).ToRotation()
+
+		#TO DO
+		#here add target prediction
+		ToEnemy = ownerTrans.pos - ownerTrans.pos
+
+		#BOOK DIFFERENT
+		#book uses here max speed for target, I use speed as bot's may move at speed lower then max
+		LookAheadTime = ToEnemy.Length() / (self.projectileSpeed + target.GetComp(physics.PhysicObject).vel.Length())
+
+		aimRot = (ownerTrans.pos + self.owner.GetComp(physics.PhysicObject).vel * LookAheadTime).ToRotation()
+
+		#here add inacurracy
+		aimRot += (random.random() * inaccuracy * 2) - inaccuracy
+		return aimRot
 
 class Projectile(events.Trigger):
 	

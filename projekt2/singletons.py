@@ -5,6 +5,11 @@ MainCamera = None
 
 GeneralDebugFlag = None
 
+'''used as initializator for values as arbirtary value to simulate infinity'''
+maxValue = 8192
+'''same, used for squared comparisons'''
+maxSquareValue = 65536
+
 ProjectileColor = [255, 255, 0]
 
 DebugCol = [255, 0, 255]
