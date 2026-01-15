@@ -115,9 +115,9 @@ def main():
         
         #dummy weapon
         DummyWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-        DummyWeapon.AddComp(weapons.Railgun(Dummy, 0.6, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
+        #DummyWeapon.AddComp(weapons.Railgun(Dummy, 0.6, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
     
-        #DummyWeapon.AddComp(weapons.RocketLauncher(Player, 0.4, 4096, 35, 2, Vector([12, 12]), 120, 60))
+        DummyWeapon.AddComp(weapons.RocketLauncher(Dummy, 0.4, 4096, 35, 2, Vector([12, 12]), 120, 60))
         DummyWeapon.SetParent(Dummy)
 
         DummyWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND
@@ -284,7 +284,7 @@ def main():
         #if player keeps mouse button down he tries to shoot
         if MouseInputs[0][0] > 0:
             #PlayerWeapon.GetComp(weapons.Railgun).TryShoot([Map], singletons.Bots)
-            PlayerWeapon.GetComp(weapons.RocketLauncher).TryShoot()
+            PlayerWeapon.GetComp(weapons.RocketLauncher).TryShoot(singletons.MapObjects, singletons.Bots)
 
         for Object in singletons.Projectiles:
             projectile = Object.GetComp(weapons.Projectile)

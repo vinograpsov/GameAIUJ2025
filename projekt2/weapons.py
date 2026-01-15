@@ -120,7 +120,7 @@ class RocketLauncher(Weapon):
 		super().__init__(owner, cooldown, ammo, damage, projectileSpeed, projectileScale, firingSoundRadius)
 		self.blastRadius = blastRadius
 
-	def TryShoot(self):
+	def TryShoot(self, obstacleObjects, botObjects):
 		if not super(RocketLauncher, self).TryShoot():
 			return False
 		#actual rocket launcher logic
@@ -151,15 +151,17 @@ class RocketLauncher(Weapon):
 
 		aimRot = (targetTrans.pos - ownerTrans.pos).ToRotation()
 
-		#TO DO
-		#here add target prediction
-		ToEnemy = ownerTrans.pos - ownerTrans.pos
+		#predict future target position
+		ToEnemy = targetTrans.pos - ownerTrans.pos
 
 		#BOOK DIFFERENT
 		#book uses here max speed for target, I use speed as bot's may move at speed lower then max
 		LookAheadTime = ToEnemy.Length() / (self.projectileSpeed + target.GetComp(physics.PhysicObject).vel.Length())
 
-		aimRot = (ownerTrans.pos + self.owner.GetComp(physics.PhysicObject).vel * LookAheadTime).ToRotation()
+		aimPos = targetTrans.pos + self.owner.GetComp(physics.PhysicObject).vel * LookAheadTime
+		aimRot = (aimPos - ownerTrans.pos).ToRotation()
+
+		#singletons.MainCamera.RenderRawCircle(aimPos, [0, 255, 0], 5, 1)
 
 		#here add inacurracy
 		aimRot += (random.random() * inaccuracy * 2) - inaccuracy

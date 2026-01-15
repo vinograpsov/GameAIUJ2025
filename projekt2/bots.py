@@ -119,6 +119,9 @@ class Bot():
         minDist = Vector.DistSquared(trans.pos, targetTrans.pos)
 
         for memory in memories:
+            #do not return memory of itself
+            if memory.source == self:
+                continue
             targetTrans = memory.source.gameObject.transform
             targetTrans.SynchGlobals()
             curDist = Vector.DistSquared(trans.pos, targetTrans.pos)
