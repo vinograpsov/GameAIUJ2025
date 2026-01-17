@@ -7,8 +7,6 @@ import rendering
 import heapq 
 
 
-
-
 class GraphNode:
     def __init__(self, position):
         self.pos = position
@@ -28,11 +26,7 @@ class GraphNode:
     def __lt__(self, other):
         return self.f < other.f
 
-
-
-
 class NavigationGraph:
-    # idk how to do this without max width and height
     def __init__(self, step_size, bot_radius, MAX_WIDTH = 800, MAX_HEIGHT = 600, MARGIN = 20):
         self.nodes = []
         self.step_size = step_size
@@ -41,6 +35,12 @@ class NavigationGraph:
         self.MAX_WIDTH = MAX_WIDTH
         self.MAX_HEIGHT = MAX_HEIGHT
         self.MARGIN = MARGIN
+
+        self.show_debug = False
+
+    def toggle_debug(self):
+        self.show_debug = not self.show_debug
+        print(f"Navigation Graph Debug: {self.show_debug}")
 
     def _pos_to_key(self, position):
         return (int(round(position.x())), int(round(position.y())))
@@ -162,9 +162,11 @@ class NavigationGraph:
 
 
     def debugDraw(self, camera):
-        surface = pygame.display.get_surface()
-        camera_pos = camera.gameObject.transform.pos
 
+        if not self.show_debug:
+            return 
+
+        surface = pygame.display.get_surface()
 
         for node in self.nodes:
             start_screen = self._world_to_screen(node.pos, camera)
@@ -173,9 +175,6 @@ class NavigationGraph:
             for neighbor in node.neighbors: 
                 end_screen = self._world_to_screen(neighbor.pos, camera)
                 pygame.draw.line(surface, (0, 255, 0), start_screen, end_screen, 1)
-
-
-
 
     def _world_to_screen(self, world_pos, camera):  
         cam_pivot = camera.gameObject.transform.pos
@@ -307,8 +306,8 @@ class Pathfinder:
 
         if success: 
             path = self.current_search.get_path_as_vectors()
-            if len(path) > 0:
-                path.append(target_pos)
+            # if len(path) > 0:
+            #     path.append(target_pos)
 
             return path
         else: 

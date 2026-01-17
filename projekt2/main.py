@@ -16,7 +16,6 @@ import weapons
 import bots
 
 pygame.init()
-
 clock = pygame.time.Clock()
 FPS = 60
 
@@ -38,29 +37,8 @@ def main():
     #START
     #------------------------------------------------------------------
 
-    #For now vector testing
-    '''
-    vectTest = Vector([0, 1])
-    #vectTest += Vector([2, 2])
-    #vectTest /= 2
-    print(RadiansToDegrees(Vector([0, 1]).ToRotation()))
-    vectTest.Rotate(Vector([1, 1]).ToRotation());
-    #vectTest.x = 2
-    print(vectTest.data)
-    print(Vector.RotToVect(DegToRad(90)).data)
-
-
-    return;
-    '''
-    transTest = Transform(Vector([0, 0]), DegToRad(0), Vector([1, 1]))
-    print(transTest.GlobalToLocal(Vector([1, 0]), True).data)
-
-    #vectTest = Vector([1, 1])
-    #print(Vector.Proj(vectTest, Vector([0, 1])).data)
-
     size = [pygame.display.Info().current_w, pygame.display.Info().current_h]
     background = (255, 255, 255)
-
     deltaTime = time.time()
     pastTime = time.time()
 
@@ -78,30 +56,13 @@ def main():
     Borders = [] #game objects
     Bots = [] #game objects with physic object + BotAI
 
-    #PLAYER IS SIMPLY BOT THAT CAN BE CONTROLLED BY OUTSIDE INPUT AND HAS NON FUNCTIONING AI
-    Player = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
-    Player.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, [0, 0, 255], 0))
-    #Player.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255], enums.RenderMode.POLYGON));
-    Player.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
-    Player.AddComp(physics.PhysicObject(1))
-    Player.AddComp(bots.Bot(100)) #player is still considered a bot
-    #TO DO
-    #REPLACE PLAYER RAYCAST WITH RAILGUN WEAPON
-    PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 100)) #for debug weapon has no cooldown and nearly infinite ammo
-    PlayerWeapon.SetParent(Player)
 
-    PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER
+    #------------------------MAP AND BORDERS ----------------------------
+    Map = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([singletons.MainCamera.windowSize[0] / 2, singletons.MainCamera.windowSize[1] / 2])), [], None)
+    Map.AddComp(rendering.Model('Assets\Map.obj', [192, 192, 192], enums.RenderMode.WIREFRAME));
+    Map.AddComp(collisions.PolygonCollider(enums.ColliderType.POLYGON, 'Assets/Map.obj'))
+    GlobalObjects.append(Map)
 
-    GlobalObjects.append(Player);
-
-    #create cursor object
-    Cursor = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
-    Cursor.AddComp(rendering.Model('Assets\Cursor.obj', [255, 0, 0], enums.RenderMode.WIREFRAME))
-    GlobalObjects.append(Cursor);
-
-
-    #WORLD BORDER
     #TO DO: REPLACE WORLD BORDER WITH POLYGON COLLIDER (OR MAP)
     MainBorder = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([singletons.MainCamera.windowSize[0], singletons.MainCamera.windowSize[1]])), [], None)
     Border1 = game_object.GameObject(Transform(Vector([0.5, 0]), DegToRad(180), Vector([0.1, 0.1])), [], MainBorder)
@@ -124,100 +85,81 @@ def main():
     Borders.append(Border3)
     Borders.append(Border4)
 
-    #enviromental obstacles creation
-    #TO DO
-    #replace it by map creation
-    Map = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([singletons.MainCamera.windowSize[0] / 2, singletons.MainCamera.windowSize[1] / 2])), [], None)
-    Map.AddComp(rendering.Model('Assets\Map.obj', [192, 192, 192], enums.RenderMode.WIREFRAME));
-    Map.AddComp(collisions.PolygonCollider(enums.ColliderType.POLYGON, 'Assets/Map.obj'))
-    GlobalObjects.append(Map)
+    #------------------------MAP AND BORDERS ----------------------------
 
 
-    # for _ in range(10):
-    #     borderDist = 50
-    #     obstacleSize = random.randint(10, 50)
-    #     CurObstacle = game_object.GameObject(Transform(Vector([random.randint(borderDist, MainCamera.windowSize[0] - borderDist), random.randint(borderDist, MainCamera.windowSize[1] - borderDist)]), 0, Vector([obstacleSize, obstacleSize])), [], None)
-    #     CurObstacle.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
-    #     CurObstacle.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (0, 255, 0), 0))
-    #     GlobalObjects.append(CurObstacle)
-    #     Obstacles.append(CurObstacle)
+    # ------------------------PLAYER SETUP ----------------------------
+    Player = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
+    Player.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, [0, 0, 255], 0))
+    Player.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
+    Player.AddComp(physics.PhysicObject(1))
+    Player.AddComp(bots.Bot(100)) 
 
-    #TO DO
-    #bots spawns
-    #bots spawns in set positions (not random)
-    #btw we may randomize for now it for better testing
+    PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
+    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 100)) #for debug weapon has no cooldown and nearly infinite ammo
+    PlayerWeapon.SetParent(Player)
+    PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER
+    GlobalObjects.append(Player);
+
+    Cursor = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
+    Cursor.AddComp(rendering.Model('Assets\Cursor.obj', [255, 0, 0], enums.RenderMode.WIREFRAME))
+    GlobalObjects.append(Cursor);
+    # ------------------------PLAYER SETUP ----------------------------
+
+
+
+    #--------------------------BOTS SETUP -----------------------------
     for _ in range(1):
-        borderDist = 50
         botPosition = Vector([150, 150])
-        # botPosition = Vector([random.randint(borderDist, singletons.MainCamera.windowSize[0] - borderDist), random.randint(borderDist, singletons.MainCamera.windowSize[0] - borderDist)])
         CurBot = game_object.GameObject(Transform(botPosition, 0, Vector([15, 15])), [], None)
         CurBot.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (255, 0, 0), 0))
-        #CurBot.AddComp(rendering.Model('Assets\Triangle.obj', [255, 0, 0], enums.RenderMode.POLYGON));
         CurBot.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
-        CurBot.AddComp(physics.PhysicObject(1)) #?
-        # CurBot.AddComp(Bot())
-
+        CurBot.AddComp(physics.PhysicObject(1))
+        
         bot_ai = bots.Bot(100)
+        bot_ai.debugFlag = enums.BotDebug.DIRECTION | enums.BotDebug.PATH
+        
         CurBot.AddComp(bot_ai)
-        bot_ai.gameObject = CurBot
-
-
-        #BOT AI SETUP
-        # CurBotAI = CurBot.GetComp('Bot')
-        #(...)
-
-        #debug on / off
-        # CurBotAI.debugFlag = enums.BotDebug.DIRECTION
-
-        #values references setup
         Bots.append(CurBot)
         GlobalObjects.append(CurBot)
+    #--------------------------BOTS SETUP -----------------------------
     
 
-
     #------------------------------------------------------------------
-    #TEST FLOODFILL
+    #FLOODFILL and ASTAR
     #------------------------------------------------------------------
 
     allObstacles = Obstacles + Borders + [Map]
     NavGraph = navigation.NavigationGraph(30, 15)
-
     start_point = Vector([100, 100])
     NavGraph.generateFloodFill(start_point, allObstacles)
 
-
-
-    #-----------------------------------------------
-    # TEST A* 
-    #-----------------------------------------------
-
-
     MyPathFinder = navigation.Pathfinder(NavGraph)
-    current_pass = []
-
-
     #------------------------------------------------------------------
-    #UPDATE
+    #FLOODFILL and ASTAR
     #------------------------------------------------------------------
-
-    path_vectors = []
 
     while 1:
+        
         clock.tick(FPS)
+        now = time.time()
+        pastTime = now 
+        deltaTime = now - pastTime
 
-        deltaTime = time.time() - pastTime
-        pastTime = time.time()
-
-        #checkingInputs
+        
+        #-----------------------------------------------
+        # INPUT HANDLING
+        #-----------------------------------------------
         MouseInputs[1] = [0, 0, 0]
         RechargeInput[1] = 0
         for event in pygame.event.get():
+            
             if event.type == pygame.QUIT: sys.exit()
+            
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
                     RechargeInput[0] += 1;
                     RechargeInput[1] = 1;
-
                 if event.key == pygame.K_w:
                     UpDownInput[0] += 1
                     UpDownInput[1] = 1
@@ -231,14 +173,19 @@ def main():
                     LeftRightInput[0] += 1
                     LeftRightInput[1] = 1
                 if event.key == pygame.K_ESCAPE:
-                    #if player wants to leave then just leave
                     sys.exit()
+                if event.key == pygame.K_F1:
+                    NavGraph.toggle_debug()
+                if event.key == pygame.K_F2:
+                    for obj in Bots:
+                        bot = obj.GetComp(bots.Bot)
+                        bot.toggle_debug_path()
+
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_r:
                     RechargeInput[0] -= 1;
                     RechargeInput[1] = -1;
-
                 if event.key == pygame.K_w:
                     UpDownInput[0] -= 1
                     UpDownInput[1] = -1
@@ -256,9 +203,25 @@ def main():
                 MouseInputs[1] = pygame.mouse.get_pressed()
                 MouseInputs[1] = [int(MouseInputs[1][0]), int(MouseInputs[1][1]), int(MouseInputs[1][2])]
                 MouseInputs[0] = [MouseInputs[0][0] + MouseInputs[1][0], MouseInputs[0][1] + MouseInputs[1][1], MouseInputs[0][2] + MouseInputs[1][2]]
+                
+                if event.button == 3:
+                    target_pos = Cursor.transform.pos
+                    if len(Bots) > 0:
+                        bot = Bots[0].GetComp(bots.Bot)
+                        start_pos = Bots[0].transform.pos
+                        path_vectors = MyPathFinder.create_path_to_position(start_pos, target_pos)
+                        if path_vectors:
+                            bot.set_path(path_vectors)
+                        else:
+                            print("No path found")
+            
             if event.type == pygame.MOUSEBUTTONUP: #apparently pygame do not sends inputs when mouse is button up, only informs that it is at all
                 MouseInputs[1] = [-MouseInputs[0][0], -MouseInputs[0][1], -MouseInputs[0][2]]
                 MouseInputs[0] = [MouseInputs[0][0] + MouseInputs[1][0], MouseInputs[0][1] + MouseInputs[1][1], MouseInputs[0][2] + MouseInputs[1][2]]
+                
+        #-----------------------------------------------
+        # INPUT HANDLING
+        #-----------------------------------------------
 
 
         Cursor.transform.lpos = GetWorldMousePos(singletons.MainCamera.windowSize, singletons.MainCamera.gameObject.transform.lpos)
@@ -267,39 +230,35 @@ def main():
         #-----------------------------------------------
         #Player handling
         #-----------------------------------------------
-        if Player != None: #we can have no player
+        if Player != None: 
             Player.transform.FaceTowards(Cursor.transform);
-            #LATER MOVE PLAYER SPEED TO SOME SPECIAL CLASS
             moveVector = Vector([LeftRightInput[0], UpDownInput[0]])
             playerSpeed = 0.2
             Player.GetComp(physics.PhysicObject).maxVelocity = 0.2
             Player.GetComp(physics.PhysicObject).vel += moveVector * playerSpeed
 
+
+
         #-----------------------------------------------
-        #Special Events
+        #Bots handling
         #-----------------------------------------------
 
-        #TO DO
-        #replace to use weapon system, or make it so that weapon kills
-        #killing enemies
-        #print(raycastObject.GetComp('Enemy'))
-        #if raycastObject and raycastObject.GetComp('Enemy'):
-            #pass
-            #Enemies.remove(raycastObject)
-            #GlobalObjects.remove(raycastObject)
-            #del raycastObject
+        #singular bot
+        for obj in Bots:
+
+            BotComp = obj.GetComp(bots.Bot)
+            if BotComp: BotComp.update()
+
+            physComp = obj.GetComp(physics.PhysicObject)
+            if physComp: physComp.ExecutePos()
+
+            obj.transform.SynchGlobals()
 
         #-----------------------------------------------
         #Global rendering
         #-----------------------------------------------
         singletons.MainCamera.Clear()
-
         PlayerWeapon.transform.SynchGlobals()
-
-        #test raycast collision by player weapon
-        if enums.WeaponDebug.LINEPOINTER in PlayerWeapon.GetComp(weapons.Railgun).debugFlag:
-            PlayerWeapon.GetComp(weapons.Railgun).ShowLinePointer([Map], [])
-
 
         for Object in GlobalObjects:
             for Model in Object.GetComps(rendering.Model):
@@ -307,22 +266,17 @@ def main():
             for Primitive in Object.GetComps(rendering.Primitive):
                 singletons.MainCamera.RenderPrimitive(Primitive)
 
-        #ENEMIES DEBUG!!!
-        for Object in Bots:
-            BotAI = Object.GetComp(bots.Bot)
-            BotAI.Debug()
+        NavGraph.debugDraw(singletons.MainCamera)
 
+        for obj in Bots:
+            bot = obj.GetComp(bots.Bot)
+            bot.Debug(singletons.MainCamera)
+
+        if enums.WeaponDebug.LINEPOINTER in PlayerWeapon.GetComp(weapons.Railgun).debugFlag:
+            PlayerWeapon.GetComp(weapons.Railgun).ShowLinePointer([Map], [])
         #-----------------------------------------------
         #Collision handling
         #-----------------------------------------------
-
-        #now for testing collision with map
-        '''
-        if collisions.CollisionSolver.CheckCollision(Player.GetComp(collisions.Collider), Map.GetComp(collisions.Collider)):
-            Player.GetComp(rendering.RenderObject).col = [0, 255, 0]
-        else:
-            Player.GetComp(rendering.RenderObject).col = [255, 0, 0]
-        '''
 
         #if player keeps mouse button down he tries to shoot
         if MouseInputs[0][0] > 0:
@@ -353,42 +307,26 @@ def main():
         Player.GetComp(physics.PhysicObject).ExecutePos()
         Player.transform.SynchGlobals()
 
-        #-----------------------------------------------
-        #AI logic
-        #-----------------------------------------------
 
-        #singular bot
-        for Object in Bots:
-
-            BotComp = Object.GetComp(bots.Bot)
-            if BotComp:           
-                BotComp.update()
-
-            physComp = Object.GetComp(physics.PhysicObject)
-            if physComp: 
-                physComp.ExecutePos()
-
-            
-            Object.transform.SynchGlobals()
         
 
 
-        NavGraph.debugDraw(singletons.MainCamera)
+        # NavGraph.debugDraw(singletons.MainCamera)
 
-        if pygame.mouse.get_pressed()[2]:
-            target_pos = Cursor.transform.pos
+        # if pygame.mouse.get_pressed()[2]:
+        #     target_pos = Cursor.transform.pos
             
-            if len(Bots) > 0:
+        #     if len(Bots) > 0:
 
-                bot = Bots[0].GetComp(bots.Bot)
-                start_pos = Bots[0].transform.pos
+        #         bot = Bots[0].GetComp(bots.Bot)
+        #         start_pos = Bots[0].transform.pos
 
-                path_vectors = MyPathFinder.create_path_to_position(start_pos, target_pos)
+        #         path_vectors = MyPathFinder.create_path_to_position(start_pos, target_pos)
 
-                if path_vectors:
-                    bot.set_path(path_vectors)
-                else:
-                    print("No path found")
+        #         if path_vectors:
+        #             bot.set_path(path_vectors)
+        #         else:
+        #             print("No path found")
 
 
         pygame.display.flip();

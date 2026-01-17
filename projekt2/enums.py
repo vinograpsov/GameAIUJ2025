@@ -19,6 +19,7 @@ class ColliderType(Enum):
 
 class BotDebug(Flag):
 	DIRECTION = auto()
+	PATH = auto()
 	#(...)
 
 class WeaponDebug(Flag):
