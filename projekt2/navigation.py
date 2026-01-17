@@ -13,10 +13,11 @@ class GraphNode:
         self.neighbors = []
         self.parent = None
 
-        self.parent = None
         self.g = 0
         self.h = 0
         self.f = 0
+
+        self.extra_info = None
 
 
     def addNeighbor(self, node):
@@ -44,6 +45,22 @@ class NavigationGraph:
 
     def _pos_to_key(self, position):
         return (int(round(position.x())), int(round(position.y())))
+
+    def register_pickup(self, pickup_obj):
+        min_dist = float('inf')
+        closest_node = None
+
+        for node in self.nodes:
+            dist = (node.pos - pickup_obj.transform.pos).LengthSquared()
+            if dist < min_dist:
+                min_dist = dist
+                closest_node = node
+
+        if closest_node and min_dist < (self.step_size * self.step_size):
+            closest_node.extra_info = pickup_obj 
+            # !!!!!!!!!!!!!!! pickup_obj.transform.pos = closest_node.pos
+            pickup_obj.transform.pos = closest_node.pos
+            print(f"Pickup registered to node at {closest_node.pos.data}")
 
     def generateFloodFill(self, start_pos, obstacles_list):
         start_time = pygame.time.get_ticks()
@@ -170,6 +187,7 @@ class NavigationGraph:
 
         for node in self.nodes:
             start_screen = self._world_to_screen(node.pos, camera)
+
             pygame.draw.circle(surface, (0, 0, 255), (int(start_screen[0]), int(start_screen[1])), 2)
 
             for neighbor in node.neighbors: 
@@ -186,7 +204,78 @@ class NavigationGraph:
         return [screen_x, screen_y]
                                  
 
+class DijkstraSearch:
+    def __init__(self, start_node, target_node_type):
+        self.start_node = start_node
+        self.target_node_type = target_node_type
 
+        self.open_list = []
+        self.closed_set = set()
+
+        self.start_node.parent = None
+        self.start_node.g = 0
+        self.start_node.f = 0
+
+        heapq.heappush(self.open_list, start_node)
+        self.target_node_found = None 
+
+    def run(self):
+        import pickup 
+
+        while len(self.open_list) > 0: 
+            current_node = heapq.heappop(self.open_list)
+            self.closed_set.add(current_node) 
+
+            if current_node.extra_info is not None:
+                pickup_comp = current_node.extra_info.GetComp(pickup.Pickup)
+                if pickup_comp and pickup_comp.is_active and pickup_comp.type == self.target_node_type:
+                    self.target_node_found = current_node 
+                    return True
+
+            for neighbor in current_node.neighbors: 
+                if neighbor in self.closed_set: 
+                    continue
+
+                dist_to_neighbor = (current_node.pos - neighbor.pos).Length()
+                tentative_g = current_node.g + dist_to_neighbor
+
+                in_open_list = neighbor in self.open_list
+
+                if tentative_g < neighbor.g or not in_open_list:
+                    neighbor.parent = current_node
+                    neighbor.g = tentative_g 
+                    neighbor.f = tentative_g
+
+                    if not in_open_list:
+                        heapq.heappush(self.open_list, neighbor)
+                    else: 
+                        heapq.heappush(self.open_list, neighbor)
+
+        return False
+
+
+    def get_path_as_vectors(self):
+        if not self.target_node_found:
+            return[]
+        
+        SAFETY_COUNTER = 0
+        MAX_LOOPS = 1000
+
+        path = []
+        curr = self.target_node_found
+        while curr is not None: 
+            path.append(curr.pos)
+            curr = curr.parent
+            if curr == self.start_node:
+                break 
+            
+            SAFETY_COUNTER += 1
+            if SAFETY_COUNTER > MAX_LOOPS:
+                print("Infinite loop detected")
+                break
+            
+        path.reverse()
+        return path
 
 class AStarSearch: 
     def __init__(self, start_node, target_node):
@@ -300,22 +389,29 @@ class Pathfinder:
             return []
         
 
-
         self.current_search = AStarSearch(start_node, target_node)
         success = self.current_search.run()
 
         if success: 
             path = self.current_search.get_path_as_vectors()
-            # if len(path) > 0:
-            #     path.append(target_pos)
-
             return path
         else: 
             print("Pathfinder: no path")
             return []
 
 
+    def create_path_to_pickup(self, start_pos, pickup_type):
+        start_node = self.get_closest_node(start_pos)
 
+        if start_node is None: return []
+        self.current_search = DijkstraSearch(start_node, pickup_type)
+        if self.current_search.run():
+            path = self.current_search.get_path_as_vectors()
+            return path
+
+        print(f"No active pickup of type {pickup_type} found")
+        return []
+    
 
 class Path: 
     def __init__(self, waypoints):

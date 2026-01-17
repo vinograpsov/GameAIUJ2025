@@ -14,6 +14,7 @@ import navigation
 
 import weapons
 import bots
+import pickup
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -134,11 +135,44 @@ def main():
     start_point = Vector([100, 100])
     NavGraph.generateFloodFill(start_point, allObstacles)
 
-    MyPathFinder = navigation.Pathfinder(NavGraph)
     #------------------------------------------------------------------
     #FLOODFILL and ASTAR
     #------------------------------------------------------------------
 
+
+
+    #-----------------------------------------------
+    # PICKUPS SETUP
+    #-----------------------------------------------
+
+    Pickups = []
+
+    HealthObj = game_object.GameObject(Transform(Vector([600, 400]), 0, Vector([10, 10])), [], None)
+    HealthObj.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (0, 255, 0), 0))
+    p_comp = pickup.Pickup(pickup.PickupType.HEALTH, 25, 10.0)
+    p_comp.gameObject = HealthObj
+    HealthObj.AddComp(p_comp)
+    Pickups.append(HealthObj)
+    GlobalObjects.append(HealthObj)
+
+    AmmoObj = game_object.GameObject(Transform(Vector([200, 500]), 0, Vector([10, 10])), [], None)
+    AmmoObj.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (255, 0, 0), 0))
+    p_comp_ammp = pickup.Pickup(pickup.PickupType.AMMO_ROCKET, 10)
+    p_comp_ammp.gameObject = AmmoObj
+    AmmoObj.AddComp(p_comp_ammp)
+    Pickups.append(AmmoObj)
+    GlobalObjects.append(AmmoObj)
+
+    for p_obj in Pickups:
+        NavGraph.register_pickup(p_obj)
+
+    #-----------------------------------------------
+    # PICKUPS SETUP
+    #-----------------------------------------------
+
+
+    MyPathFinder = navigation.Pathfinder(NavGraph)
+    
     while 1:
         
         clock.tick(FPS)
@@ -180,6 +214,17 @@ def main():
                     for obj in Bots:
                         bot = obj.GetComp(bots.Bot)
                         bot.toggle_debug_path()
+
+
+                # TMP TEST BOT GO TO PICKUP
+                if event.key == pygame.K_e:
+                    if len(Bots) > 0:
+                        bot_obj = Bots[0]
+                        bot_ai = bot_obj.GetComp(bots.Bot)
+
+                        path = MyPathFinder.create_path_to_pickup(bot_obj.transform.pos, pickup.PickupType.AMMO_ROCKET)
+                        if path: bot_ai.set_path(path)
+                        else: print("No path to pickup found")
 
 
             if event.type == pygame.KEYUP:
