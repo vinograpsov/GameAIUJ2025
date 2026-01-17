@@ -59,6 +59,7 @@ class NavigationGraph:
         if closest_node and min_dist < (self.step_size * self.step_size):
             closest_node.extra_info = pickup_obj 
             # !!!!!!!!!!!!!!! pickup_obj.transform.pos = closest_node.pos
+            #Show to adam and ask if this is ok
             pickup_obj.transform.pos = closest_node.pos
             print(f"Pickup registered to node at {closest_node.pos.data}")
 
