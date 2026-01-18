@@ -94,17 +94,23 @@ def main():
     Player.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
     
     Player.AddComp(physics.PhysicObject(1))
-    Player.AddComp(bots.Bot(3, 100, math.pi)) #player is still considered a bot
+    PlayerBot = Player.AddComp(bots.Bot(3, 1000000000, math.pi, 0.1, 0.3, 1)) #player is still considered a bot
     singletons.Bots.append(Player)
-    
-    Player.GetComp(bots.Bot).debugFlag = enums.BotDebug.FIELDOFVIEW
 
+    PlayerBot.debugFlag = enums.BotDebug.FIELDOFVIEW
+    #PlayerBot.debugFlag = enums.BotDebug.VISION | enums.BotDebug.MEMORYPOSITIONS
+    
     PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 100, 60, 0)) #for debug weapon has no cooldown and nearly infinite ammo
+    #PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
+    
+    PlayerWeapon.AddComp(weapons.RocketLauncher(Player, 0.4, 4096, 35, 2, Vector([12, 12]), 120, 60))
     PlayerWeapon.SetParent(Player)
 
-    PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND
-    singletons.GlobalObjects.append(Player);
+    PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.FIRESOUND
+
+    PlayerBot.weapon = PlayerWeapon.GetComp(weapons.Weapon)
+
+    del(PlayerBot)
 
     Cursor = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
     Cursor.AddComp(rendering.Model('Assets\Cursor.obj', [255, 0, 0], enums.RenderMode.WIREFRAME))
@@ -136,11 +142,24 @@ def main():
     Dummy = None
     if enums.GeneralDebug.SPAWNDUMMY in GeneralDebugFlag:
         Dummy = game_object.GameObject(Transform(Vector([singletons.MainCamera.windowSize[0] / 2, singletons.MainCamera.windowSize[1] / 2 - 20]), 0, Vector([15, 15])), [], None)
-        Dummy.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, [0, 0, 255], 0))
+        Dummy.AddComp(rendering.Model('Assets\Triangle.obj', [0, 0, 255], enums.RenderMode.POLYGON));
+        #Dummy.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, [0, 0, 255], 0))
         Dummy.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
         Dummy.AddComp(physics.PhysicObject(1))
-        Dummy.AddComp(bots.Bot(3, 100, math.pi))
-        #dummy should later also hold a weapon
+        Dummy.AddComp(bots.Bot(3, 100, math.pi, 0.1, 0.3, 1))
+        
+        #dummy weapon
+        DummyWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
+        #DummyWeapon.AddComp(weapons.Railgun(Dummy, 3, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
+    
+        DummyWeapon.AddComp(weapons.RocketLauncher(Dummy, 0.6, 4096, 35, 2.5, Vector([12, 12]), 120, 60))
+        DummyWeapon.SetParent(Dummy)
+
+        DummyWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND
+
+        Dummy.GetComp(bots.Bot).weapon = DummyWeapon.GetComp(weapons.Weapon)
+
+
         singletons.Bots.append(Dummy)
 
         Dummy.GetComp(bots.Bot).debugFlag = enums.BotDebug.VISION | enums.BotDebug.MEMORYPOSITIONS
@@ -307,6 +326,11 @@ def main():
             Player.GetComp(physics.PhysicObject).vel += moveVector * playerSpeed
 
 
+        
+        #if player keeps mouse button down he tries to shoot
+        if MouseInputs[0][0] > 0:
+            #PlayerWeapon.GetComp(weapons.Railgun).TryShoot([Map], singletons.Bots)
+            PlayerWeapon.GetComp(weapons.RocketLauncher).TryShoot(singletons.MapObjects, singletons.Bots)
 
         #-----------------------------------------------
         #Bots handling
@@ -327,13 +351,9 @@ def main():
         #Global rendering
         #-----------------------------------------------
         singletons.MainCamera.Clear()
-        PlayerWeapon.transform.SynchGlobals()
 
-        for Object in singletons.GlobalObjects:
-            for Model in Object.GetComps(rendering.Model):
-                singletons.MainCamera.RenderWireframe(Model)
-            for Primitive in Object.GetComps(rendering.Primitive):
-                singletons.MainCamera.RenderPrimitive(Primitive)
+        for Renderer in singletons.RenderObjects:
+            singletons.MainCamera.Render(Renderer)
 
         NavGraph.debugDraw(singletons.MainCamera)
 
@@ -344,43 +364,22 @@ def main():
         if enums.WeaponDebug.LINEPOINTER in PlayerWeapon.GetComp(weapons.Railgun).debugFlag:
             PlayerWeapon.GetComp(weapons.Railgun).ShowLinePointer([Map], [])
 
-        
-        for Renderer in singletons.RenderObjects:
-            singletons.MainCamera.Render(Renderer)
+        #ENEMIES DEBUG!!!
+        for Object in singletons.Bots:
+            BotAI = Object.GetComp(bots.Bot)
+            BotAI.Debug()
+            BotWeapon = BotAI.weapon
+            BotWeapon.Debug()
 
         #-----------------------------------------------
         #Collision handling
         #-----------------------------------------------
 
-        #if player keeps mouse button down he tries to shoot
-        if MouseInputs[0][0] > 0:
-            PlayerWeapon.GetComp(weapons.Weapon).TryShoot([Map], [])
+        for Object in singletons.Projectiles:
+            projectile = Object.GetComp(weapons.Projectile)
+            if isinstance(projectile, weapons.ExplosiveProjectile):
+                projectile.CheckIfTriggered(singletons.Bots, singletons.MapObjects)
 
-        #get all physic components in game: (as collision reaction happens only for them)
-        PhysicComponents = []
-        for i in range(0, len(singletons.GlobalObjects)):
-            iPhys = singletons.GlobalObjects[i].GetComp(physics.PhysicObject)
-            if iPhys:
-                PhysicComponents.append(iPhys)
-
-        #for every physic object, find colliders in all objects
-        for i in range(0, len(PhysicComponents)):
-            for j in range(0, len(singletons.GlobalObjects)):
-                #check for every collider in object
-                for OtherCollider in singletons.GlobalObjects[j].GetComps(collisions.Collider):
-
-                    PhysCollider = PhysicComponents[i].gameObject.GetComp(collisions.Collider)
-                    #UNUSED, we no longer need to resolve any collisions
-                    #if PhysCollider:
-                    #    PhysCollider.ResolveCollision(OtherCollider)
-
-        #-----------------------------------------------
-        #Physics execution
-        #-----------------------------------------------
-
-
-        Player.GetComp(physics.PhysicObject).ExecutePos()
-        Player.transform.SynchGlobals()
         #-----------------------------------------------
         #AI logic
         #-----------------------------------------------
@@ -395,19 +394,25 @@ def main():
             #hearing
             botAI.UpdateHearing(singletons.Sounds, singletons.MapObjects)
 
+            #dummy debug for shooting
+            if object != Player:
+                botAI.TryAimAndShoot(singletons.MapObjects)
             #dummy does not act, but can still be a receiver and can use it's perception
             if object == Dummy:
                 continue
 
-        #singular bot
-        for Object in singletons.Bots:
-            
-            #physics execution for bots
-            for Phys in Object.GetComps(physics.PhysicObject):
-                Phys.UpdateVelocity()
-                #first rotate the bot towards it's velocity
-                #Bot.UpdateForwardDirection() #part of old project, could this still be important?
-                Phys.ExecutePos()
+        #-----------------------------------------------
+        #Physics execution
+        #-----------------------------------------------
+
+        for Object in singletons.Projectiles:
+            projectile = Object.GetComp(weapons.Projectile)
+            projectile.UpdatePhysics()
+
+        for Phys in singletons.PhysicObjects:
+            Phys.UpdateVelocity()
+            Phys.ExecutePos()
+
 
 
         #-----------------------------------------------

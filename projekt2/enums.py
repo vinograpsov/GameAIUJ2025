@@ -27,6 +27,7 @@ class BotDebug(Flag):
 	FIELDOFVIEW = auto() #unused
 	VISION = auto()
 	MEMORYPOSITIONS = auto()
+	HEALTH = auto()
 	#(...)
 
 class WeaponDebug(Flag):

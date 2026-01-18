@@ -21,6 +21,7 @@ class GameObject:
     '''custom destructor, the reason why it is not native function is because python natively do not supports destructors and __del__ or any other kind of native function is NOT a destructor for object'''
     def Destroy(self):
         #it is impossible to trully delete object in python, why why is it so...
+        self.parent = None
         if self in singletons.GlobalObjects:
             singletons.GlobalObjects.remove(self)
         if self.parent:
@@ -32,10 +33,10 @@ class GameObject:
             #it is stupid, but it is the least convoluted method of utilizing actual destructor
             try:
                comp.Destroy()
-               self.components.remove(comp)
             except AttributeError:
-                #special destructor not defined
-                self.components.remove(comp)
+                pass
+            comp.gameObject = None
+        self.components = None
 
     def Update():
         pass

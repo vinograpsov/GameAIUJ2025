@@ -5,6 +5,13 @@ MainCamera = None
 
 GeneralDebugFlag = None
 
+'''used as initializator for values as arbirtary value to simulate infinity'''
+maxValue = 8192
+'''same, used for squared comparisons'''
+maxSquareValue = 65536
+
+ProjectileColor = [255, 255, 0]
+
 DebugCol = [255, 0, 255]
 DebugNegativeCol = [255, 0, 153]
 DebugPositiveCol = [153, 0, 255]
@@ -14,6 +21,9 @@ GlobalObjects = [] #game objects
 
 '''objects with a component for rendering'''
 RenderObjects = [] #render object class
+
+'''physic components'''
+PhysicObjects = [] #physic object class
 
 '''list of map objects'''
 MapObjects = []
@@ -29,3 +39,6 @@ Sounds = [] #sound trigger component
 
 '''list of bot objects'''
 Bots = [] #gameobject
+
+'''list of projectile objects'''
+Projectiles = [] #gameobject

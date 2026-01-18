@@ -273,6 +273,7 @@ class Raycast():
         return False
 
     '''returns a list of all objects that intersects with ray'''
+    @staticmethod
     def CollectRay(transPivot, endPoint, sceneObjects): #endpoint is optional type
         result = []
         transPivot.SynchGlobals()
@@ -301,12 +302,14 @@ class Raycast():
     #ray is always casted in the forward direction of a transform
     #by the book raycast will ignore collider when it starts inside it, that means that raycast by default will not trigger on the caster (player)
     @staticmethod
-    def CastRay(transPivot, sceneObjects):
+    def CastRay(transPivot, endPoint, sceneObjects):
         result = None
-        hit = 8192.0 #some arbitrary high number as ray highest range
-        contactPoint = hit
         #calculate automatic (near infinite) endpoint if not given
-        endPoint = transPivot.LocalToGlobal(Vector([8192, 0]), True)
+        if not endPoint:
+            endPoint = transPivot.LocalToGlobal(Vector([8192, 0]), True)
+        hit = 16384 #initial hit must be higher then endPoint (for rare case scenario when collision happens exacly at the threshold)
+        contactPoint = hit
+
 
         transPivot.SynchGlobals()
         for Object in sceneObjects:
@@ -350,3 +353,34 @@ class Raycast():
                     result = collider.gameObject
 
         return result, transPivot.LocalToGlobal(Vector([hit, 0]), True)
+
+    #used by rocket launcher to get collision with bots, works only on sphere colliders
+    #structure of this function is little different than in the book, but logic stays the same:
+    #1. get all colliders intersecting with ray
+    #2. find closest ORIGIN to specified position (in book this position was projectile origin, here it is passed as variable from projectile)
+    #3. return object with closest origin to anchor
+    @staticmethod
+    def GetClosestOriginAlongRay(transPivot, endPoint, anchorPos, sceneObjects): #anchor point is point to which we compare intersecting origins with
+        result = None
+        transPivot.SynchGlobals()
+        if not endPoint:
+            endPoint = transPivot.LocalToGlobal(Vector([8192, 0]), True)
+        if not anchorPos:
+            anchorPos = transPivot.pos.copy()
+
+        ObjectsAlongRay = Raycast.CollectRay(transPivot, endPoint, sceneObjects)
+
+        #find object with closest origin to anchorPos
+        #WARNING!
+        #this function compares ORIGINS of objects, not their contact points with ray
+        closestDistSquared = 8192
+        for intersectingObject in ObjectsAlongRay:
+            trans = intersectingObject.transform
+            trans.SynchGlobals()
+            diff = trans.pos - anchorPos
+            curDistSquared = Vector.Dot(diff, diff) 
+            if curDistSquared < closestDistSquared:
+                closestDistSquared = curDistSquared
+                result = intersectingObject
+
+        return result

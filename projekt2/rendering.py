@@ -39,10 +39,8 @@ class Camera():
         trans = primitive.gameObject.transform
         trans.SynchGlobals()
 
-        if enums.PrimitiveType.CIRCLE:
-            #for some reason rendering here does not require to flip y position
+        if primitive.type == enums.PrimitiveType.SPHERE:
             drawPos = trans.Reposition(transforms.Vector([0, 0])).data
-            #drawPos = trans.pos.data
             drawPos[1] = self.windowSize[1] - drawPos[1]
             pygame.draw.circle(self.screen, primitive.col, drawPos, trans.scale.MaxComponent(), primitive.width)
 

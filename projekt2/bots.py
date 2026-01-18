@@ -1,5 +1,6 @@
 import time
 import math #used only in one line, in FOV check
+import gc
 
 import game_object
 from transforms import *
@@ -30,6 +31,9 @@ class MemoryRecord():
         self.isInLineOfSight = False
         #bot is considered visible when both in FOV and line of sight are trues
 
+    def Destroy(self):
+        self.source = None
+
     #BOOK REQUIREMENT
     #MEMORY FRAGMENT IS NOT DESTROYED WHEN PASSING TIME THRESHOLD, IT STAYS IN SENSORY MEMORY FOREVER!!!
 
@@ -52,8 +56,9 @@ class MemoryRecord():
 
 class Bot():
 
-    def __init__(self, maxHealth, memorySpan, fov, rocket_ammo=10, railgun_ammo=10):
+    def __init__(self, memorySpan, maxHealth, fov, accuracy, reactionTime, aimingPersistance):
         self.gameObject = None
+        self.weapon = None
         self.memories = [] #list of memory records
         self.memorySpan = memorySpan
         self.maxHealth = maxHealth
@@ -63,14 +68,20 @@ class Bot():
 
 
         self.path = None
-        self.waypoint_seek_dist_sq = 20 * 20 
+        self.waypoint_seek_dist_sq = 20 * 20
+        #OD TEGO JEST PHYSIC OBJECT W BOCIE, ON MA TO WSZYSTKO
         self.max_speed = 2.0 
         self.velocity = Vector([0, 0]) 
         self.mass = 1.0
         self.fov = fov
 
-        self.debugFlag = enums.BotDebug(0)
+        #bot aiming inaccuracy
+        self.accuracy = accuracy
+        self.reactionTime = reactionTime
+        self.aimingPersistance = aimingPersistance #the time bot will continue to aim at target after target already dissapeared
+        self.lastTimeReacted = time.time()
 
+        self.debugFlag = enums.BotDebug(0)
         self.transform = None
 
     def set_path(self, vector_list): 
@@ -150,7 +161,7 @@ class Bot():
         print(f"Bot Path Debug: {self.debugFlag}")
 
 
-
+    #CO TO K* ROBI W BOCIE A NIE W MODULE RENDEROWANIA WTF
     def _world_to_screen(self, world_pos, camera):
         cam_pivot = camera.gameObject.transform.pos
         win_size = camera.windowSize
@@ -158,6 +169,13 @@ class Bot():
         screen_y = win_size[1] - (world_pos.y() - cam_pivot.y() + win_size[1] / 2)
         return [screen_x, screen_y]
     
+    def Destroy(self):
+        singletons.Bots.remove(self.gameObject)
+        self.memories = None
+        self.weapon = None
+
+        for botObject in singletons.Bots:
+            botObject.GetComp(Bot).RemoveFromMemory(self.gameObject)
 
     #this function is used to render debug objects based on the debug flag
     def Debug(self, camera):
@@ -166,7 +184,12 @@ class Bot():
         trans.SynchGlobals()
 
 
+        #text debugs
+        if enums.BotDebug.HEALTH in self.debugFlag:
+            print(self.health)
+
         if enums.BotDebug.DIRECTION in self.debugFlag:
+            #ZMIENIC NA RENDER UZYWAJACY RENDERERA
             start_pos = self._world_to_screen(self.transform.pos, camera)
             end_pos = self._world_to_screen(self.transform.pos + self.transform.Forward() * 30, camera)
             pygame.draw.line(surface, (255,0,0), start_pos, end_pos, 2)
@@ -205,13 +228,99 @@ class Bot():
                 else:
                     if memory.sensedPos: #if position was ever initialized
                         singletons.MainCamera.RenderRawPoint(memory.sensedPos, singletons.DebugNegativeCol, 5)
+    
+    '''this function is equivalent of tergeting system from book'''
+    def GetClosestValiableMemory(self):
+        memories = self.GetValidMemoryRecords()
+        if len(memories) <= 0:
+            return None
+        result = memories[0]
+        trans = self.gameObject.transform
+        trans.SynchGlobals()
+        targetTrans = memories[0].source.gameObject.transform
+        targetTrans.SynchGlobals()
+        minDist = Vector.DistSquared(trans.pos, targetTrans.pos)
+
+        for memory in memories:
+            #do not return memory of itself
+            if memory.source == self:
+                continue
+            targetTrans = memory.source.gameObject.transform
+            targetTrans.SynchGlobals()
+            curDist = Vector.DistSquared(trans.pos, targetTrans.pos)
+            if curDist < minDist:
+                minDist = curDist
+                result = memory
+        return result
+
+    def TryAimAndShoot(self, mapObjects):
+        possibleTargetMemory = self.GetClosestValiableMemory()
+
+        if not possibleTargetMemory:
+            return
+
+        #aim only if there is line of sight or last sensed lower the persistance
+        if possibleTargetMemory.isInLineOfSight or time.time() - possibleTargetMemory.lastTimeVisible < self.aimingPersistance:
+
+            trans = self.gameObject.transform
+            trans.SynchGlobals()
+            targetTrans = possibleTargetMemory.source.gameObject.transform
+            targetTrans.SynchGlobals()
+
+            #in the book it uses actual bot position, not source pos created by sensory memory
+            #shootingRot = self.weapon.Aim(possibleTargetMemory.sourcePos, self.accuracy)
+            #BOOK REUIREMENT?
+            #OR JUST AN OVERSIGHT THAT WE SHOULD NOT FOLLOW?
+            #BOOK USES HERE POSITION OF THE BOT, **NOT** SAVED POSITION WHEN BOT WAS LAST SENSED
+            #THAT MEANS THAT WHEN WE AIM AT ALREADY NOT VISIBLE ENEMY THE BOT WILL FOLLOW HIM WITH XRAY VISION
+            shootingRot = (targetTrans.pos - trans.pos).ToRotation()
+
+            #set bot rotation to visually show that he is looking at the opponent
+            #this is not his shooting direction btw
+            trans.lrot = shootingRot
+            trans.Desynch()
 
 
+            #check if target is visible for some time
+            if time.time() - possibleTargetMemory.timeBecameVisible > self.reactionTime:
+                
+                #perform actual aiming algorithm
+                #BOOK DIFFERENCE
+                #in the book we first calculate predicted position, and then check line of sight
+                shootingRot, shootingPos = self.weapon.Aim(possibleTargetMemory.source.gameObject, self.accuracy)
+                
+                #check for second time if targetable position is visible
+                if not collisions.Raycast.CheckRay(trans, shootingPos, mapObjects):
+                    #rotate again to face shooting direction
+                    #BOOK OVERSIGHT?
+                    #Yes, that means that bot will briefly look at exacly where he is shooting when TRYING to shoot, not when actually shooting
+                    trans.lrot = shootingRot
+                    trans.Desynch()
+
+                    self.weapon.TryShoot(singletons.MapObjects, singletons.Bots)
+
+    def Kill(self):
+        self.gameObject.Destroy()
+                        
     def Heal(self, damage):
         self.health = min(self.health + damage, self.maxHealth)
 
-    def DealDamage(self, damage):
-        pass
+    def DealDamage(self, damage, source):
+
+        #TO DO
+        #bot is being informed about by whom he was shot, but by other means then memory
+        #(I yet need to read that one)
+        
+        #if source is not null then add source to memory
+        #if source:
+            #curMemory = self.TryCreateMemory(source)
+            #curMemory.lastTimeSensed = time.time()
+
+        print("damage dealt")
+        
+        self.health -= damage
+        if self.health < 0:
+            self.Kill()
 
     '''returns true if given point is within field of view, FOV is always set to 90deg'''
     def CheckFieldOfView(self, point):
@@ -225,6 +334,14 @@ class Bot():
         return False
 
     #SENSORY MEMORY
+
+    def RemoveFromMemory(self, source):
+        for memory in self.memories:
+            if memory.source == source:
+                self.memories.remove(memory)
+                memory.Destroy()
+                return
+        print("trying to remove unexisting memory")
     
     '''this function creates memory if not existing and returns it, when already existing returns existing'''
     def TryCreateMemory(self, source):
@@ -262,7 +379,7 @@ class Bot():
         
         for object in sourceObjects:
             sourceBot = object.GetComp(Bot)
-            #do not check visibility whit itself
+            #do not check visibility whith itself
             if sourceBot == self:
                 continue
             

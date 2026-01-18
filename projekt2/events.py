@@ -106,7 +106,7 @@ class Trigger():
 		self.collider = self.gameObject.GetComp(collisions.Collider)
 		self.isActive = isActive
 
-	def CheckIfTriggered(collider):
+	def CheckIfTriggered(self, collider):
 		if self.isActive and collisions.CollisionSolver.CheckCollision(self.collider, collider):
 			self.TriggeredEvent(collider.gameObject)
 
