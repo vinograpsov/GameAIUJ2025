@@ -1,5 +1,6 @@
 #import pygame
 import transforms
+import singletons
 
 class GameObject:
     #transform
@@ -14,24 +15,27 @@ class GameObject:
         self.childs = []
         if parent != None:
             self.SetParent(parent)
-            #self.transforms.Reparent
         self.components = components
+        singletons.GlobalObjects.append(self)
 
-        self.isRemoved = False
-
-    '''destroys entire gameObject once with all it's components'''
-    def __delete__(self):
-        print('I am deleting')
-        for child in self.childs:
-            del child
-        del self.transform
-        for comp in self.components:
-            del comp
-        del self
-    
+    '''custom destructor, the reason why it is not native function is because python natively do not supports destructors and __del__ or any other kind of native function is NOT a destructor for object'''
     def Destroy(self):
-        print('I am trying')
-        del self
+        #it is impossible to trully delete object in python, why why is it so...
+        if self in singletons.GlobalObjects:
+            singletons.GlobalObjects.remove(self)
+        if self.parent:
+            self.parent = None #this essentially releases this object from parent
+        for child in self.childs:
+            child.Destroy()
+        for comp in self.components:
+            #this weird code calls destructors in components, but only when they are defined bypassing actual inheritance requirement
+            #it is stupid, but it is the least convoluted method of utilizing actual destructor
+            try:
+               comp.Destroy()
+               self.components.remove(comp)
+            except AttributeError:
+                #special destructor not defined
+                self.components.remove(comp)
 
     def Update():
         pass
@@ -64,8 +68,12 @@ class GameObject:
                 return
             del self.components[toRemove]
         else:
-            #also schould be debug but not for now
-            self.components.remove(toRemove)
+            try:
+               toRemove.Destroy()
+               self.components.remove(toRemove)
+            except AttributeError:
+                #special destructor not defined
+                self.components.remove(toRemove)
 
     '''returns first component of specified type'''
     def GetComp(self, compType):

@@ -16,8 +16,6 @@ class CollisionSolver():
         trans.SynchGlobals()
         target.SynchGlobals()
         
-        #only possible collision shapes are sphere <-> sphere sphere <-> line, sphere <-> polygon
-
         if collider.type == enums.ColliderType.SPHERE:
             if other.type == enums.ColliderType.SPHERE:
                 if trans.Distance(target) < trans.scale.MaxComponent() * collider.size + trans.scale.MaxComponent() * other.size:

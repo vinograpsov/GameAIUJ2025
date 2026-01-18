@@ -52,59 +52,63 @@ def main():
     #----------------------------------------
     #Game objects containers
     #----------------------------------------
-    GlobalObjects = [] #game objects
-    Obstacles = [] #game objects
-    Borders = [] #game objects
-    Bots = [] #game objects with physic object + BotAI
+
+    GeneralDebugFlag = enums.GeneralDebug.SPAWNPLAYER | enums.GeneralDebug.SPAWNDUMMY
 
 
     #------------------------MAP AND BORDERS ----------------------------
     Map = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([singletons.MainCamera.windowSize[0] / 2, singletons.MainCamera.windowSize[1] / 2])), [], None)
     Map.AddComp(rendering.Model('Assets\Map.obj', [192, 192, 192], enums.RenderMode.WIREFRAME));
     Map.AddComp(collisions.PolygonCollider(enums.ColliderType.POLYGON, 'Assets/Map.obj'))
-    GlobalObjects.append(Map)
+    singletons.MapObjects.append(Map)
 
     #TO DO: REPLACE WORLD BORDER WITH POLYGON COLLIDER (OR MAP)
-    MainBorder = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([singletons.MainCamera.windowSize[0], singletons.MainCamera.windowSize[1]])), [], None)
-    Border1 = game_object.GameObject(Transform(Vector([0.5, 0]), DegToRad(180), Vector([0.1, 0.1])), [], MainBorder)
-    Border1.AddComp(collisions.Collider(enums.ColliderType.LINE))
-    Border2 = game_object.GameObject(Transform(Vector([0, 0.5]), DegToRad(270), Vector([1, 1])), [], MainBorder)
-    Border2.AddComp(collisions.Collider(enums.ColliderType.LINE))
-    Border3 = game_object.GameObject(Transform(Vector([-0.5, 0]), 0, Vector([1, 1])), [], MainBorder)
-    Border3.AddComp(collisions.Collider(enums.ColliderType.LINE))
-    Border4 = game_object.GameObject(Transform(Vector([0, -0.5]), DegToRad(90), Vector([1, 1])), [], MainBorder)
-    Border4.AddComp(collisions.Collider(enums.ColliderType.LINE))
+    # MainBorder = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([singletons.MainCamera.windowSize[0], singletons.MainCamera.windowSize[1]])), [], None)
+    # Border1 = game_object.GameObject(Transform(Vector([0.5, 0]), DegToRad(180), Vector([0.1, 0.1])), [], MainBorder)
+    # Border1.AddComp(collisions.Collider(enums.ColliderType.LINE))
+    # Border2 = game_object.GameObject(Transform(Vector([0, 0.5]), DegToRad(270), Vector([1, 1])), [], MainBorder)
+    # Border2.AddComp(collisions.Collider(enums.ColliderType.LINE))
+    # Border3 = game_object.GameObject(Transform(Vector([-0.5, 0]), 0, Vector([1, 1])), [], MainBorder)
+    # Border3.AddComp(collisions.Collider(enums.ColliderType.LINE))
+    # Border4 = game_object.GameObject(Transform(Vector([0, -0.5]), DegToRad(90), Vector([1, 1])), [], MainBorder)
+    # Border4.AddComp(collisions.Collider(enums.ColliderType.LINE))
 
-    GlobalObjects.append(MainBorder)
-    GlobalObjects.append(Border1)
-    GlobalObjects.append(Border2)
-    GlobalObjects.append(Border3)
-    GlobalObjects.append(Border4)
+    # GlobalObjects.append(MainBorder)
+    # GlobalObjects.append(Border1)
+    # GlobalObjects.append(Border2)
+    # GlobalObjects.append(Border3)
+    # GlobalObjects.append(Border4)
 
-    Borders.append(Border1)
-    Borders.append(Border2)
-    Borders.append(Border3)
-    Borders.append(Border4)
+    # Borders.append(Border1)
+    # Borders.append(Border2)
+    # Borders.append(Border3)
+    # Borders.append(Border4)
 
     #------------------------MAP AND BORDERS ----------------------------
+
 
 
     # ------------------------PLAYER SETUP ----------------------------
     Player = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
     Player.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, [0, 0, 255], 0))
     Player.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
+    
     Player.AddComp(physics.PhysicObject(1))
-    Player.AddComp(bots.Bot(100)) 
+    Player.AddComp(bots.Bot(3, 100, math.pi)) #player is still considered a bot
+    singletons.Bots.append(Player)
+    
+    Player.GetComp(bots.Bot).debugFlag = enums.BotDebug.FIELDOFVIEW
 
     PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 100)) #for debug weapon has no cooldown and nearly infinite ammo
+    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 100, 60, 0)) #for debug weapon has no cooldown and nearly infinite ammo
     PlayerWeapon.SetParent(Player)
-    PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER
-    GlobalObjects.append(Player);
+
+    PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND
+    singletons.GlobalObjects.append(Player);
 
     Cursor = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
     Cursor.AddComp(rendering.Model('Assets\Cursor.obj', [255, 0, 0], enums.RenderMode.WIREFRAME))
-    GlobalObjects.append(Cursor);
+    singletons.GlobalObjects.append(Cursor);
     # ------------------------PLAYER SETUP ----------------------------
 
 
@@ -117,20 +121,41 @@ def main():
         CurBot.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
         CurBot.AddComp(physics.PhysicObject(1))
         
-        bot_ai = bots.Bot(100)
+        bot_ai = bots.Bot(3, 100, math.pi)
         bot_ai.debugFlag = enums.BotDebug.DIRECTION | enums.BotDebug.PATH
         
         CurBot.AddComp(bot_ai)
-        Bots.append(CurBot)
-        GlobalObjects.append(CurBot)
+        singletons.Bots.append(CurBot)
+        singletons.GlobalObjects.append(CurBot)
     #--------------------------BOTS SETUP -----------------------------
     
+    #--------------------------------------- 
+    #DUMMY
+    #---------------------------------------
+
+    Dummy = None
+    if enums.GeneralDebug.SPAWNDUMMY in GeneralDebugFlag:
+        Dummy = game_object.GameObject(Transform(Vector([singletons.MainCamera.windowSize[0] / 2, singletons.MainCamera.windowSize[1] / 2 - 20]), 0, Vector([15, 15])), [], None)
+        Dummy.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, [0, 0, 255], 0))
+        Dummy.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
+        Dummy.AddComp(physics.PhysicObject(1))
+        Dummy.AddComp(bots.Bot(3, 100, math.pi))
+        #dummy should later also hold a weapon
+        singletons.Bots.append(Dummy)
+
+        Dummy.GetComp(bots.Bot).debugFlag = enums.BotDebug.VISION | enums.BotDebug.MEMORYPOSITIONS
+
+
+    #--------------------------------------- 
+    #DUMMY
+    #---------------------------------------
 
     #------------------------------------------------------------------
     #FLOODFILL and ASTAR
     #------------------------------------------------------------------
 
-    allObstacles = Obstacles + Borders + [Map]
+    # allObstacles = Obstacles + Borders + [Map]
+    allObstacles = [Map]
     NavGraph = navigation.NavigationGraph(30, 15)
     start_point = Vector([100, 100])
     NavGraph.generateFloodFill(start_point, allObstacles)
@@ -153,7 +178,7 @@ def main():
     p_comp.gameObject = HealthObj
     HealthObj.AddComp(p_comp)
     Pickups.append(HealthObj)
-    GlobalObjects.append(HealthObj)
+    singletons.GlobalObjects.append(HealthObj)
 
     AmmoObj = game_object.GameObject(Transform(Vector([200, 500]), 0, Vector([10, 10])), [], None)
     AmmoObj.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (255, 0, 0), 0))
@@ -161,7 +186,7 @@ def main():
     p_comp_ammp.gameObject = AmmoObj
     AmmoObj.AddComp(p_comp_ammp)
     Pickups.append(AmmoObj)
-    GlobalObjects.append(AmmoObj)
+    singletons.GlobalObjects.append(AmmoObj)
 
     for p_obj in Pickups:
         NavGraph.register_pickup(p_obj)
@@ -211,15 +236,15 @@ def main():
                 if event.key == pygame.K_F1:
                     NavGraph.toggle_debug()
                 if event.key == pygame.K_F2:
-                    for obj in Bots:
+                    for obj in singletons.Bots:
                         bot = obj.GetComp(bots.Bot)
                         bot.toggle_debug_path()
 
 
                 # TMP TEST BOT GO TO PICKUP
                 if event.key == pygame.K_e:
-                    if len(Bots) > 0:
-                        bot_obj = Bots[0]
+                    if len(singletons.Bots) > 0:
+                        bot_obj = singletons.Bots[0]
                         bot_ai = bot_obj.GetComp(bots.Bot)
 
                         path = MyPathFinder.create_path_to_pickup(bot_obj.transform.pos, pickup.PickupType.AMMO_ROCKET)
@@ -251,9 +276,9 @@ def main():
                 
                 if event.button == 3:
                     target_pos = Cursor.transform.pos
-                    if len(Bots) > 0:
-                        bot = Bots[0].GetComp(bots.Bot)
-                        start_pos = Bots[0].transform.pos
+                    if len(singletons.Bots) > 0:
+                        bot = singletons.Bots[0].GetComp(bots.Bot)
+                        start_pos = singletons.Bots[0].transform.pos
                         path_vectors = MyPathFinder.create_path_to_position(start_pos, target_pos)
                         if path_vectors:
                             bot.set_path(path_vectors)
@@ -279,7 +304,6 @@ def main():
             Player.transform.FaceTowards(Cursor.transform);
             moveVector = Vector([LeftRightInput[0], UpDownInput[0]])
             playerSpeed = 0.2
-            Player.GetComp(physics.PhysicObject).maxVelocity = 0.2
             Player.GetComp(physics.PhysicObject).vel += moveVector * playerSpeed
 
 
@@ -289,7 +313,7 @@ def main():
         #-----------------------------------------------
 
         #singular bot
-        for obj in Bots:
+        for obj in singletons.Bots:
 
             BotComp = obj.GetComp(bots.Bot)
             if BotComp: BotComp.update()
@@ -305,7 +329,7 @@ def main():
         singletons.MainCamera.Clear()
         PlayerWeapon.transform.SynchGlobals()
 
-        for Object in GlobalObjects:
+        for Object in singletons.GlobalObjects:
             for Model in Object.GetComps(rendering.Model):
                 singletons.MainCamera.RenderWireframe(Model)
             for Primitive in Object.GetComps(rendering.Primitive):
@@ -313,12 +337,17 @@ def main():
 
         NavGraph.debugDraw(singletons.MainCamera)
 
-        for obj in Bots:
+        for obj in singletons.Bots:
             bot = obj.GetComp(bots.Bot)
             bot.Debug(singletons.MainCamera)
 
         if enums.WeaponDebug.LINEPOINTER in PlayerWeapon.GetComp(weapons.Railgun).debugFlag:
             PlayerWeapon.GetComp(weapons.Railgun).ShowLinePointer([Map], [])
+
+        
+        for Renderer in singletons.RenderObjects:
+            singletons.MainCamera.Render(Renderer)
+
         #-----------------------------------------------
         #Collision handling
         #-----------------------------------------------
@@ -329,16 +358,16 @@ def main():
 
         #get all physic components in game: (as collision reaction happens only for them)
         PhysicComponents = []
-        for i in range(0, len(GlobalObjects)):
-            iPhys = GlobalObjects[i].GetComp(physics.PhysicObject)
+        for i in range(0, len(singletons.GlobalObjects)):
+            iPhys = singletons.GlobalObjects[i].GetComp(physics.PhysicObject)
             if iPhys:
                 PhysicComponents.append(iPhys)
 
         #for every physic object, find colliders in all objects
         for i in range(0, len(PhysicComponents)):
-            for j in range(0, len(GlobalObjects)):
+            for j in range(0, len(singletons.GlobalObjects)):
                 #check for every collider in object
-                for OtherCollider in GlobalObjects[j].GetComps(collisions.Collider):
+                for OtherCollider in singletons.GlobalObjects[j].GetComps(collisions.Collider):
 
                     PhysCollider = PhysicComponents[i].gameObject.GetComp(collisions.Collider)
                     #UNUSED, we no longer need to resolve any collisions
@@ -349,30 +378,44 @@ def main():
         #Physics execution
         #-----------------------------------------------
 
+
         Player.GetComp(physics.PhysicObject).ExecutePos()
         Player.transform.SynchGlobals()
+        #-----------------------------------------------
+        #AI logic
+        #-----------------------------------------------
 
+        for object in singletons.Bots:
+            botAI = object.GetComp(bots.Bot)
 
-        
+            #TO DO
+            #reduce number of vision calls like in the book
+            #vision
+            botAI.UpdateVision(singletons.Bots, singletons.MapObjects)
+            #hearing
+            botAI.UpdateHearing(singletons.Sounds, singletons.MapObjects)
 
+            #dummy does not act, but can still be a receiver and can use it's perception
+            if object == Dummy:
+                continue
 
-        # NavGraph.debugDraw(singletons.MainCamera)
-
-        # if pygame.mouse.get_pressed()[2]:
-        #     target_pos = Cursor.transform.pos
+        #singular bot
+        for Object in singletons.Bots:
             
-        #     if len(Bots) > 0:
+            #physics execution for bots
+            for Phys in Object.GetComps(physics.PhysicObject):
+                Phys.UpdateVelocity()
+                #first rotate the bot towards it's velocity
+                #Bot.UpdateForwardDirection() #part of old project, could this still be important?
+                Phys.ExecutePos()
 
-        #         bot = Bots[0].GetComp(bots.Bot)
-        #         start_pos = Bots[0].transform.pos
 
-        #         path_vectors = MyPathFinder.create_path_to_position(start_pos, target_pos)
+        #-----------------------------------------------
+        #Timets Update
+        #-----------------------------------------------
 
-        #         if path_vectors:
-        #             bot.set_path(path_vectors)
-        #         else:
-        #             print("No path found")
-
+        for Timer in singletons.Timers:
+            Timer.UpdateTimer()
 
         pygame.display.flip();
 

@@ -1,6 +1,7 @@
 import pygame
 import transforms
 import enums
+import singletons
 #print
 
 pygame.font.init()
@@ -65,20 +66,22 @@ class Camera():
 
         pygame.draw.line(self.screen, col, startDrawPos, endDrawPos, width)
 
-
     def RenderRawPoint(self, pos, col, size):
         drawPos = pos.data.copy()
         drawPos[1] = self.windowSize[1] - drawPos[1]
         pygame.draw.circle(self.screen, col, drawPos, size, 0)
 
-    '''
-    def RenderRawCircle(self, pos, size, col, width):
-                    #for some reason rendering here does not require to flip y position
-            drawPos = pos.data
-            #drawPos = trans.pos.data
-            drawPos[1] = self.windowSize[1] - drawPos[1]
-            pygame.draw.circle(self.screen, col, drawPos, size, width)
-    '''
+    def RenderRawCircle(self, pos, col, size, width):
+        drawPos = pos.data.copy()
+        drawPos[1] = self.windowSize[1] - drawPos[1]
+        pygame.draw.circle(self.screen, col, drawPos, size, width)
+
+    def RenderRawArc(self, pos, col, size, startRot, endRot, width):
+        drawPos = pos.data.copy()
+        drawPos[1] = self.windowSize[1] - drawPos[1]
+        drawSize = size.data.copy()
+        drawDimensions = [drawPos[0] - drawSize[0], drawPos[1] - drawSize[1], drawSize[0] * 2, drawSize[1] * 2]
+        pygame.draw.arc(self.screen, col, drawDimensions, startRot, endRot, width)
 
     def RenderVertices(self, model):
         trans = model.gameObject.transform
@@ -128,6 +131,10 @@ class RenderObject():
     def __init__(self, col):
         self.gameObject = None
         self.col = col
+        singletons.RenderObjects.append(self)
+
+    def Destroy(self):
+        singletons.RenderObjects.remove(self)
 
 class Model(RenderObject):
 
