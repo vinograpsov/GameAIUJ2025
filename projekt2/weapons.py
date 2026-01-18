@@ -112,7 +112,7 @@ class Railgun(Weapon):
 		aimRot = (targetTrans.pos - ownerTrans.pos).ToRotation()
 		#here add inacurracy
 		aimRot += (random.random() * inaccuracy * 2) - inaccuracy
-		return aimRot
+		return aimRot, targetTrans.pos
 
 class RocketLauncher(Weapon):
 
@@ -149,8 +149,6 @@ class RocketLauncher(Weapon):
 		targetTrans = target.transform
 		targetTrans.SynchGlobals()
 
-		aimRot = (targetTrans.pos - ownerTrans.pos).ToRotation()
-
 		#predict future target position
 		ToEnemy = targetTrans.pos - ownerTrans.pos
 
@@ -165,7 +163,7 @@ class RocketLauncher(Weapon):
 
 		#here add inacurracy
 		aimRot += (random.random() * inaccuracy * 2) - inaccuracy
-		return aimRot
+		return aimRot, aimPos
 
 class Projectile(events.Trigger):
 	

@@ -115,9 +115,9 @@ def main():
         
         #dummy weapon
         DummyWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-        #DummyWeapon.AddComp(weapons.Railgun(Dummy, 0.6, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
+        #DummyWeapon.AddComp(weapons.Railgun(Dummy, 3, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
     
-        DummyWeapon.AddComp(weapons.RocketLauncher(Dummy, 0.4, 4096, 35, 2, Vector([12, 12]), 120, 60))
+        DummyWeapon.AddComp(weapons.RocketLauncher(Dummy, 0.6, 4096, 35, 2.5, Vector([12, 12]), 120, 60))
         DummyWeapon.SetParent(Dummy)
 
         DummyWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND

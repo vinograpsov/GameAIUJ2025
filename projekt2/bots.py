@@ -157,19 +157,24 @@ class Bot():
             trans.lrot = shootingRot
             trans.Desynch()
 
-            #also to actually shoot target must be visible (not memory of target)
-            #and it must be visibe for some time
-            if not collisions.Raycast.CheckRay(trans, targetTrans.pos, mapObjects) and time.time() - possibleTargetMemory.timeBecameVisible > self.reactionTime:
+
+            #check if target is visible for some time
+            if time.time() - possibleTargetMemory.timeBecameVisible > self.reactionTime:
                 
                 #perform actual aiming algorithm
-                shootingRot = self.weapon.Aim(possibleTargetMemory.source.gameObject, self.accuracy)
-                #rotate again to face shooting direction
-                #BOOK OVERSIGHT?
-                #Yes, that means that bot will briefly look at exacly where he is shooting when TRYING to shoot, not when actually shooting
-                trans.lrot = shootingRot
-                trans.Desynch()
+                #BOOK DIFFERENCE
+                #in the book we first calculate predicted position, and then check line of sight
+                shootingRot, shootingPos = self.weapon.Aim(possibleTargetMemory.source.gameObject, self.accuracy)
+                
+                #check for second time if targetable position is visible
+                if not collisions.Raycast.CheckRay(trans, shootingPos, mapObjects):
+                    #rotate again to face shooting direction
+                    #BOOK OVERSIGHT?
+                    #Yes, that means that bot will briefly look at exacly where he is shooting when TRYING to shoot, not when actually shooting
+                    trans.lrot = shootingRot
+                    trans.Desynch()
 
-                self.weapon.TryShoot(singletons.MapObjects, singletons.Bots)
+                    self.weapon.TryShoot(singletons.MapObjects, singletons.Bots)
 
     def Kill(self):
         self.gameObject.Destroy()
