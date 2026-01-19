@@ -53,8 +53,8 @@ def main():
     #Game objects containers
     #----------------------------------------
 
-    GeneralDebugFlag = enums.GeneralDebug.SPAWNPLAYER | enums.GeneralDebug.SPAWNDUMMY
-
+    #GeneralDebugFlag = enums.GeneralDebug.SPAWNPLAYER | enums.GeneralDebug.SPAWNDUMMY
+    GeneralDebugFlag = enums.GeneralDebug.SPAWNPLAYER
 
     #------------------------MAP AND BORDERS ----------------------------
     Map = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([singletons.MainCamera.windowSize[0] / 2, singletons.MainCamera.windowSize[1] / 2])), [], None)
@@ -98,10 +98,10 @@ def main():
 
 
     #--------------------------BOTS SETUP -----------------------------
-    for _ in range(0):
+    for _ in range(1):
         botPosition = Vector([150, 150])
         CurBot = game_object.GameObject(Transform(botPosition, 0, Vector([15, 15])), [], None)
-        CurBot.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (255, 0, 0), 0))
+        CurBot.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, (255, 0, 0), 0))
         CurBot.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
         CurBot.AddComp(physics.PhysicObject(1))
         
@@ -111,6 +111,17 @@ def main():
         CurBot.AddComp(bot_ai)
         singletons.Bots.append(CurBot)
         singletons.GlobalObjects.append(CurBot)
+
+        BotWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
+        #DummyWeapon.AddComp(weapons.Railgun(CurBot, 3, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
+    
+        BotWeapon.AddComp(weapons.RocketLauncher(CurBot, 0.6, 4096, 35, 2.5, Vector([12, 12]), 120, 60))
+        BotWeapon.SetParent(CurBot)
+
+        BotWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND
+
+        CurBot.GetComp(bots.Bot).weapon = BotWeapon.GetComp(weapons.Weapon)
+
     #--------------------------BOTS SETUP -----------------------------
     
     #--------------------------------------- 

@@ -19,7 +19,7 @@ class Camera():
         self.screen.fill(self.clearColor)
 
     #for now unused, here in case we want game object scale to not be connected to screen resolution
-    def ToCameraSpace():
+    def WorldToScreen():
         pass
 
     #general rendering function that combines all for ease of use, others can be used for debug purposes

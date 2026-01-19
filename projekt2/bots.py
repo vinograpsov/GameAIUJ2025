@@ -80,18 +80,22 @@ class Bot():
         self.lastTimeReacted = time.time()
 
         self.debugFlag = enums.BotDebug(0)
-        self.transform = None
 
     def set_path(self, vector_list): 
         self.path = Path(vector_list)
 
     def seek(self, target_pos):
-        desired_velocity = (target_pos - self.transform.pos).Normalize() * self.max_speed
-        return desired_velocity - self.velocity 
+        trans = self.gameObject.transform
+        trans.SynchGlobals()
+        desired_velocity = (target_pos - trans.pos).Normalize() * self.max_speed
+        return desired_velocity - self.velocity
 
 
     def arrive(self, target_pos, deceleration=3.0):
-        to_target = target_pos - self.transform.pos
+        trans = self.gameObject.transform
+        trans.SynchGlobals()
+
+        to_target = target_pos - trans.pos
         dist = to_target.Length()
         if dist > 0:
             speed = dist / deceleration
@@ -105,9 +109,12 @@ class Bot():
     def follow_path(self):
         if self.path is None or not self.path.waypoints: 
             return Vector([0, 0])
+
+        trans = self.gameObject.transform
+        trans.SynchGlobals()
         
         current_target = self.path.current_waypoint()
-        dist_sq = (current_target - self.transform.pos).LengthSquared()
+        dist_sq = (current_target - trans.pos).LengthSquared()
 
         if dist_sq < self.waypoint_seek_dist_sq:
             self.path.set_next_waypoint()
@@ -119,12 +126,11 @@ class Bot():
         
 
     def update(self):
+        trans = self.gameObject.transform
+        trans.SynchGlobals()
 
         if self.gameObject is None:
             return
-        
-        if self.transform is None:
-            self.transform = self.gameObject.transform
 
         phys_comp = self.gameObject.GetComp(physics.PhysicObject)
         if phys_comp is None:
@@ -138,7 +144,7 @@ class Bot():
             phys_comp.vel = phys_comp.vel.Normalize() * self.max_speed
 
         if phys_comp.vel.LengthSquared() > 0.001:
-            self.transform.FaceTowards(self.transform.pos + phys_comp.vel)
+            trans.FaceTowards(trans.pos + phys_comp.vel)
 
 
     def add_ammo(self, weapon_type, amount):
@@ -177,7 +183,7 @@ class Bot():
 
     #this function is used to render debug objects based on the debug flag
     def Debug(self):
-        surface = pygame.display.get_surface()
+        surface = singletons.MainCamera.screen
         trans = self.gameObject.transform
         trans.SynchGlobals()
 
@@ -188,8 +194,8 @@ class Bot():
 
         if enums.BotDebug.DIRECTION in self.debugFlag:
             #ZMIENIC NA RENDER UZYWAJACY RENDERERA
-            start_pos = self._world_to_screen(self.transform.pos, singletons.MainCamera)
-            end_pos = self._world_to_screen(self.transform.pos + self.transform.Forward() * 30, singletons.MainCamera)
+            start_pos = self._world_to_screen(trans.pos, singletons.MainCamera)
+            end_pos = self._world_to_screen(trans.pos + trans.Forward() * 30, singletons.MainCamera)
             pygame.draw.line(surface, (255,0,0), start_pos, end_pos, 2)
 
         if self.path and self.path.waypoints and enums.BotDebug.PATH in self.debugFlag:
