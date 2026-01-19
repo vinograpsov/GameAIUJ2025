@@ -31,9 +31,6 @@ class Weapon():
 
 	def Destroy(self):
 		self.owner = None
-		for object in self.projectiles:
-			object.GetComp(Projectile).source = None
-		self.projectiles = None
 
 	def TryShoot(self):
 		if self.ammo <= 0 or (self.lastTimeShot + self.cooldown) > time.time():
@@ -135,7 +132,7 @@ class RocketLauncher(Weapon):
 		#spawn projectile
 		newProj = ExplosiveProjectile(self.owner, self.damage, Vector.RotToVect(trans.rot) * 8192, 0.8, self.projectileSpeed, self.blastRadius)
 		newRend = rendering.Model('Assets\Rocket.obj', singletons.ProjectileColor, enums.RenderMode.WIREFRAME)
-		SpawnProjectile(newProj, newRend, ownerTrans.pos, trans.rot, self.projectileScale, Vector([0, 0]))
+		self.projectiles.append(SpawnProjectile(newProj, newRend, ownerTrans.pos, trans.rot, self.projectileScale, Vector([0, 0])))
 		del(newProj)
 		del(newRend)
 
@@ -227,8 +224,10 @@ class ExplosiveProjectile(Projectile):
 		trans.Desynch()
 
 		botObjectsWithoutSource = botObjects.copy()
-		if self.source: #source may be none when bot is already dead, but projectile is still going
+		try:
 			botObjectsWithoutSource.remove(self.source)
+		except: #source may be none when bot is already dead, but projectile is still going
+			self.source = None
 		#if I understood this function correctly in the book it retruns closest origin to projectile origin, what in such use case (which is book's use case) will return closest bot to the END of line, not start
 		closestObject = collisions.Raycast.GetClosestOriginAlongRay(trans, curPos, curPos, botObjectsWithoutSource)
 
