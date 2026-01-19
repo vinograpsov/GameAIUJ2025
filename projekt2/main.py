@@ -11,6 +11,7 @@ import collisions
 import physics
 import enums
 import navigation
+import states
 
 import weapons
 import bots
@@ -73,6 +74,8 @@ def main():
     
     Player.AddComp(physics.PhysicObject(1))
     PlayerBot = Player.AddComp(bots.Bot(3, 1000000000, math.pi, 0.1, 0.3, 1)) #player is still considered a bot
+    
+    PlayerBot.ChangeState(states.NullState(PlayerBot))
     singletons.Bots.append(Player)
 
     PlayerBot.debugFlag = enums.BotDebug.FIELDOFVIEW
@@ -105,17 +108,19 @@ def main():
         CurBot.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
         CurBot.AddComp(physics.PhysicObject(1))
         
-        bot_ai = bots.Bot(3, 100, math.pi, 0.1, 0.3, 1)
-        bot_ai.debugFlag = enums.BotDebug.DIRECTION | enums.BotDebug.PATH
+        bot_ai = CurBot.AddComp(bots.Bot(3, 100, math.pi, 0.1, 0.3, 1))
+        bot_ai.debugFlag = enums.BotDebug.DIRECTION | enums.BotDebug.PATH | enums.BotDebug.FIELDOFVIEW
+
+        #sets bot state to one that best initializes his behaviour at start
+        bot_ai.ChangeState(states.WhatNowState(bot_ai))
         
-        CurBot.AddComp(bot_ai)
         singletons.Bots.append(CurBot)
         singletons.GlobalObjects.append(CurBot)
 
         BotWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-        #DummyWeapon.AddComp(weapons.Railgun(CurBot, 3, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
+        BotWeapon.AddComp(weapons.Railgun(CurBot, 3, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
     
-        BotWeapon.AddComp(weapons.RocketLauncher(CurBot, 0.6, 4096, 35, 2.5, Vector([12, 12]), 120, 60))
+        #BotWeapon.AddComp(weapons.RocketLauncher(CurBot, 0.6, 4096, 35, 2.5, Vector([12, 12]), 120, 60))
         BotWeapon.SetParent(CurBot)
 
         BotWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND
@@ -135,8 +140,10 @@ def main():
         #Dummy.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, [0, 0, 255], 0))
         Dummy.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
         Dummy.AddComp(physics.PhysicObject(1))
-        Dummy.AddComp(bots.Bot(3, 100, math.pi, 0.1, 0.3, 1))
+        DummyBot = Dummy.AddComp(bots.Bot(3, 100, math.pi, 0.1, 0.3, 1))
         
+        DummyBot.ChangeState(states.NullState(DummyBot))
+
         #dummy weapon
         DummyWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
         #DummyWeapon.AddComp(weapons.Railgun(Dummy, 3, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
@@ -151,7 +158,7 @@ def main():
 
         singletons.Bots.append(Dummy)
 
-        Dummy.GetComp(bots.Bot).debugFlag = enums.BotDebug.VISION | enums.BotDebug.MEMORYPOSITIONS
+        DummyBot.debugFlag = enums.BotDebug.VISION | enums.BotDebug.MEMORYPOSITIONS
 
 
     #--------------------------------------- 
@@ -202,7 +209,7 @@ def main():
     #-----------------------------------------------
 
 
-    MyPathFinder = navigation.Pathfinder(singletons.NavGraph)
+    singletons.MainPathFinder = navigation.Pathfinder(singletons.NavGraph)
     
     while 1:
         
@@ -253,7 +260,7 @@ def main():
                         bot_obj = singletons.Bots[0]
                         bot_ai = bot_obj.GetComp(bots.Bot)
 
-                        path = MyPathFinder.create_path_to_pickup(bot_obj.transform.pos, pickup.PickupType.AMMO_ROCKET)
+                        path = singletons.MainPathFinder.create_path_to_pickup(bot_obj.transform.pos, pickup.PickupType.AMMO_ROCKET)
                         if path: bot_ai.set_path(path)
                         else: print("No path to pickup found")
 
@@ -285,7 +292,7 @@ def main():
                     if len(singletons.Bots) > 0:
                         bot = singletons.Bots[0].GetComp(bots.Bot)
                         start_pos = singletons.Bots[0].transform.pos
-                        path_vectors = MyPathFinder.create_path_to_position(start_pos, target_pos)
+                        path_vectors = singletons.MainPathFinder.create_path_to_position(start_pos, target_pos)
                         if path_vectors:
                             bot.set_path(path_vectors)
                         else:
@@ -360,6 +367,9 @@ def main():
             BotComp.UpdateVision(singletons.Bots, singletons.MapObjects)
             #hearing
             BotComp.UpdateHearing(singletons.Sounds, singletons.MapObjects)
+
+            #update bot state machine
+            BotComp.UpdateCurState()
 
             #dummy debug for shooting
             if object != Player:

@@ -82,6 +82,15 @@ class Bot():
 
         self.debugFlag = enums.BotDebug(0)
 
+    def Destroy(self):
+        singletons.Bots.remove(self.gameObject)
+        self.memories = None
+        self.weapon = None
+        self.path = None
+
+        for botObject in singletons.Bots:
+            botObject.GetComp(Bot).RemoveFromMemory(self.gameObject)
+
     def set_path(self, vector_list): 
         self.path = Path(vector_list)
 
@@ -173,14 +182,6 @@ class Bot():
         screen_x = world_pos.x() - cam_pivot.x() + win_size[0] / 2
         screen_y = win_size[1] - (world_pos.y() - cam_pivot.y() + win_size[1] / 2)
         return [screen_x, screen_y]
-    
-    def Destroy(self):
-        singletons.Bots.remove(self.gameObject)
-        self.memories = None
-        self.weapon = None
-
-        for botObject in singletons.Bots:
-            botObject.GetComp(Bot).RemoveFromMemory(self.gameObject)
 
     #this function is used to render debug objects based on the debug flag
     def Debug(self):
@@ -201,7 +202,7 @@ class Bot():
 
         if self.path and self.path.waypoints and enums.BotDebug.PATH in self.debugFlag:
             screen_points = [] 
-            screen_points.append(self._world_to_screen(self.transform.pos, singletons.MainCamera))
+            screen_points.append(self._world_to_screen(trans.pos, singletons.MainCamera))
 
             for i in range(self.path.cur_waypoint_idx, len(self.path.waypoints)):
                 screen_points.append(self._world_to_screen(self.path.waypoints[i], singletons.MainCamera))
@@ -436,14 +437,17 @@ class Bot():
 
     #HERE COMES WHOLE AI MUMBO JUMBO (state machine included)
 
-    def UpdateCurState():
+    def UpdateCurState(self):
         self.state.OnStateUpdate()
 
     def ChangeState(self, newState):
+        if enums.BotDebug.LOCKSTATE in self.debugFlag:
+            return
         #first exit old state
-        self.state.OnStateExit()
-        #change state
-        self.gameObject.RemoveComp(self.state)
+        if self.state:
+            self.state.OnStateExit()
+            #change state
+            self.gameObject.RemoveComp(self.state)
         self.gameObject.AddComp(newState)
         self.state = newState
         #startState

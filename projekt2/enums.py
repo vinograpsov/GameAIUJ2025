@@ -28,6 +28,7 @@ class BotDebug(Flag):
 	VISION = auto()
 	MEMORYPOSITIONS = auto()
 	HEALTH = auto()
+	LOCKSTATE = auto() #this one is special, it will prevent any states from changing
 	#(...)
 
 class WeaponDebug(Flag):
