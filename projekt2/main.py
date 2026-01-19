@@ -368,15 +368,15 @@ def main():
             #hearing
             BotComp.UpdateHearing(singletons.Sounds, singletons.MapObjects)
 
-            #update bot state machine
-            BotComp.UpdateCurState()
-
             #dummy debug for shooting
             if object != Player:
                 BotComp.TryAimAndShoot(singletons.MapObjects)
             #dummy does not act, but can still be a receiver and can use it's perception
             if object == Dummy:
                 continue
+
+            #update bot state machine
+            BotComp.UpdateCurState()
 
         #-----------------------------------------------
         #Physics execution

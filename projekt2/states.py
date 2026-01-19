@@ -3,6 +3,7 @@ import random
 
 from transforms import *
 import singletons
+import enums
 import collisions
 import bots
 
@@ -36,13 +37,34 @@ class WhatNowState(State):
 		pass
 
 	def OnStateUpdate(self):
-		
-		#if low on hp go heal yourself
 
+		#if found target proceed to fight
+		curTarget = self.bot.GetClosestValiableMemory()
+		if curTarget:
+			self.bot.ChangeState(FightState(self.bot))
+			return
+
+		#if got shot from nowhere look towards the shot
+
+		#if low on hp go heal yourself
 
 		#if nothing else from important stuff then wander randomly
 		self.bot.ChangeState(WanderState(self.bot))
+		return
 
+'''this state is used when bot is being hit by something while not engaged in a fight'''
+class SuprisedState(State):
+
+	def OnStateEnter(self):
+		#if you were going somwhere, stop doing it
+		self.bot.path = None
+
+	def OnStateUpdate(self):
+		#simply look towards from where the shot came from
+		pass
+
+		self.bot.ChangeState(WhatNowState(self.bot))
+		return
 
 class WanderState(State):
 
@@ -66,7 +88,7 @@ class WanderState(State):
 		#check if not already at the point, if so then start thinking again
 		if self.bot.path.is_finished():
 			self.bot.ChangeState(WhatNowState(self.bot))
-		pass
+			return
 
 	def OnStateExit(self):
 		#abandon current path when changing states
@@ -84,6 +106,7 @@ class FindAmmoState(State):
 
 		#if found ammo decide what to do next
 		self.bot.ChangeState(WhatNowState(self.bot))
+		return
 
 		pass
 
@@ -99,6 +122,7 @@ class FindHPState(State):
 
 		#if found hp decide what to do next
 		self.bot.ChangeState(WhatNowState(self.bot))
+		return
 
 		pass
 
@@ -118,6 +142,7 @@ class FleeState(State):
 		currentMemories = self.bot.GetValidMemoryRecords(self)
 		if len(currentMemories) <= 0:
 			self.bot.ChangeState(WhatNowState(self.bot))
+			return
 
 class ChaseState(State):
 
@@ -138,7 +163,7 @@ class FightState(State):
 		self.bot.debugFlag = self.bot.debugFlag | enums.BotDebug.LOCKSTATE
 
 		trans = self.gameObject.transform
-		trans.SynchGlobals(self)
+		trans.SynchGlobals()
 
 		self.straifeMult = 2 #straife mult is relevant to object scale
 		self.HealthFleeRequirement = 0.4
@@ -153,30 +178,35 @@ class FightState(State):
 		#if no target we killed it and proceed to whatever
 		if not curTarget:
 			self.bot.ChangeState(WhatNowState(self.bot))
+			return
 
 		#if target no longer visible that means we need to pursuit
 		if not curTarget.isInLineOfSight:
 			self.bot.ChangeState(ChaseState(self.bot))
+			return
 		#here perform check if not need to flee
 		if self.bot.health / self.bot.maxHealth < self.HealthFleeRequirement:
 			self.bot.ChangeState(FleeState(self.bot))
+			return
 		if self.bot.weapon.ammo < AmmoThreshold:
 			self.bot.ChangeState(FleeState(self.bot))
+			return
 
 		#actual fight logic
 
 		#of course try shoot enemy
 		self.bot.TryAimAndShoot(singletons.MapObjects)
 
-		straifeEndPoint = Vector([0, self.straifeMult]) #make it random 1 or -1
+		straifeEndPoint = Vector([0, self.straifeMult]) * random.randrange(-1, 1, 2) #make it random 1 or -1
 		straifeEndPoint = trans.LocalToGlobal(straifeEndPoint, False)
 
 		#if there is free space then straife, if no then go towards target
 		if not collisions.Raycast.CheckRay(self.gameObject.transform, straifeEndPoint, singletons.MapObjects):
 			#as navMesh to go to the side
-			pass
+			self.bot.set_path(singletons.MainPathFinder.create_path_to_position(trans.pos, straifeEndPoint))
 		else:
 			#ask navMesh to go to target position
+			self.bot.set_path(singletons.MainPathFinder.create_path_to_position(trans.pos, curTarget.sensedPos))
 			pass
 
 
@@ -193,6 +223,7 @@ class FightHardState(State):
 		#if no target we killed it and proceed to whatever
 		if not curTarget:
 			self.bot.ChangeState(WhatNowState(self.bot))
+			return
 
 		self.bot.TryAimAndShoot(singletons.MapObjects)
 
