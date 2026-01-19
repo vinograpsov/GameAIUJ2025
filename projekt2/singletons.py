@@ -5,6 +5,8 @@ MainCamera = None
 
 GeneralDebugFlag = None
 
+NavGraph = None
+
 '''used as initializator for values as arbirtary value to simulate infinity'''
 maxValue = 8192
 '''same, used for squared comparisons'''

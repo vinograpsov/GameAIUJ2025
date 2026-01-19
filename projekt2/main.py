@@ -62,28 +62,6 @@ def main():
     Map.AddComp(collisions.PolygonCollider(enums.ColliderType.POLYGON, 'Assets/Map.obj'))
     singletons.MapObjects.append(Map)
 
-    #TO DO: REPLACE WORLD BORDER WITH POLYGON COLLIDER (OR MAP)
-    # MainBorder = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([singletons.MainCamera.windowSize[0], singletons.MainCamera.windowSize[1]])), [], None)
-    # Border1 = game_object.GameObject(Transform(Vector([0.5, 0]), DegToRad(180), Vector([0.1, 0.1])), [], MainBorder)
-    # Border1.AddComp(collisions.Collider(enums.ColliderType.LINE))
-    # Border2 = game_object.GameObject(Transform(Vector([0, 0.5]), DegToRad(270), Vector([1, 1])), [], MainBorder)
-    # Border2.AddComp(collisions.Collider(enums.ColliderType.LINE))
-    # Border3 = game_object.GameObject(Transform(Vector([-0.5, 0]), 0, Vector([1, 1])), [], MainBorder)
-    # Border3.AddComp(collisions.Collider(enums.ColliderType.LINE))
-    # Border4 = game_object.GameObject(Transform(Vector([0, -0.5]), DegToRad(90), Vector([1, 1])), [], MainBorder)
-    # Border4.AddComp(collisions.Collider(enums.ColliderType.LINE))
-
-    # GlobalObjects.append(MainBorder)
-    # GlobalObjects.append(Border1)
-    # GlobalObjects.append(Border2)
-    # GlobalObjects.append(Border3)
-    # GlobalObjects.append(Border4)
-
-    # Borders.append(Border1)
-    # Borders.append(Border2)
-    # Borders.append(Border3)
-    # Borders.append(Border4)
-
     #------------------------MAP AND BORDERS ----------------------------
 
 
@@ -173,11 +151,9 @@ def main():
     #FLOODFILL and ASTAR
     #------------------------------------------------------------------
 
-    # allObstacles = Obstacles + Borders + [Map]
-    allObstacles = [Map]
-    NavGraph = navigation.NavigationGraph(30, 15)
+    singletons.NavGraph = navigation.NavigationGraph(30, 15)
     start_point = Vector([100, 100])
-    NavGraph.generateFloodFill(start_point, allObstacles)
+    singletons.NavGraph.generateFloodFill(start_point, singletons.MapObjects)
 
     #------------------------------------------------------------------
     #FLOODFILL and ASTAR
@@ -208,14 +184,14 @@ def main():
     singletons.GlobalObjects.append(AmmoObj)
 
     for p_obj in Pickups:
-        NavGraph.register_pickup(p_obj)
+        singletons.NavGraph.register_pickup(p_obj)
 
     #-----------------------------------------------
     # PICKUPS SETUP
     #-----------------------------------------------
 
 
-    MyPathFinder = navigation.Pathfinder(NavGraph)
+    MyPathFinder = navigation.Pathfinder(singletons.NavGraph)
     
     while 1:
         
@@ -253,7 +229,7 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
                 if event.key == pygame.K_F1:
-                    NavGraph.toggle_debug()
+                    singletons.NavGraph.toggle_debug()
                 if event.key == pygame.K_F2:
                     for obj in singletons.Bots:
                         bot = obj.GetComp(bots.Bot)
@@ -355,7 +331,7 @@ def main():
         for Renderer in singletons.RenderObjects:
             singletons.MainCamera.Render(Renderer)
 
-        NavGraph.debugDraw(singletons.MainCamera)
+        singletons.NavGraph.debugDraw(singletons.MainCamera)
 
         #ENEMIES DEBUG!!!
         for Object in singletons.Bots:
