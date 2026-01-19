@@ -83,7 +83,14 @@ class WanderState(State):
 
 	def OnStateUpdate(self):
 
-		#other special cases if noticed an enemy or if got hit
+		#TO DO
+		#add if got hit
+
+		#if found target proceed to fight
+		curTarget = self.bot.GetClosestValiableMemory()
+		if curTarget:
+			self.bot.ChangeState(FightState(self.bot))
+			return
 
 		#check if not already at the point, if so then start thinking again
 		if self.bot.path.is_finished():
@@ -168,12 +175,15 @@ class FightState(State):
 		self.straifeMult = 2 #straife mult is relevant to object scale
 		self.HealthFleeRequirement = 0.4
 		self.AmmoThreshold = 4
+		self.SwitchStraifeChance = 0.3
+		self.StraifeDir = 1
+		self.charge = False
 
 	def OnStateUpdate(self):
 		trans = self.gameObject.transform
-		trans.SynchGlobals(self)
+		trans.SynchGlobals()
 
-		curTarget = self.bot.GetClosestValiableMemory(self)
+		curTarget = self.bot.GetClosestValiableMemory()
 
 		#if no target we killed it and proceed to whatever
 		if not curTarget:
@@ -188,7 +198,7 @@ class FightState(State):
 		if self.bot.health / self.bot.maxHealth < self.HealthFleeRequirement:
 			self.bot.ChangeState(FleeState(self.bot))
 			return
-		if self.bot.weapon.ammo < AmmoThreshold:
+		if self.bot.weapon.ammo < self.AmmoThreshold:
 			self.bot.ChangeState(FleeState(self.bot))
 			return
 
@@ -196,18 +206,26 @@ class FightState(State):
 
 		#of course try shoot enemy
 		self.bot.TryAimAndShoot(singletons.MapObjects)
+		
+		#if not going anywhere straife
+		if self.charge or not self.bot.path or self.bot.path.is_finished():
+			self.charge = False
 
-		straifeEndPoint = Vector([0, self.straifeMult]) * random.randrange(-1, 1, 2) #make it random 1 or -1
-		straifeEndPoint = trans.LocalToGlobal(straifeEndPoint, False)
+			#random chance to straife in different direction
+			if random.random() < self.SwitchStraifeChance:
+				self.StraifeDir = -self.StraifeDir
 
-		#if there is free space then straife, if no then go towards target
-		if not collisions.Raycast.CheckRay(self.gameObject.transform, straifeEndPoint, singletons.MapObjects):
-			#as navMesh to go to the side
-			self.bot.set_path(singletons.MainPathFinder.create_path_to_position(trans.pos, straifeEndPoint))
-		else:
-			#ask navMesh to go to target position
-			self.bot.set_path(singletons.MainPathFinder.create_path_to_position(trans.pos, curTarget.sensedPos))
-			pass
+			straifeEndPoint = Vector([0, self.straifeMult * self.StraifeDir])
+			straifeEndPoint = trans.LocalToGlobal(straifeEndPoint, False)
+
+			#if there is free space then straife, if no then go towards target
+			if not collisions.Raycast.CheckRay(self.gameObject.transform, straifeEndPoint, singletons.MapObjects):
+				#as navMesh to go to the side
+				self.bot.set_path(singletons.MainPathFinder.create_path_to_position(trans.pos, straifeEndPoint))
+			elif not self.charge:
+				#ask navMesh to go to target position
+				self.bot.set_path(singletons.MainPathFinder.create_path_to_position(trans.pos, curTarget.sensedPos))
+				self.charge = True
 
 
 '''fights until dead or kills the target'''
