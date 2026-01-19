@@ -34,6 +34,8 @@ class NullState(State):
 class WhatNowState(State):
 
 	def OnStateEnter(self):
+		self.hpDesire = 0.6
+		self.ammoDesire = 0.5
 		pass
 
 	def OnStateUpdate(self):
@@ -47,6 +49,13 @@ class WhatNowState(State):
 		#if got shot from nowhere look towards the shot
 
 		#if low on hp go heal yourself
+		if (self.bot.health / self.bot.maxHealth) < self.hpDesire:
+			self.bot.ChangeState(FindHPState(self.bot))
+			return
+
+		if (self.bot.weapon.ammo / self.bot.weapon.maxAmmo) < self.ammoDesire:
+			self.bot.ChangeState(FindHPState(self.bot))
+			return
 
 		#if nothing else from important stuff then wander randomly
 		self.bot.ChangeState(WanderState(self.bot))
@@ -121,18 +130,30 @@ class FindAmmoState(State):
 class FindHPState(State):
 
 	def OnStateEnter(self):
-		#get all hp across map
-		pass
+		trans = self.gameObject.transform
+		trans.SynchGlobals()
+		#create path towards closest active hp pickup
+		path = singletons.MainPathFinder.create_path_to_pickup(trans.pos, enums.PickupType.HEALTH)
+		
+		#if no pickup found, then re-evaluate your life choices
+		if not path:
+			self.bot.ChangeState(WhatNowState(self.bot))
+
+		self.bot.set_path(path)
+
 
 	def OnStateUpdate(self):
 
-		#go towards found hp
+		#if found target proceed to fight
+		curTarget = self.bot.GetClosestValiableMemory()
+		if curTarget:
+			self.bot.ChangeState(FightState(self.bot))
+			return
 
-		#if found hp decide what to do next
-		self.bot.ChangeState(WhatNowState(self.bot))
-		return
-
-		pass
+		#check if not already at the point, if so then start thinking again
+		if self.bot.path.is_finished():
+			self.bot.ChangeState(WhatNowState(self.bot))
+			return
 
 class ChaseState(State):
 

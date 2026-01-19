@@ -13,12 +13,13 @@ import bots
 
 class Weapon():
 
-	def __init__(self, owner, cooldown, ammo, damage, projectileSpeed, projectileScale, firingSoundRadius):
+	def __init__(self, owner, cooldown, ammo, maxAmmo, damage, projectileSpeed, projectileScale, firingSoundRadius):
 		self.gameObject = None
 		self.owner = owner
 		self.cooldown = cooldown
 		self.lastTimeShot = 0
 		self.ammo = ammo
+		self.maxAmmo = maxAmmo
 		self.damage = damage
 		self.projectileSpeed = projectileSpeed
 		self.projectileScale = projectileScale
@@ -32,7 +33,10 @@ class Weapon():
 	def Destroy(self):
 		self.owner = None
 
-	def TryShoot(self):
+	def RefillAmmo(self, ammo):
+		self.ammo = min(self.ammo + ammo, self.maxAmmo)
+
+	def TryShoot(self, obstacleObjects, botObjects):
 		if self.ammo <= 0 or (self.lastTimeShot + self.cooldown) > time.time():
 			return False
 		self.ammo -= 1
@@ -65,11 +69,11 @@ class Weapon():
 
 class Railgun(Weapon):
 
-	def __init__(self, owner, cooldown, ammo, damage, firingSoundRadius):
-		super().__init__(owner, cooldown, ammo, damage, 0, Vector([0, 0]), firingSoundRadius)
+	def __init__(self, owner, cooldown, ammo, maxAmmo, damage, firingSoundRadius):
+		super().__init__(owner, cooldown, ammo, maxAmmo, damage, 0, Vector([0, 0]), firingSoundRadius)
 
 	def TryShoot(self, obstacleObjects, botObjects):
-		if not super(Railgun, self).TryShoot():
+		if not super(Railgun, self).TryShoot(obstacleObjects, botObjects):
 			return False
 		#actual railgun logic
 		trans = self.gameObject.transform
@@ -117,8 +121,8 @@ class Railgun(Weapon):
 
 class RocketLauncher(Weapon):
 
-	def __init__(self, owner, cooldown, ammo, damage, projectileSpeed, projectileScale, firingSoundRadius, blastRadius):
-		super().__init__(owner, cooldown, ammo, damage, projectileSpeed, projectileScale, firingSoundRadius)
+	def __init__(self, owner, cooldown, ammo, maxAmmo, damage, projectileSpeed, projectileScale, firingSoundRadius, blastRadius):
+		super().__init__(owner, cooldown, ammo, maxAmmo, damage, projectileSpeed, projectileScale, firingSoundRadius)
 		self.blastRadius = blastRadius
 
 	def TryShoot(self, obstacleObjects, botObjects):

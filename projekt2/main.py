@@ -81,9 +81,9 @@ def main():
     #PlayerBot.debugFlag = enums.BotDebug.VISION | enums.BotDebug.MEMORYPOSITIONS
     
     PlayerWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-    #PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
+    PlayerWeapon.AddComp(weapons.Railgun(Player, 0.1, 4096, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
     
-    PlayerWeapon.AddComp(weapons.RocketLauncher(Player, 0.4, 4096, 35, 2, Vector([12, 12]), 120, 60))
+    #PlayerWeapon.AddComp(weapons.RocketLauncher(Player, 0.4, 4096, 4096, 20, 35, 2, Vector([12, 12]), 120, 60))
     PlayerWeapon.SetParent(Player)
 
     PlayerWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.FIRESOUND
@@ -117,9 +117,9 @@ def main():
         singletons.GlobalObjects.append(CurBot)
 
         BotWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-        BotWeapon.AddComp(weapons.Railgun(CurBot, 3, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
+        BotWeapon.AddComp(weapons.Railgun(CurBot, 3, 4096, 10, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
     
-        #BotWeapon.AddComp(weapons.RocketLauncher(CurBot, 0.6, 4096, 35, 2.5, Vector([12, 12]), 120, 60))
+        #BotWeapon.AddComp(weapons.RocketLauncher(CurBot, 0.6, 4096, 20, 35, 2.5, Vector([12, 12]), 120, 60))
         BotWeapon.SetParent(CurBot)
 
         BotWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND
@@ -145,9 +145,9 @@ def main():
 
         #dummy weapon
         DummyWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-        #DummyWeapon.AddComp(weapons.Railgun(Dummy, 3, 4096, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
+        #DummyWeapon.AddComp(weapons.Railgun(Dummy, 3, 4096, 10, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
     
-        DummyWeapon.AddComp(weapons.RocketLauncher(Dummy, 0.6, 4096, 35, 2.5, Vector([12, 12]), 120, 60))
+        DummyWeapon.AddComp(weapons.RocketLauncher(Dummy, 0.6, 4096, 20, 35, 2.5, Vector([12, 12]), 120, 60))
         DummyWeapon.SetParent(Dummy)
 
         DummyWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND
@@ -181,9 +181,9 @@ def main():
     #-----------------------------------------------
 
     #this is a list of pickup positions, they are not random
-    PickupSpawns = [Vector([85, singletons.MainCamera.windowSize[1] / 2])]
+    PickupSpawns = [Vector([85, singletons.MainCamera.windowSize[1] / 2]), Vector([300, singletons.MainCamera.windowSize[1] / 2 - 20])]
 
-    for i in range(1):
+    for i in range(2):
         HealthObj = game_object.GameObject(Transform(PickupSpawns[i], 0, Vector([10, 10])), [], None)
         HealthObj.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, singletons.PickupCol, 0))
         HealthObj.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
@@ -315,7 +315,7 @@ def main():
         #if player keeps mouse button down he tries to shoot
         if MouseInputs[0][0] > 0:
             #PlayerWeapon.GetComp(weapons.Railgun).TryShoot([Map], singletons.Bots)
-            PlayerWeapon.GetComp(weapons.RocketLauncher).TryShoot(singletons.MapObjects, singletons.Bots)
+            PlayerWeapon.GetComp(weapons.Weapon).TryShoot(singletons.MapObjects, singletons.Bots)
 
         #-----------------------------------------------
         #Global rendering
