@@ -309,21 +309,6 @@ def main():
             PlayerWeapon.GetComp(weapons.RocketLauncher).TryShoot(singletons.MapObjects, singletons.Bots)
 
         #-----------------------------------------------
-        #Bots handling
-        #-----------------------------------------------
-
-        #singular bot
-        for obj in singletons.Bots:
-
-            BotComp = obj.GetComp(bots.Bot)
-            if BotComp: BotComp.update()
-
-            physComp = obj.GetComp(physics.PhysicObject)
-            if physComp: physComp.ExecutePos()
-
-            obj.transform.SynchGlobals()
-
-        #-----------------------------------------------
         #Global rendering
         #-----------------------------------------------
         singletons.MainCamera.Clear()
@@ -350,22 +335,24 @@ def main():
                 projectile.CheckIfTriggered(singletons.Bots, singletons.MapObjects)
 
         #-----------------------------------------------
-        #AI logic
+        #Bots handling
         #-----------------------------------------------
 
         for object in singletons.Bots:
-            botAI = object.GetComp(bots.Bot)
+            BotComp = object.GetComp(bots.Bot)
+
+            BotComp.update()
 
             #TO DO
             #reduce number of vision calls like in the book
             #vision
-            botAI.UpdateVision(singletons.Bots, singletons.MapObjects)
+            BotComp.UpdateVision(singletons.Bots, singletons.MapObjects)
             #hearing
-            botAI.UpdateHearing(singletons.Sounds, singletons.MapObjects)
+            BotComp.UpdateHearing(singletons.Sounds, singletons.MapObjects)
 
             #dummy debug for shooting
             if object != Player:
-                botAI.TryAimAndShoot(singletons.MapObjects)
+                BotComp.TryAimAndShoot(singletons.MapObjects)
             #dummy does not act, but can still be a receiver and can use it's perception
             if object == Dummy:
                 continue
