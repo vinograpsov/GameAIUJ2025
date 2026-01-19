@@ -10,6 +10,7 @@ import rendering
 import collisions
 import physics
 import enums
+import events
 import navigation
 import states
 
@@ -23,7 +24,7 @@ FPS = 60
 
 #already at start create camera as global object
 CameraObject = game_object.GameObject(Transform(Vector([800 / 2, 600 / 2]), 0, Vector([1, 1])), [], None)
-CameraObject.AddComp(rendering.Camera([800, 600], (92, 92, 92), "Stable Cobra Deathmatch Mega Bestseller 6000"))
+CameraObject.AddComp(rendering.Camera([800, 600], singletons.BackgroundCol, "Stable Cobra Deathmatch Mega Bestseller 6000"))
 singletons.MainCamera = CameraObject.GetComp(rendering.Camera)
 
 def GetFixedMousePos(windowSize):
@@ -40,7 +41,6 @@ def main():
     #------------------------------------------------------------------
 
     size = [pygame.display.Info().current_w, pygame.display.Info().current_h]
-    background = (255, 255, 255)
     deltaTime = time.time()
     pastTime = time.time()
 
@@ -64,7 +64,6 @@ def main():
     singletons.MapObjects.append(Map)
 
     #------------------------MAP AND BORDERS ----------------------------
-
 
 
     # ------------------------PLAYER SETUP ----------------------------
@@ -109,7 +108,7 @@ def main():
         CurBot.AddComp(physics.PhysicObject(1))
         
         bot_ai = CurBot.AddComp(bots.Bot(3, 100, math.pi, 0.1, 0.3, 1))
-        bot_ai.debugFlag = enums.BotDebug.DIRECTION | enums.BotDebug.PATH | enums.BotDebug.FIELDOFVIEW
+        bot_ai.debugFlag = enums.BotDebug.DIRECTION | enums.BotDebug.PATH | enums.BotDebug.FIELDOFVIEW | enums.BotDebug.MEMORYPOSITIONS
 
         #sets bot state to one that best initializes his behaviour at start
         bot_ai.ChangeState(states.WhatNowState(bot_ai))
@@ -177,32 +176,24 @@ def main():
     #FLOODFILL and ASTAR
     #------------------------------------------------------------------
 
-
-
     #-----------------------------------------------
     # PICKUPS SETUP
     #-----------------------------------------------
 
-    Pickups = []
+    #this is a list of pickup positions, they are not random
+    PickupSpawns = [Vector([85, singletons.MainCamera.windowSize[1] / 2])]
 
-    HealthObj = game_object.GameObject(Transform(Vector([600, 400]), 0, Vector([10, 10])), [], None)
-    HealthObj.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (0, 255, 0), 0))
-    p_comp = pickup.Pickup(pickup.PickupType.HEALTH, 25, 10.0)
-    p_comp.gameObject = HealthObj
-    HealthObj.AddComp(p_comp)
-    Pickups.append(HealthObj)
-    singletons.GlobalObjects.append(HealthObj)
+    for i in range(1):
+        HealthObj = game_object.GameObject(Transform(PickupSpawns[i], 0, Vector([10, 10])), [], None)
+        HealthObj.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, singletons.PickupCol, 0))
+        HealthObj.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
 
-    AmmoObj = game_object.GameObject(Transform(Vector([200, 500]), 0, Vector([10, 10])), [], None)
-    AmmoObj.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (255, 0, 0), 0))
-    p_comp_ammp = pickup.Pickup(pickup.PickupType.AMMO_ROCKET, 10)
-    p_comp_ammp.gameObject = AmmoObj
-    AmmoObj.AddComp(p_comp_ammp)
-    Pickups.append(AmmoObj)
-    singletons.GlobalObjects.append(AmmoObj)
+        PickupTrigger = HealthObj.AddComp(events.HealthPickupTrigger(50))
+        HealthObj.AddComp(events.TriggerRespawnFPSTimer(100))
+        PickupTrigger.Start(True)
 
-    for p_obj in Pickups:
-        singletons.NavGraph.register_pickup(p_obj)
+        singletons.GlobalObjects.append(HealthObj)
+        singletons.NavGraph.register_pickup(HealthObj)
 
     #-----------------------------------------------
     # PICKUPS SETUP
@@ -260,7 +251,7 @@ def main():
                         bot_obj = singletons.Bots[0]
                         bot_ai = bot_obj.GetComp(bots.Bot)
 
-                        path = singletons.MainPathFinder.create_path_to_pickup(bot_obj.transform.pos, pickup.PickupType.AMMO_ROCKET)
+                        path = singletons.MainPathFinder.create_path_to_pickup(bot_obj.transform.pos, enums.PickupType.HEALTH)
                         if path: bot_ai.set_path(path)
                         else: print("No path to pickup found")
 
@@ -358,8 +349,13 @@ def main():
 
         for object in singletons.Bots:
             BotComp = object.GetComp(bots.Bot)
+            BotCollider = object.GetComp(collisions.Collider)
 
             BotComp.update()
+
+            #check for triggers
+            for trigger in singletons.HealthPickups:
+                trigger.CheckIfTriggered(BotCollider)
 
             #TO DO
             #reduce number of vision calls like in the book
@@ -369,8 +365,8 @@ def main():
             BotComp.UpdateHearing(singletons.Sounds, singletons.MapObjects)
 
             #dummy debug for shooting
-            if object != Player:
-                BotComp.TryAimAndShoot(singletons.MapObjects)
+            #if object != Player:
+                #BotComp.TryAimAndShoot(singletons.MapObjects)
             #dummy does not act, but can still be a receiver and can use it's perception
             if object == Dummy:
                 continue
@@ -389,8 +385,6 @@ def main():
         for Phys in singletons.PhysicObjects:
             Phys.UpdateVelocity()
             Phys.ExecutePos()
-
-
 
         #-----------------------------------------------
         #Timets Update

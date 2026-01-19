@@ -3,7 +3,9 @@ import time
 import game_object
 from transforms import *
 import singletons
+import enums
 import collisions
+import rendering
 
 class Timer():
 
@@ -54,23 +56,6 @@ class RealtimeTimer(Timer):
 			self.TimedEvent()
 			self.lastTimedEvent = time.time()
 
-'''
-class DeltaTimer(Timer):
-	def __init__(self, threshold):
-		super().__init__(threshold) 
-		self.ResetTimer()
-
-	def ResetTimer(self):
-		self.lastFrameTime = time.time()
-		self.deltaTime = 0
-
-	def UpdateTimer(self):
-		deltaTime = time.time() - 
-		if time.time() >= self.lastTimedEvent + self.threshold:
-			self.TimedEvent()
-			self.lastTimedEvent = time.time()
-'''
-
 class DestroyFPSTimer(FPSTimer):
 
 	def TimedEvent(self):
@@ -85,6 +70,9 @@ class TriggerRespawnFPSTimer(FPSTimer):
 
 	def TimedEvent(self):
 		self.gameObject.GetComp(Trigger).isActive = True
+		visual = self.gameObject.GetComp(rendering.RenderObject)
+		if visual:
+			visual.col = singletons.PickupCol
 
 #BOOK REQUIREMENT!!!
 #TRIGGER DOES NOT TRIGGERS ANYTHING, IT IS **BEING** TRIGGERED BY OTHER THINGS,
@@ -116,24 +104,42 @@ class Trigger():
 #import needs to be here to avoid circular imports
 import bots
 
-class HealthPickupTrigger(Trigger):
+class PickupTrigger(Trigger):
+	def __init__(self):
+		super().__init__()
+		self.type = None
+
+class HealthPickupTrigger(PickupTrigger):
 	def __init__(self, health):
 		super().__init__()
+		self.type = enums.PickupType.HEALTH
 		self.givenHealth = health
+		singletons.HealthPickups.append(self)
+
+	def Destroy():
+		super().Destroy()
+		singletons.HealthPickups.remove(self)
 
 	def TriggeredEvent(self, triggeredObject):
 		triggeredBot = triggeredObject.GetComp(bots.Bot)
 		if triggeredBot:
 				triggeredBot.Heal(self.givenHealth)
+
+				#if trigger has visual cue make it invisible by giving same color as background
+				visual = self.gameObject.GetComp(rendering.RenderObject)
+				if visual:
+					visual.col = singletons.BackgroundCol
+
 				#if trigger has any timers associated reset them
 				for timer in triggeredObject.GetComps(Timer):
 					timer.ResetTimer()
 				self.isActive = False
 
-class AmmoPickupTrigger(Trigger):
+class AmmoPickupTrigger(PickupTrigger):
 
-	def __init__(self, weaponType, ammo): #weaponType is type, ammo is int
+	def __init__(self, pickupType, weaponType, ammo): #weaponType is type, ammo is int
 		super().__init__()
+		self.type = pickupType
 		self.weaponType = weaponType
 		self.givenAmmo = ammo
 

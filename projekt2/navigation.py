@@ -3,6 +3,7 @@ from transforms import Vector, Transform
 import enums
 import collisions
 import game_object
+import events
 import rendering 
 import heapq 
 
@@ -60,7 +61,8 @@ class NavigationGraph:
             closest_node.extra_info = pickup_obj 
             # !!!!!!!!!!!!!!! pickup_obj.transform.pos = closest_node.pos
             #Show to adam and ask if this is ok
-            pickup_obj.transform.pos = closest_node.pos
+            pickup_obj.transform.lpos = closest_node.pos
+            pickup_obj.transform.Desynch()
             print(f"Pickup registered to node at {closest_node.pos.data}")
 
     def generateFloodFill(self, start_pos, obstacles_list):
@@ -228,10 +230,14 @@ class DijkstraSearch:
             self.closed_set.add(current_node) 
 
             if current_node.extra_info is not None:
-                pickup_comp = current_node.extra_info.GetComp(pickup.Pickup)
-                if pickup_comp and pickup_comp.is_active and pickup_comp.type == self.target_node_type:
+                pickup_comp = current_node.extra_info.GetComp(events.PickupTrigger)
+                if pickup_comp and pickup_comp.isActive and pickup_comp.type == self.target_node_type:
                     self.target_node_found = current_node 
                     return True
+                #pickup_comp = current_node.extra_info.GetComp(pickup.Pickup)
+                #if pickup_comp and pickup_comp.is_active and pickup_comp.type == self.target_node_type:
+                #    self.target_node_found = current_node 
+                #    return True
 
             for neighbor in current_node.neighbors: 
                 if neighbor in self.closed_set: 

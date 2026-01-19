@@ -7,7 +7,7 @@ GeneralDebugFlag = None
 
 NavGraph = None
 
-MainPathFinder = None
+#MainPathFinder = None
 
 '''used as initializator for values as arbirtary value to simulate infinity'''
 maxValue = 8192
@@ -16,6 +16,8 @@ maxSquareValue = 65536
 
 ProjectileColor = [255, 255, 0]
 
+BackgroundCol = [92, 92, 92]
+PickupCol = [0, 255, 0]
 DebugCol = [255, 0, 255]
 DebugNegativeCol = [255, 0, 153]
 DebugPositiveCol = [153, 0, 255]
@@ -37,6 +39,9 @@ Timers = []
 
 '''list of triggers'''
 Triggers = []
+
+'''list of health pickups'''
+HealthPickups = [] #pickup trigger component
 
 '''list of sound triggers'''
 Sounds = [] #sound trigger component

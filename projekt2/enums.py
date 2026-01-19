@@ -17,6 +17,11 @@ class ColliderType(Enum):
 	LINE = 2 #border is inverse box, but requires special code
 	POLYGON = 3 #polygon is in reality a container of line colliders
 
+class PickupType(Enum):
+    HEALTH = 1
+    AMMO_RAILGUN = 2
+    AMMO_ROCKET = 3
+
 class GeneralDebug(Flag):
 	SPAWNPLAYER = auto() #player is bot controlled by player input
 	SPAWNDUMMY = auto() #dummy is bot that is not acting

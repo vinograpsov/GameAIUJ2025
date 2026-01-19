@@ -5,12 +5,6 @@ import rendering
 import game_object
 
 
-class PickupType(enums.Enum):
-    HEALTH = 1
-    AMMO_RAILGUN = 2
-    AMMO_ROCKET = 3
-
-
 class Pickup:
     def __init__(self, pickup_type, amaout, respawn_delay=5.0, debugFlag=0):
         self.gameObject = None 
@@ -46,7 +40,7 @@ class Pickup:
             bot.add_ammo(self.type, self.amount)
 
         if self.debugFlag:
-            print(f"Pickup collected: {self.type}, amount: {self.amount}") 
+            print(f"Pickup collected: {self.type}, amount: {self.amount}")
 
     def deactivate(self):
         self.active = False 

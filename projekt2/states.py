@@ -77,6 +77,7 @@ class WanderState(State):
 		wanderPoint = Vector([random.random(), random.random()]) * Vector(singletons.MainCamera.windowSize)
 
 		#start going to that point
+
 		self.bot.set_path(singletons.MainPathFinder.create_path_to_position(trans.pos, wanderPoint))
 
 		pass
@@ -133,48 +134,76 @@ class FindHPState(State):
 
 		pass
 
-class FleeState(State):
-
-	def OnStateEnter(self):
-		#get nav mesh and find some point away from enemy
-		pass
-
-	def OnStateUpdate(self):
-
-		#check if not at the point, if so then repeat this state
-
-		#if no targets in field of view and none of them are remembered then stop fleeing and think
-		
-		#should flee from all enemies, or only from one of them?
-		currentMemories = self.bot.GetValidMemoryRecords(self)
-		if len(currentMemories) <= 0:
-			self.bot.ChangeState(WhatNowState(self.bot))
-			return
-
 class ChaseState(State):
 
 	def OnStateEnter(self):
-		pass
+		trans = self.gameObject.transform
+		trans.SynchGlobals()
+
+		self.ChaseExtensionRange = 1.5 #depends on bot scale
+
+		#POSSIBLE BUG, MAY FOLLOW OTHER BOT NOT ONE RECENTLY ATTACKING
+		curTarget = self.bot.GetClosestValiableMemory()
+
+		#if forgot about target do whatever
+		if not curTarget:
+			self.bot.ChangeState(WhatNowState(self.bot))
+			return
+
+		#if target visible proceed to fight
+		if curTarget.isInLineOfSight:
+			self.bot.ChangeState(FightState(self.bot))
+			return
+		else:
+			futurePath = singletons.MainPathFinder.create_path_to_position(trans.pos, curTarget.sensedPos)
+
+			#if possible set actual endpoint further up towards enemy
+			orgPos = trans.lpos
+			trans.lpos = futurePath[-1]
+			trans.lrot = Vector.ToRotation(futurePath[-1] - orgPos)
+			trans.Desynch()
+			rayPos = collisions.Raycast.CastRay(trans, trans.LocalToGlobal(Vector([self.ChaseExtensionRange, 0]), False), singletons.MapObjects)[1]
+			trans.lpos = orgPos
+			trans.Desynch()
+			trans.SynchGlobals()
+
+			futurePath = singletons.MainPathFinder.create_path_to_position(trans.pos, rayPos)
+
+			self.bot.set_path(futurePath)
+
+			del futurePath
 
 	def OnStateUpdate(self):
-
-		#go to place where enemy resides in memory
-
-		#after arrival go little bit more further
-
-		pass
-
-class FightState(State):
-
-	def OnStateEnter(self):
-		self.bot.debugFlag = self.bot.debugFlag | enums.BotDebug.LOCKSTATE
 
 		trans = self.gameObject.transform
 		trans.SynchGlobals()
 
-		self.straifeMult = 2 #straife mult is relevant to object scale
+		#POSSIBLE BUG, MAY FOLLOW OTHER BOT NOT ONE RECENTLY ATTACKING
+		curTarget = self.bot.GetClosestValiableMemory()
+
+		#if forgot about target do whatever
+		if not curTarget:
+			self.bot.ChangeState(WhatNowState(self.bot))
+			return
+
+		#if target visible proceed to fight
+		if curTarget.isInLineOfSight:
+			self.bot.ChangeState(FightState(self.bot))
+			return
+
+	def OnStateExit(self):
+		self.bot.path = None
+
+class FightState(State):
+
+	def OnStateEnter(self):
+
+		trans = self.gameObject.transform
+		trans.SynchGlobals()
+
 		self.HealthFleeRequirement = 0.4
 		self.AmmoThreshold = 4
+		self.straifeMult = 2 #straife mult is relevant to object scale
 		self.SwitchStraifeChance = 0.3
 		self.StraifeDir = 1
 		self.charge = False
@@ -227,12 +256,17 @@ class FightState(State):
 				self.bot.set_path(singletons.MainPathFinder.create_path_to_position(trans.pos, curTarget.sensedPos))
 				self.charge = True
 
+	def OnStateExit(self):
+		self.bot.path = None
 
 '''fights until dead or kills the target'''
 class FightHardState(State):
 
 	def OnStateEnter(self):
-		pass
+		self.straifeMult = 2 #straife mult is relevant to object scale
+		self.SwitchStraifeChance = 0.3
+		self.StraifeDir = 1
+		self.charge = False
 
 	def OnStateUpdate(self):
 		
@@ -243,6 +277,136 @@ class FightHardState(State):
 			self.bot.ChangeState(WhatNowState(self.bot))
 			return
 
-		self.bot.TryAimAndShoot(singletons.MapObjects)
+		#this state does not tries to flee or evade, it just simply fights unless enemy is defeated
 
-		#if no longer has ammo then there is no salvation, just give up on life
+		#fight logic, same as during regular fight
+
+		#of course try shoot enemy
+		self.bot.TryAimAndShoot(singletons.MapObjects)
+		
+		#if not going anywhere straife
+		if self.charge or not self.bot.path or self.bot.path.is_finished():
+			self.charge = False
+
+			#random chance to straife in different direction
+			if random.random() < self.SwitchStraifeChance:
+				self.StraifeDir = -self.StraifeDir
+
+			straifeEndPoint = Vector([0, self.straifeMult * self.StraifeDir])
+			straifeEndPoint = trans.LocalToGlobal(straifeEndPoint, False)
+
+			#if there is free space then straife, if no then go towards target
+			if not collisions.Raycast.CheckRay(self.gameObject.transform, straifeEndPoint, singletons.MapObjects):
+				#as navMesh to go to the side
+				self.bot.set_path(singletons.MainPathFinder.create_path_to_position(trans.pos, straifeEndPoint))
+			elif not self.charge:
+				#ask navMesh to go to target position
+				self.bot.set_path(singletons.MainPathFinder.create_path_to_position(trans.pos, curTarget.sensedPos))
+				self.charge = True
+
+
+class FleeState(State):
+
+	def OnStateEnter(self):
+		#get nav mesh and find some point away from enemy
+		trans = self.gameObject.transform
+		trans.SynchGlobals()
+
+		#this is used to determine if candidate path is "safe" safe paths are ones that do not go near enemy
+		self.coverPenetration = 1.2 * trans.scale.MaxComponent() #scales with bot scale
+		self.minEscapeDit = 2 * trans.scale.MaxComponent() # scales with bot scale
+		self.enemySafeDist = 0.7
+		self.candidatePathDistribution = math.pi / 4
+
+		#create candidate path 
+
+		curTarget = self.bot.GetClosestValiableMemory()
+		#this technically should never happen but you never know
+		if not curTarget:
+			self.bot.ChangeState(WhatNowState(self.bot))
+			return
+
+		#search for cover left or right from enemy
+		pivotTrans = Transform(curTarget.sensedPos.copy, Vector.ToRotation(trans.pos - curTarget.sensedPos), trans.scale.copy())
+
+		#direction of first check chosen at random
+		candidateCoverDir = 1
+		if bool(random.getrandbits(1)):
+			candidateCoverDir = -1
+		pivotTrans.lrot = pivotTrans.lrot + self.candidatePathDistribution * candidateCoverDir
+		pivotTrans.Desynch()
+		
+		#create first candidate cover
+		coverPos = collisions.Raycast.CastRay(pivotTrans, None, singletons.MapObjects)[1]
+
+		coverPos += pivotTrans.Forward() * coverPenetration
+
+		#check if path to candidate cover is long enough and does not passes near enemy
+		#candidatePath = singletons.MainPathFinder.create_path_to_position(trans.pos, coverPos)
+		#if Vector.Distance(trans.pos, candidatePath[-1]) > self.minEscapeDist:
+		#	for waypoint in candidatePath:
+		#		if 
+
+
+
+	def OnStateUpdate(self):
+
+		#check if not at the point, if so then repeat this state
+
+		#if no targets in field of view and none of them are remembered then stop fleeing and think
+		
+		#should flee from all enemies, or only from one of them?
+		curTarget = self.bot.GetClosestValiableMemory()
+		if not curTarget:
+			self.bot.ChangeState(WhatNowState(self.bot))
+			return
+		else:
+			#fight back, bot can still fight when fleeing
+			pass
+
+'''unused old flee state
+
+class FleeState(State):
+
+	def OnStateEnter(self):
+		#get nav mesh and find some point away from enemy
+		trans = self.gameObject.transform
+		trans.SynchGlobals()
+
+		#this is used to determine if candidate path is "safe" safe paths are ones that do not go near enemy
+		self.coverPenetration = 1.2 * trans.scale.MaxComponent() #scales with bot scale
+		self.minEscapeDit = 2 * trans.scale.MaxComponent() # scales with bot scale
+		self.enemySafeDist = 0.7
+		self.candidatePathDistribution = math.pi / 4
+
+		#create candidate path 
+
+		curTarget = self.bot.GetClosestValiableMemory()
+		#this technically should never happen but you never know
+		if not curTarget:
+			self.bot.ChangeState(WhatNowState(self.bot))
+			return
+
+		#search for cover left or right from enemy
+		pivotTrans = Transform(curTarget.sensedPos.copy, Vector.ToRotation(trans.pos - curTarget.sensedPos), trans.scale.copy())
+
+		#direction of first check chosen at random
+		candidateCoverDir = 1
+		if bool(random.getrandbits(1)):
+			candidateCoverDir = -1
+		pivotTrans.lrot = pivotTrans.lrot + self.candidatePathDistribution * candidateCoverDir
+		pivotTrans.Desynch()
+		
+		#create first candidate cover
+		coverPos = collisions.Raycast.CastRay(pivotTrans, None, singletons.MapObjects)[1]
+
+		coverPos += pivotTrans.Forward() * coverPenetration
+
+		#check if path to candidate cover is long enough and does not passes near enemy
+		candidatePath = singletons.MainPathFinder.create_path_to_position(trans.pos, coverPos)
+		if Vector.Distance(trans.pos, candidatePath[-1]) > self.minEscapeDist:
+			for waypoint in candidatePath:
+				if 
+
+
+'''

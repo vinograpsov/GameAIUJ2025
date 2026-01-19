@@ -15,6 +15,7 @@ import pickup
 import pygame
 import events
 import collisions
+import navigation
 
 '''memory fragment does NOT has it's own object, it is a component of bot's object'''
 class MemoryRecord():
@@ -65,7 +66,7 @@ class Bot():
         self.maxHealth = maxHealth
         self.health = maxHealth
 
-
+        self.pathfinder = navigation.Pathfinder(singletons.NavGraph)
         self.path = None
         self.waypoint_seek_dist_sq = 20 * 20
         #OD TEGO JEST PHYSIC OBJECT W BOCIE, ON MA TO WSZYSTKO
@@ -87,6 +88,7 @@ class Bot():
         self.memories = None
         self.weapon = None
         self.path = None
+        self.pathfinder = None
 
         for botObject in singletons.Bots:
             botObject.GetComp(Bot).RemoveFromMemory(self.gameObject)
@@ -162,9 +164,6 @@ class Bot():
             self.rocket_ammo += amount
         elif weapon_type == pickup.PickupType.AMMO_RAILGUN:
             self.railgun_ammo += amount
-
-    def add_health(self, amount):
-        self.health = min(self.health + amount, self.maxHealth)
 
 
     def toggle_debug_path(self):
