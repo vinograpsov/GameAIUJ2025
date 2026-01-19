@@ -59,6 +59,7 @@ class Bot():
     def __init__(self, memorySpan, maxHealth, fov, accuracy, reactionTime, aimingPersistance):
         self.gameObject = None
         self.weapon = None
+        self.state = None
         self.memories = [] #list of memory records
         self.memorySpan = memorySpan
         self.maxHealth = maxHealth
@@ -232,7 +233,7 @@ class Bot():
                 else:
                     if memory.sensedPos: #if position was ever initialized
                         singletons.MainCamera.RenderRawPoint(memory.sensedPos, singletons.DebugNegativeCol, 5)
-    
+
     '''this function is equivalent of tergeting system from book'''
     def GetClosestValiableMemory(self):
         memories = self.GetValidMemoryRecords()
@@ -337,8 +338,6 @@ class Bot():
             return True
         return False
 
-    #SENSORY MEMORY
-
     def RemoveFromMemory(self, source):
         for memory in self.memories:
             if memory.source == source:
@@ -437,6 +436,18 @@ class Bot():
 
     #HERE COMES WHOLE AI MUMBO JUMBO (state machine included)
 
+    def UpdateCurState():
+        self.state.OnStateUpdate()
+
+    def ChangeState(self, newState):
+        #first exit old state
+        self.state.OnStateExit()
+        #change state
+        self.gameObject.RemoveComp(self.state)
+        self.gameObject.AddComp(newState)
+        self.state = newState
+        #startState
+        self.state.OnStateEnter()
 
 '''this class limits certain bot updates to only happen from time to time'''
 class BotUpdateLimiter(events.FPSTimer):
