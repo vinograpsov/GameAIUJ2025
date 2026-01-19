@@ -120,14 +120,14 @@ def main():
 
 
     #--------------------------BOTS SETUP -----------------------------
-    for _ in range(1):
+    for _ in range(0):
         botPosition = Vector([150, 150])
         CurBot = game_object.GameObject(Transform(botPosition, 0, Vector([15, 15])), [], None)
         CurBot.AddComp(rendering.Primitive(enums.PrimitiveType.CIRCLE, (255, 0, 0), 0))
         CurBot.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
         CurBot.AddComp(physics.PhysicObject(1))
         
-        bot_ai = bots.Bot(3, 100, math.pi)
+        bot_ai = bots.Bot(3, 100, math.pi, 0.1, 0.3, 1)
         bot_ai.debugFlag = enums.BotDebug.DIRECTION | enums.BotDebug.PATH
         
         CurBot.AddComp(bot_ai)
@@ -356,13 +356,6 @@ def main():
             singletons.MainCamera.Render(Renderer)
 
         NavGraph.debugDraw(singletons.MainCamera)
-
-        for obj in singletons.Bots:
-            bot = obj.GetComp(bots.Bot)
-            bot.Debug(singletons.MainCamera)
-
-        if enums.WeaponDebug.LINEPOINTER in PlayerWeapon.GetComp(weapons.Railgun).debugFlag:
-            PlayerWeapon.GetComp(weapons.Railgun).ShowLinePointer([Map], [])
 
         #ENEMIES DEBUG!!!
         for Object in singletons.Bots:

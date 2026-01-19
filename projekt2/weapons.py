@@ -24,12 +24,16 @@ class Weapon():
 		self.projectileScale = projectileScale
 		self.firingSoundRadius = firingSoundRadius
 
+		self.projectiles = []
+
 		self.debugFlag = enums.WeaponDebug(0)
 		pass
 
 	def Destroy(self):
 		self.owner = None
-		#self.owner = None
+		for object in self.projectiles:
+			object.GetComp(Projectile).source = None
+		self.projectiles = None
 
 	def TryShoot(self):
 		if self.ammo <= 0 or (self.lastTimeShot + self.cooldown) > time.time():
@@ -223,7 +227,8 @@ class ExplosiveProjectile(Projectile):
 		trans.Desynch()
 
 		botObjectsWithoutSource = botObjects.copy()
-		botObjectsWithoutSource.remove(self.source)
+		if self.source: #source may be none when bot is already dead, but projectile is still going
+			botObjectsWithoutSource.remove(self.source)
 		#if I understood this function correctly in the book it retruns closest origin to projectile origin, what in such use case (which is book's use case) will return closest bot to the END of line, not start
 		closestObject = collisions.Raycast.GetClosestOriginAlongRay(trans, curPos, curPos, botObjectsWithoutSource)
 

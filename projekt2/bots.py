@@ -63,8 +63,6 @@ class Bot():
         self.memorySpan = memorySpan
         self.maxHealth = maxHealth
         self.health = maxHealth
-        self.rocket_ammo = rocket_ammo
-        self.railgun_ammo = railgun_ammo
 
 
         self.path = None
@@ -158,7 +156,7 @@ class Bot():
             self.debugFlag &= ~enums.BotDebug.PATH
         else:
             self.debugFlag |= enums.BotDebug.PATH
-        print(f"Bot Path Debug: {self.debugFlag}")
+        #print(f"Bot Path Debug: {self.debugFlag}")
 
 
     #CO TO K* ROBI W BOCIE A NIE W MODULE RENDEROWANIA WTF
@@ -178,7 +176,7 @@ class Bot():
             botObject.GetComp(Bot).RemoveFromMemory(self.gameObject)
 
     #this function is used to render debug objects based on the debug flag
-    def Debug(self, camera):
+    def Debug(self):
         surface = pygame.display.get_surface()
         trans = self.gameObject.transform
         trans.SynchGlobals()
@@ -190,16 +188,16 @@ class Bot():
 
         if enums.BotDebug.DIRECTION in self.debugFlag:
             #ZMIENIC NA RENDER UZYWAJACY RENDERERA
-            start_pos = self._world_to_screen(self.transform.pos, camera)
-            end_pos = self._world_to_screen(self.transform.pos + self.transform.Forward() * 30, camera)
+            start_pos = self._world_to_screen(self.transform.pos, singletons.MainCamera)
+            end_pos = self._world_to_screen(self.transform.pos + self.transform.Forward() * 30, singletons.MainCamera)
             pygame.draw.line(surface, (255,0,0), start_pos, end_pos, 2)
 
         if self.path and self.path.waypoints and enums.BotDebug.PATH in self.debugFlag:
             screen_points = [] 
-            screen_points.append(self._world_to_screen(self.transform.pos, camera))
+            screen_points.append(self._world_to_screen(self.transform.pos, singletons.MainCamera))
 
             for i in range(self.path.cur_waypoint_idx, len(self.path.waypoints)):
-                screen_points.append(self._world_to_screen(self.path.waypoints[i], camera))
+                screen_points.append(self._world_to_screen(self.path.waypoints[i], singletons.MainCamera))
             
             if len(screen_points) > 1: 
                 pygame.draw.lines(surface, (255,255,255), False, screen_points, 2)
