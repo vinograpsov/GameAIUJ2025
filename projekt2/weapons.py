@@ -129,7 +129,7 @@ class RocketLauncher(Weapon):
 		self.blastRadius = blastRadius
 
 	def TryShoot(self, obstacleObjects, botObjects):
-		if not super(RocketLauncher, self).TryShoot():
+		if not super(RocketLauncher, self).TryShoot(obstacleObjects, botObjects):
 			return False
 		#actual rocket launcher logic
 		trans = self.gameObject.transform

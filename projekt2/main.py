@@ -139,7 +139,7 @@ def main():
 
 
     # ------------------------PLAYER SETUP ----------------------------
-    Player = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
+    Player = game_object.GameObject(Transform(Vector([700, 500]), 0, Vector([15, 15])), [], None)
     Player.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, [0, 0, 255], 0))
     Player.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
     
@@ -173,16 +173,17 @@ def main():
 
     #--------------------------BOTS SETUP -----------------------------
 
+    BotSpawns = [Vector([150, 150]), Vector([400, 400]), Vector([700, 300]), Vector([500, 300])]
 
-    for _ in range(1):
+    for i in range(4):
         botPosition = Vector([150, 150])
-        CurBot = game_object.GameObject(Transform(botPosition, 0, Vector([15, 15])), [], None)
+        CurBot = game_object.GameObject(Transform(BotSpawns[i], 0, Vector([15, 15])), [], None)
         CurBot.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, (255, 0, 0), 0))
         CurBot.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
         CurBot.AddComp(physics.PhysicObject(1))
         
         bot_ai = CurBot.AddComp(bots.Bot(3, 100, math.pi, 0.1, 0.3, 1))
-        bot_ai.debugFlag = enums.BotDebug.DIRECTION | enums.BotDebug.PATH | enums.BotDebug.FIELDOFVIEW | enums.BotDebug.MEMORYPOSITIONS | enums.BotDebug.SHOWSTATE
+        bot_ai.debugFlag = enums.BotDebug.DIRECTION | enums.BotDebug.PATH | enums.BotDebug.FIELDOFVIEW | enums.BotDebug.MEMORYPOSITIONS
 
         #sets bot state to one that best initializes his behaviour at start
         bot_ai.ChangeState(states.WhatNowState(bot_ai))
@@ -191,9 +192,11 @@ def main():
         singletons.GlobalObjects.append(CurBot)
 
         BotWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-        BotWeapon.AddComp(weapons.Railgun(CurBot, 3, 0, 10, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
-    
-        #BotWeapon.AddComp(weapons.RocketLauncher(CurBot, 0.6, 4096, 20, 35, 2.5, Vector([12, 12]), 120, 60))
+        
+        if not i % 2:
+            BotWeapon.AddComp(weapons.Railgun(CurBot, 3, 0, 10, 60, 60))
+        else:
+            BotWeapon.AddComp(weapons.RocketLauncher(CurBot, 0.6, 0, 20, 35, 2.5, Vector([12, 12]), 120, 60))
         BotWeapon.SetParent(CurBot)
 
         BotWeapon.GetComp(weapons.Weapon).debugFlag = enums.WeaponDebug.LINEPOINTER | enums.WeaponDebug.FIRESOUND

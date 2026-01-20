@@ -92,7 +92,7 @@ class Bot():
         self.pathfinder = None
 
         for botObject in singletons.Bots:
-            botObject.GetComp(Bot).RemoveFromMemory(self.gameObject)
+            botObject.GetComp(Bot).RemoveFromMemory(self)
 
     def set_path(self, vector_list): 
         self.path = Path(vector_list)
