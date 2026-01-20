@@ -107,7 +107,7 @@ def main():
         AmmoObj.AddComp(rendering.Model('Assets\RailgunPickup.obj', singletons.PickupCol, enums.RenderMode.WIREFRAME))
         AmmoObj.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
 
-        PickupTrigger = AmmoObj.AddComp(events.AmmoPickupTrigger(enums.PickupType.AMMO_RAILGUN, 4))
+        PickupTrigger = AmmoObj.AddComp(events.AmmoPickupTrigger(enums.PickupType.AMMO_RAILGUN, 5))
         AmmoObj.AddComp(events.TriggerRespawnFPSTimer(600))
         PickupTrigger.Start(True)
 
@@ -124,7 +124,7 @@ def main():
         AmmoObj.AddComp(rendering.Model('Assets\RocketPickup.obj', singletons.PickupCol, enums.RenderMode.WIREFRAME))
         AmmoObj.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
 
-        PickupTrigger = AmmoObj.AddComp(events.AmmoPickupTrigger(enums.PickupType.AMMO_ROCKET, 12))
+        PickupTrigger = AmmoObj.AddComp(events.AmmoPickupTrigger(enums.PickupType.AMMO_ROCKET, 8))
         AmmoObj.AddComp(events.TriggerRespawnFPSTimer(600))
         PickupTrigger.Start(True)
 
