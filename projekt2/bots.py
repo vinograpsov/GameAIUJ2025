@@ -16,6 +16,7 @@ import pygame
 import events
 import collisions
 import navigation
+import states
 
 '''memory fragment does NOT has it's own object, it is a component of bot's object'''
 class MemoryRecord():
@@ -233,6 +234,9 @@ class Bot():
                 else:
                     if memory.sensedPos: #if position was ever initialized
                         singletons.MainCamera.RenderRawPoint(memory.sensedPos, singletons.DebugNegativeCol, 5)
+        
+        if enums.BotDebug.SHOWSTATE in self.debugFlag:
+            print(self.state.__class__.__name__)
 
     '''this function is equivalent of tergeting system from book'''
     def GetClosestValiableMemory(self):
@@ -321,11 +325,13 @@ class Bot():
             #curMemory = self.TryCreateMemory(source)
             #curMemory.lastTimeSensed = time.time()
 
-        print("damage dealt")
+        #print("damage dealt")
         
         self.health -= damage
         if self.health < 0:
             self.Kill()
+        else:
+            self.state.GotHit(source)
 
     '''returns true if given point is within field of view, FOV is always set to 90deg'''
     def CheckFieldOfView(self, point):

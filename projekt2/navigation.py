@@ -416,8 +416,8 @@ class Pathfinder:
             path = self.current_search.get_path_as_vectors()
             return path
 
-        print(f"No active pickup of type {pickup_type} found")
-        return []
+        #print(f"No active pickup of type {pickup_type} found")
+        return None
     
 
 class Path: 

@@ -100,7 +100,7 @@ def main():
     del HealthSpawns
 
     #this is a list of pickup positions, they are not random
-    AmmoRailgunSpawns = [Vector([85, 140]), Vector([550, 550])]
+    AmmoRailgunSpawns = [Vector([85, 140]), Vector([500, 500])]
 
     for i in range(2):
         AmmoObj = game_object.GameObject(Transform(AmmoRailgunSpawns[i], 0, Vector([10, 10])), [], None)
@@ -180,7 +180,7 @@ def main():
         CurBot.AddComp(physics.PhysicObject(1))
         
         bot_ai = CurBot.AddComp(bots.Bot(3, 100, math.pi, 0.1, 0.3, 1))
-        bot_ai.debugFlag = enums.BotDebug.DIRECTION | enums.BotDebug.PATH | enums.BotDebug.FIELDOFVIEW | enums.BotDebug.MEMORYPOSITIONS
+        bot_ai.debugFlag = enums.BotDebug.DIRECTION | enums.BotDebug.PATH | enums.BotDebug.FIELDOFVIEW | enums.BotDebug.MEMORYPOSITIONS | enums.BotDebug.SHOWSTATE
 
         #sets bot state to one that best initializes his behaviour at start
         bot_ai.ChangeState(states.WhatNowState(bot_ai))

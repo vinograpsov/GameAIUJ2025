@@ -17,6 +17,10 @@ class State():
 	def Destroy(self):
 		self.bot = None
 
+	def GotHit(self, source):
+		self.bot.ChangeState(SurprisedState(self.bot))
+		return
+
 	def OnStateEnter(self):
 		pass
 
@@ -28,7 +32,13 @@ class State():
 
 '''does nothing used for debug, mostly for player'''
 class NullState(State):
-	pass
+
+	def GotHit(self, source):
+		pass
+
+	def OnStateEnter(self):
+		self.bot.debugFlag = self.bot.debugFlag | enums.BotDebug.LOCKSTATE
+
 
 '''this is the general state that decides what to do if no particular state is ongoing at the time'''
 class WhatNowState(State):
@@ -49,11 +59,11 @@ class WhatNowState(State):
 		#if got shot from nowhere look towards the shot
 
 		#if low on hp go heal yourself
-		if (self.bot.health / self.bot.maxHealth) < self.hpDesire:
+		if (self.bot.health / self.bot.maxHealth) <= self.hpDesire:
 			self.bot.ChangeState(FindHPState(self.bot))
 			return
 		#if low ammo search for ammo
-		if (self.bot.weapon.ammo / self.bot.weapon.maxAmmo) < self.ammoDesire:
+		if (self.bot.weapon.ammo / self.bot.weapon.maxAmmo) <= self.ammoDesire:
 			self.bot.ChangeState(FindAmmoState(self.bot))
 			return
 
@@ -62,15 +72,16 @@ class WhatNowState(State):
 		return
 
 '''this state is used when bot is being hit by something while not engaged in a fight'''
-class SuprisedState(State):
+class SurprisedState(State):
 
 	def OnStateEnter(self):
 		#if you were going somwhere, stop doing it
 		self.bot.path = None
 
 	def OnStateUpdate(self):
-		#simply look towards from where the shot came from
-		pass
+		#simply look behind yourself as propably you got shot from behind if you didn't see it
+		self.gameObject.transform.lrot += math.pi
+		self.gameObject.transform.Desynch()
 
 		self.bot.ChangeState(WhatNowState(self.bot))
 		return
@@ -123,9 +134,9 @@ class FindAmmoState(State):
 		elif self.bot.weapon.ammoType == enums.PickupType.AMMO_ROCKET:
 			path = singletons.MainPathFinder.create_path_to_pickup(trans.pos, enums.PickupType.AMMO_ROCKET)
 		#if no pickup found, then re-evaluate your life choices
-		if not path:
+		if path ==  None:
 			self.bot.ChangeState(WhatNowState(self.bot))
-
+			return
 		self.bot.set_path(path)
 
 	def OnStateUpdate(self):
@@ -152,7 +163,7 @@ class FindHPState(State):
 		#if no pickup found, then re-evaluate your life choices
 		if not path:
 			self.bot.ChangeState(WhatNowState(self.bot))
-
+			return
 		self.bot.set_path(path)
 
 
@@ -237,7 +248,7 @@ class FightState(State):
 		trans.SynchGlobals()
 
 		self.HealthFleeRequirement = 0.4
-		self.AmmoThreshold = 4
+		self.AmmoThreshold = 0.2
 		self.straifeMult = 2 #straife mult is relevant to object scale
 		self.SwitchStraifeChance = 0.3
 		self.StraifeDir = 1
@@ -259,10 +270,10 @@ class FightState(State):
 			self.bot.ChangeState(ChaseState(self.bot))
 			return
 		#here perform check if not need to flee
-		if self.bot.health / self.bot.maxHealth < self.HealthFleeRequirement:
+		if self.bot.health / self.bot.maxHealth <= self.HealthFleeRequirement:
 			self.bot.ChangeState(FleeState(self.bot))
 			return
-		if self.bot.weapon.ammo < self.AmmoThreshold:
+		if self.bot.weapon.ammo / self.bot.weapon.maxAmmo <= self.AmmoThreshold:
 			self.bot.ChangeState(FleeState(self.bot))
 			return
 
@@ -297,6 +308,11 @@ class FightState(State):
 '''fights until dead or kills the target'''
 class FightHardState(State):
 
+	#bot does not care if he got hit during fight, it is natural
+	def GotHit(self, source):
+		pass
+		#self.bot.ChangeState(SurprisedState(self.bot))
+
 	def OnStateEnter(self):
 		self.straifeMult = 2 #straife mult is relevant to object scale
 		self.SwitchStraifeChance = 0.3
@@ -304,8 +320,10 @@ class FightHardState(State):
 		self.charge = False
 
 	def OnStateUpdate(self):
-		
-		curTarget = self.bot.GetClosestValiableMemory(self)
+		trans = self.gameObject.transform
+		trans.SynchGlobals()
+
+		curTarget = self.bot.GetClosestValiableMemory()
 
 		#if no target we killed it and proceed to whatever
 		if not curTarget:
@@ -342,62 +360,101 @@ class FightHardState(State):
 
 class FleeState(State):
 
+	#only become surprised if you got shot by someone who is not visible
+	def GotHit(self, source):
+		memories = self.bot.GetValidMemoryRecords()
+		for memory in memories:
+			if source == memory.source:
+				return #got shot by someone known, so no panic
+		self.bot.ChangeState(SurprisedState(self.bot)) #got shot from nowhere, panic
+		return
+
 	def OnStateEnter(self):
-		#get nav mesh and find some point away from enemy
+		self.recalc_timer = 0
+		self.recalc_delay = 30
+		self.minFleeingDist = self.gameObject.transform.scale.MaxComponent() * 2
+
+	def OnStateUpdate(self):
 		trans = self.gameObject.transform
 		trans.SynchGlobals()
 
-		#this is used to determine if candidate path is "safe" safe paths are ones that do not go near enemy
-		self.coverPenetration = 1.2 * trans.scale.MaxComponent() #scales with bot scale
-		self.minEscapeDit = 2 * trans.scale.MaxComponent() # scales with bot scale
-		self.enemySafeDist = 0.7
-		self.candidatePathDistribution = math.pi / 4
-
-		#create candidate path 
-
-		curTarget = self.bot.GetClosestValiableMemory()
-		#this technically should never happen but you never know
-		if not curTarget:
+		threat_memory = self.bot.GetClosestValiableMemory()
+		if not threat_memory:
 			self.bot.ChangeState(WhatNowState(self.bot))
-			return
-
-		#search for cover left or right from enemy
-		pivotTrans = Transform(curTarget.sensedPos.copy, Vector.ToRotation(trans.pos - curTarget.sensedPos), trans.scale.copy())
-
-		#direction of first check chosen at random
-		candidateCoverDir = 1
-		if bool(random.getrandbits(1)):
-			candidateCoverDir = -1
-		pivotTrans.lrot = pivotTrans.lrot + self.candidatePathDistribution * candidateCoverDir
-		pivotTrans.Desynch()
+			return 
 		
-		#create first candidate cover
-		coverPos = collisions.Raycast.CastRay(pivotTrans, None, singletons.MapObjects)[1]
+		threat_pos = threat_memory.sensedPos
 
-		coverPos += pivotTrans.Forward() * coverPenetration
+		self.recalc_timer -= 1
+		if self.recalc_timer <= 0: 
+			self.recalc_timer = self.recalc_delay
 
-		#check if path to candidate cover is long enough and does not passes near enemy
-		#candidatePath = singletons.MainPathFinder.create_path_to_position(trans.pos, coverPos)
-		#if Vector.Distance(trans.pos, candidatePath[-1]) > self.minEscapeDist:
-		#	for waypoint in candidatePath:
-		#		if 
+			best_hiding_spot = self.FindBestHidingSpot(threat_pos)
 
+			if best_hiding_spot:
+				path = singletons.MainPathFinder.create_path_to_position(self.gameObject.transform.pos, best_hiding_spot)
+				self.bot.set_path(path)
+			else: 
+				self.PanicFlee(threat_pos)
 
-
-	def OnStateUpdate(self):
-
-		#check if not at the point, if so then repeat this state
-
-		#if no targets in field of view and none of them are remembered then stop fleeing and think
-		
-		#should flee from all enemies, or only from one of them?
-		curTarget = self.bot.GetClosestValiableMemory()
-		if not curTarget:
-			self.bot.ChangeState(WhatNowState(self.bot))
+		#if fleeing does not provides nowhere then fight to death
+		if Vector.Dist(self.bot.path.waypoints[-1], trans.pos) < self.minFleeingDist:
+			self.bot.ChangeState(FightHardState(self.bot))
 			return
-		else:
-			#fight back, bot can still fight when fleeing
-			pass
+			
+		# if self.bot.health / self.bot.maxHealth > 0.3:
+		# 	self.bot.ChangeState(WhatNowState(self.bot))
+		# 	return
+
+
+	def FindBestHidingSpot(self, threat_pos):
+		best_pos = None 
+		min_dist_to_me = float('inf')
+		my_pos = self.bot.gameObject.transform.pos
+		nav_graph = singletons.NavGraph
+
+		for node in nav_graph.nodes:
+
+			dist_to_threat_sq = (node.pos - threat_pos).LengthSquared()
+			if dist_to_threat_sq < 100**2:
+				continue
+
+
+			if not self.IsVisible(threat_pos, node.pos):
+
+				dist_to_me = (node.pos - my_pos).LengthSquared()
+				if dist_to_me < min_dist_to_me:
+					min_dist_to_me = dist_to_me
+					best_pos = node.pos
+
+
+	def PanicFlee(self, threat_pos):
+
+		trans = self.bot.gameObject.transform
+		flee_dir = (trans.pos - threat_pos).Normalize()
+		target_pos = trans.pos + flee_dir * 200	
+
+		path = singletons.MainPathFinder.create_path_to_position(trans.pos, target_pos)
+		self.bot.set_path(path)
+
+	def IsVisible(self, start_pos, end_pos): 
+		for obj in singletons.MapObjects: 
+			colliders = obj.GetComps(collisions.Collider)
+			poly_colliders = obj.GetComps(collisions.PolygonCollider)
+			if poly_colliders: colliders.extend(poly_colliders)
+
+			trans = obj.transform
+			trans.SynchGlobals()
+
+			for col in colliders:
+				if col.type == enums.ColliderType.POLYGON:
+					for connection in col.edges: 
+						p1 = trans.Reposition(Vector(col.verts[connection[0]-1]))
+						p2 = trans.Reposition(Vector(col.verts[connection[1]-1]))
+
+						if collisions.CollisionSolver.LineIntersection2DCheck(start_pos, end_pos, p1, p2):
+							return False
+		return True
 
 '''unused old flee state
 
