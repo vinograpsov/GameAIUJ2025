@@ -83,9 +83,9 @@ def main():
     #-----------------------------------------------
 
     #this is a list of pickup positions, they are not random
-    HealthSpawns = [Vector([85, singletons.MainCamera.windowSize[1] / 2]), Vector([300, singletons.MainCamera.windowSize[1] / 2 - 40])]
+    HealthSpawns = [Vector([85, singletons.MainCamera.windowSize[1] / 2]), Vector([300, singletons.MainCamera.windowSize[1] / 2 - 40]), Vector([700, 100])]
 
-    for i in range(2):
+    for i in range(3):
         HealthObj = game_object.GameObject(Transform(HealthSpawns[i], 0, Vector([10, 10])), [], None)
         HealthObj.AddComp(rendering.Model('Assets\HealthPickup.obj', singletons.PickupCol, enums.RenderMode.WIREFRAME));
         HealthObj.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
@@ -172,6 +172,8 @@ def main():
 
 
     #--------------------------BOTS SETUP -----------------------------
+
+
     for _ in range(1):
         botPosition = Vector([150, 150])
         CurBot = game_object.GameObject(Transform(botPosition, 0, Vector([15, 15])), [], None)

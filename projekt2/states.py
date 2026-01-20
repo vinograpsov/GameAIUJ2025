@@ -372,7 +372,7 @@ class FleeState(State):
 	def OnStateEnter(self):
 		self.recalc_timer = 0
 		self.recalc_delay = 30
-		self.minFleeingDist = self.gameObject.transform.scale.MaxComponent() * 2
+		self.minFleeingDist = self.gameObject.transform.scale.MaxComponent() * 1.2
 
 	def OnStateUpdate(self):
 		trans = self.gameObject.transform
@@ -381,7 +381,10 @@ class FleeState(State):
 		threat_memory = self.bot.GetClosestValiableMemory()
 		if not threat_memory:
 			self.bot.ChangeState(WhatNowState(self.bot))
-			return 
+			return
+
+		#still try to fend off enemy while fleeing
+		self.bot.TryAimAndShoot(singletons.MapObjects)
 		
 		threat_pos = threat_memory.sensedPos
 
