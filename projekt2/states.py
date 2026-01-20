@@ -35,7 +35,7 @@ class WhatNowState(State):
 
 	def OnStateEnter(self):
 		self.hpDesire = 0.6
-		self.ammoDesire = 0.5
+		self.ammoDesire = 0.4
 		pass
 
 	def OnStateUpdate(self):
@@ -52,9 +52,9 @@ class WhatNowState(State):
 		if (self.bot.health / self.bot.maxHealth) < self.hpDesire:
 			self.bot.ChangeState(FindHPState(self.bot))
 			return
-
+		#if low ammo search for ammo
 		if (self.bot.weapon.ammo / self.bot.weapon.maxAmmo) < self.ammoDesire:
-			self.bot.ChangeState(FindHPState(self.bot))
+			self.bot.ChangeState(FindAmmoState(self.bot))
 			return
 
 		#if nothing else from important stuff then wander randomly
@@ -114,18 +114,32 @@ class WanderState(State):
 class FindAmmoState(State):
 
 	def OnStateEnter(self):
-		#get all ammo across map
-		pass
+		trans = self.gameObject.transform
+		trans.SynchGlobals()
+		#create path towards closest active ammo pickup of correct type
+		path = None
+		if self.bot.weapon.ammoType == enums.PickupType.AMMO_RAILGUN:
+			path = singletons.MainPathFinder.create_path_to_pickup(trans.pos, enums.PickupType.AMMO_RAILGUN)
+		elif self.bot.weapon.ammoType == enums.PickupType.AMMO_ROCKET:
+			path = singletons.MainPathFinder.create_path_to_pickup(trans.pos, enums.PickupType.AMMO_ROCKET)
+		#if no pickup found, then re-evaluate your life choices
+		if not path:
+			self.bot.ChangeState(WhatNowState(self.bot))
+
+		self.bot.set_path(path)
 
 	def OnStateUpdate(self):
 
-		#go towards found ammo
+		#if found target proceed to fight
+		curTarget = self.bot.GetClosestValiableMemory()
+		if curTarget:
+			self.bot.ChangeState(FightState(self.bot))
+			return
 
-		#if found ammo decide what to do next
-		self.bot.ChangeState(WhatNowState(self.bot))
-		return
-
-		pass
+		#check if not already at the point, if so then start thinking again
+		if self.bot.path.is_finished():
+			self.bot.ChangeState(WhatNowState(self.bot))
+			return
 
 class FindHPState(State):
 

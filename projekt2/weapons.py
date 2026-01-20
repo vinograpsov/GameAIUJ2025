@@ -27,6 +27,7 @@ class Weapon():
 
 		self.projectiles = []
 
+		self.ammoType = None
 		self.debugFlag = enums.WeaponDebug(0)
 		pass
 
@@ -71,6 +72,7 @@ class Railgun(Weapon):
 
 	def __init__(self, owner, cooldown, ammo, maxAmmo, damage, firingSoundRadius):
 		super().__init__(owner, cooldown, ammo, maxAmmo, damage, 0, Vector([0, 0]), firingSoundRadius)
+		self.ammoType = enums.PickupType.AMMO_RAILGUN
 
 	def TryShoot(self, obstacleObjects, botObjects):
 		if not super(Railgun, self).TryShoot(obstacleObjects, botObjects):
@@ -123,6 +125,7 @@ class RocketLauncher(Weapon):
 
 	def __init__(self, owner, cooldown, ammo, maxAmmo, damage, projectileSpeed, projectileScale, firingSoundRadius, blastRadius):
 		super().__init__(owner, cooldown, ammo, maxAmmo, damage, projectileSpeed, projectileScale, firingSoundRadius)
+		self.ammoType = enums.PickupType.AMMO_ROCKET
 		self.blastRadius = blastRadius
 
 	def TryShoot(self, obstacleObjects, botObjects):

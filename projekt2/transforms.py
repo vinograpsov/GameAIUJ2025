@@ -333,8 +333,9 @@ class Transform:
     '''marks transform and it's children as desynchronised'''
     def Desynch(self):
         self.isSynch = False
-        for child in self.gameObject.childs:
-            child.transform.Desynch()
+        if self.gameObject: #added near the end as there was a need for detached transform
+            for child in self.gameObject.childs:
+                child.transform.Desynch()
 
     '''immediately faces one object to another tranform(position)'''
     def FaceTowards(self, other):

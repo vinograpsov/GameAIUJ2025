@@ -108,17 +108,17 @@ class PickupTrigger(Trigger):
 	def __init__(self):
 		super().__init__()
 		self.type = None
+		singletons.Pickups.append(self)
+
+	def Destroy():
+		super().Destroy()
+		singletons.Pickups.remove(self)
 
 class HealthPickupTrigger(PickupTrigger):
 	def __init__(self, health):
 		super().__init__()
 		self.type = enums.PickupType.HEALTH
 		self.givenHealth = health
-		singletons.HealthPickups.append(self)
-
-	def Destroy():
-		super().Destroy()
-		singletons.HealthPickups.remove(self)
 
 	def TriggeredEvent(self, triggeredObject):
 		triggeredBot = triggeredObject.GetComp(bots.Bot)
@@ -137,17 +137,22 @@ class HealthPickupTrigger(PickupTrigger):
 
 class AmmoPickupTrigger(PickupTrigger):
 
-	def __init__(self, pickupType, weaponType, ammo): #weaponType is type, ammo is int
+	def __init__(self, pickupType, ammo): #weaponType is type, ammo is int
 		super().__init__()
 		self.type = pickupType
-		self.weaponType = weaponType
 		self.givenAmmo = ammo
 
 	def TriggeredEvent(self, triggeredObject):
 		triggeredBot = triggeredObject.GetComp(bots.Bot)
 		if triggeredBot:
-			if triggeredBot.weapon and isinstance(triggeredBot.weapon, self.weaponType):
-				triggeredBot.weapon.ammo += self.givenAmmo
+			if triggeredBot.weapon and triggeredBot.weapon.ammoType == self.type:
+				triggeredBot.weapon.RefillAmmo(self.givenAmmo)
+
+				#if trigger has visual cue make it invisible by giving same color as background
+				visual = self.gameObject.GetComp(rendering.RenderObject)
+				if visual:
+					visual.col = singletons.BackgroundCol
+
 				#if trigger has any timers associated reset them
 				for timer in triggeredObject.GetComps(Timer):
 					timer.ResetTimer()

@@ -40,8 +40,8 @@ Timers = []
 '''list of triggers'''
 Triggers = []
 
-'''list of health pickups'''
-HealthPickups = [] #pickup trigger component
+'''list of pickups'''
+Pickups = [] #pickup trigger component
 
 '''list of sound triggers'''
 Sounds = [] #sound trigger component

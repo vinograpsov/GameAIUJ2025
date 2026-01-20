@@ -65,6 +65,78 @@ def main():
 
     #------------------------MAP AND BORDERS ----------------------------
 
+    
+    #------------------------------------------------------------------
+    #FLOODFILL and ASTAR
+    #------------------------------------------------------------------
+
+    singletons.NavGraph = navigation.NavigationGraph(30, 15)
+    start_point = Vector([100, 100])
+    singletons.NavGraph.generateFloodFill(start_point, singletons.MapObjects)
+
+    #------------------------------------------------------------------
+    #FLOODFILL and ASTAR
+    #------------------------------------------------------------------
+
+    #-----------------------------------------------
+    # PICKUPS SETUP
+    #-----------------------------------------------
+
+    #this is a list of pickup positions, they are not random
+    HealthSpawns = [Vector([85, singletons.MainCamera.windowSize[1] / 2]), Vector([300, singletons.MainCamera.windowSize[1] / 2 - 40])]
+
+    for i in range(2):
+        HealthObj = game_object.GameObject(Transform(HealthSpawns[i], 0, Vector([10, 10])), [], None)
+        HealthObj.AddComp(rendering.Model('Assets\HealthPickup.obj', singletons.PickupCol, enums.RenderMode.WIREFRAME));
+        HealthObj.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
+
+        PickupTrigger = HealthObj.AddComp(events.HealthPickupTrigger(50))
+        HealthObj.AddComp(events.TriggerRespawnFPSTimer(600))
+        PickupTrigger.Start(True)
+
+        singletons.GlobalObjects.append(HealthObj)
+        singletons.NavGraph.register_pickup(HealthObj)
+
+    del HealthSpawns
+
+    #this is a list of pickup positions, they are not random
+    AmmoRailgunSpawns = [Vector([85, 140]), Vector([550, 550])]
+
+    for i in range(2):
+        AmmoObj = game_object.GameObject(Transform(AmmoRailgunSpawns[i], 0, Vector([10, 10])), [], None)
+        AmmoObj.AddComp(rendering.Model('Assets\RailgunPickup.obj', singletons.PickupCol, enums.RenderMode.WIREFRAME))
+        AmmoObj.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
+
+        PickupTrigger = AmmoObj.AddComp(events.AmmoPickupTrigger(enums.PickupType.AMMO_RAILGUN, 4))
+        AmmoObj.AddComp(events.TriggerRespawnFPSTimer(600))
+        PickupTrigger.Start(True)
+
+        singletons.GlobalObjects.append(AmmoObj)
+        singletons.NavGraph.register_pickup(AmmoObj)
+
+    del AmmoRailgunSpawns
+
+
+    AmmoRocketSpawns = [Vector([85, 500]), Vector([500, 50])]
+
+    for i in range(2):
+        AmmoObj = game_object.GameObject(Transform(AmmoRocketSpawns[i], 0, Vector([10, 10])), [], None)
+        AmmoObj.AddComp(rendering.Model('Assets\RocketPickup.obj', singletons.PickupCol, enums.RenderMode.WIREFRAME))
+        AmmoObj.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
+
+        PickupTrigger = AmmoObj.AddComp(events.AmmoPickupTrigger(enums.PickupType.AMMO_ROCKET, 12))
+        AmmoObj.AddComp(events.TriggerRespawnFPSTimer(600))
+        PickupTrigger.Start(True)
+
+        singletons.GlobalObjects.append(AmmoObj)
+        singletons.NavGraph.register_pickup(AmmoObj)
+
+    del AmmoRocketSpawns
+
+    #-----------------------------------------------
+    # PICKUPS SETUP
+    #-----------------------------------------------
+
 
     # ------------------------PLAYER SETUP ----------------------------
     Player = game_object.GameObject(Transform(Vector(singletons.MainCamera.windowSize) / 2, 0, Vector([15, 15])), [], None)
@@ -117,7 +189,7 @@ def main():
         singletons.GlobalObjects.append(CurBot)
 
         BotWeapon = game_object.GameObject(Transform(Vector([1, 0]), 0, Vector([1, 1])), [], None)
-        BotWeapon.AddComp(weapons.Railgun(CurBot, 3, 4096, 10, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
+        BotWeapon.AddComp(weapons.Railgun(CurBot, 3, 0, 10, 60, 60)) #for debug weapon has no cooldown and nearly infinite ammo
     
         #BotWeapon.AddComp(weapons.RocketLauncher(CurBot, 0.6, 4096, 20, 35, 2.5, Vector([12, 12]), 120, 60))
         BotWeapon.SetParent(CurBot)
@@ -163,41 +235,6 @@ def main():
     #--------------------------------------- 
     #DUMMY
     #---------------------------------------
-
-    #------------------------------------------------------------------
-    #FLOODFILL and ASTAR
-    #------------------------------------------------------------------
-
-    singletons.NavGraph = navigation.NavigationGraph(30, 15)
-    start_point = Vector([100, 100])
-    singletons.NavGraph.generateFloodFill(start_point, singletons.MapObjects)
-
-    #------------------------------------------------------------------
-    #FLOODFILL and ASTAR
-    #------------------------------------------------------------------
-
-    #-----------------------------------------------
-    # PICKUPS SETUP
-    #-----------------------------------------------
-
-    #this is a list of pickup positions, they are not random
-    PickupSpawns = [Vector([85, singletons.MainCamera.windowSize[1] / 2]), Vector([300, singletons.MainCamera.windowSize[1] / 2 - 20])]
-
-    for i in range(2):
-        HealthObj = game_object.GameObject(Transform(PickupSpawns[i], 0, Vector([10, 10])), [], None)
-        HealthObj.AddComp(rendering.Primitive(enums.PrimitiveType.SPHERE, singletons.PickupCol, 0))
-        HealthObj.AddComp(collisions.Collider(enums.ColliderType.SPHERE))
-
-        PickupTrigger = HealthObj.AddComp(events.HealthPickupTrigger(50))
-        HealthObj.AddComp(events.TriggerRespawnFPSTimer(100))
-        PickupTrigger.Start(True)
-
-        singletons.GlobalObjects.append(HealthObj)
-        singletons.NavGraph.register_pickup(HealthObj)
-
-    #-----------------------------------------------
-    # PICKUPS SETUP
-    #-----------------------------------------------
 
 
     singletons.MainPathFinder = navigation.Pathfinder(singletons.NavGraph)
@@ -354,7 +391,7 @@ def main():
             BotComp.update()
 
             #check for triggers
-            for trigger in singletons.HealthPickups:
+            for trigger in singletons.Pickups:
                 trigger.CheckIfTriggered(BotCollider)
 
             #TO DO
